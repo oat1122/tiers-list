@@ -14,16 +14,20 @@ const DEFAULT_TIERS: TierRow[] = [
 interface TierStore {
   tiers: TierRow[];
   pool: TierItem[];
-  // Tier mutations
   addTier: (tier: TierRow) => void;
   removeTier: (tierId: string) => void;
   renameTier: (tierId: string, label: string) => void;
   setTierColor: (tierId: string, color: string) => void;
-  // Item mutations
+  moveRow: (fromIndex: number, toIndex: number) => void;
   addItemToPool: (item: TierItem) => void;
   removeItem: (itemId: string) => void;
-  moveItem: (itemId: string, fromTierId: string | 'pool', toTierId: string | 'pool', toIndex: number) => void;
-  // Reset
+  moveItem: (
+    itemId: string,
+    fromTierId: string | 'pool',
+    toTierId: string | 'pool',
+    toIndex: number
+  ) => void;
+  resetItems: () => void;
   reset: () => void;
 }
 
@@ -37,10 +41,7 @@ export const useTierStore = create<TierStore>((set) => ({
   removeTier: (tierId) =>
     set((state) => ({
       tiers: state.tiers.filter((t) => t.id !== tierId),
-      pool: [
-        ...state.pool,
-        ...(state.tiers.find((t) => t.id === tierId)?.items ?? []),
-      ],
+      pool: [...state.pool, ...(state.tiers.find((t) => t.id === tierId)?.items ?? [])],
     })),
 
   renameTier: (tierId, label) =>
@@ -52,6 +53,14 @@ export const useTierStore = create<TierStore>((set) => ({
     set((state) => ({
       tiers: state.tiers.map((t) => (t.id === tierId ? { ...t, color } : t)),
     })),
+
+  moveRow: (fromIndex, toIndex) =>
+    set((state) => {
+      const tiers = [...state.tiers];
+      const [removed] = tiers.splice(fromIndex, 1);
+      tiers.splice(toIndex, 0, removed);
+      return { tiers };
+    }),
 
   addItemToPool: (item) =>
     set((state) => ({ pool: [...state.pool, item] })),
@@ -69,7 +78,6 @@ export const useTierStore = create<TierStore>((set) => ({
     set((state) => {
       let item: TierItem | undefined;
 
-      // Remove from source
       let newTiers = state.tiers.map((t) => {
         if (t.id === fromTierId) {
           item = t.items.find((i) => i.id === itemId);
@@ -78,16 +86,12 @@ export const useTierStore = create<TierStore>((set) => ({
         return t;
       });
       let newPool = state.pool.filter((i) => {
-        if (fromTierId === 'pool' && i.id === itemId) {
-          item = i;
-          return false;
-        }
+        if (fromTierId === 'pool' && i.id === itemId) { item = i; return false; }
         return true;
       });
 
       if (!item) return state;
 
-      // Insert at destination
       if (toTierId === 'pool') {
         newPool = [...newPool.slice(0, toIndex), item, ...newPool.slice(toIndex)];
       } else {
@@ -103,6 +107,12 @@ export const useTierStore = create<TierStore>((set) => ({
 
       return { tiers: newTiers, pool: newPool };
     }),
+
+  resetItems: () =>
+    set((state) => ({
+      pool: [...state.pool, ...state.tiers.flatMap((t) => t.items)],
+      tiers: state.tiers.map((t) => ({ ...t, items: [] })),
+    })),
 
   reset: () => set({ tiers: DEFAULT_TIERS, pool: [] }),
 }));
