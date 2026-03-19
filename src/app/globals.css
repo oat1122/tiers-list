@@ -126,4 +126,10 @@
   html {
     @apply font-sans;
   }
+  button,
+  [role="button"],
+  label[title],
+  label[for] {
+    @apply cursor-pointer;
+  }
 }

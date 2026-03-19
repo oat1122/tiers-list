@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { TierRow, TierItem } from "@/types";
+import { TierRow, TierItem, CardSize } from "@/types";
 
 const DEFAULT_TIERS: TierRow[] = [
   { id: "S", label: "S", color: "#ff7f7f", items: [] },
@@ -14,6 +14,8 @@ const DEFAULT_TIERS: TierRow[] = [
 interface TierStore {
   tiers: TierRow[];
   pool: TierItem[];
+  cardSize: CardSize;
+  setCardSize: (size: CardSize) => void;
   addTier: (tier: TierRow) => void;
   removeTier: (tierId: string) => void;
   renameTier: (tierId: string, label: string) => void;
@@ -21,6 +23,8 @@ interface TierStore {
   moveRow: (fromIndex: number, toIndex: number) => void;
   addItemToPool: (item: TierItem) => void;
   removeItem: (itemId: string) => void;
+  returnItemToPool: (itemId: string) => void;
+  renameItem: (itemId: string, name: string) => void;
   moveItem: (
     itemId: string,
     fromTierId: string | "pool",
@@ -34,6 +38,10 @@ interface TierStore {
 export const useTierStore = create<TierStore>((set) => ({
   tiers: DEFAULT_TIERS,
   pool: [],
+  cardSize: 'md',
+
+  setCardSize: (size) => set({ cardSize: size }),
+
 
   addTier: (tier) => set((state) => ({ tiers: [...state.tiers, tier] })),
 
@@ -73,6 +81,26 @@ export const useTierStore = create<TierStore>((set) => ({
         items: t.items.filter((i) => i.id !== itemId),
       })),
       pool: state.pool.filter((i) => i.id !== itemId),
+    })),
+
+  returnItemToPool: (itemId) =>
+    set((state) => {
+      let found: TierItem | undefined;
+      const tiers = state.tiers.map((t) => {
+        const item = t.items.find((i) => i.id === itemId);
+        if (item) { found = item; return { ...t, items: t.items.filter((i) => i.id !== itemId) }; }
+        return t;
+      });
+      return found ? { tiers, pool: [...state.pool, found] } : state;
+    }),
+
+  renameItem: (itemId, name) =>
+    set((state) => ({
+      tiers: state.tiers.map((t) => ({
+        ...t,
+        items: t.items.map((i) => (i.id === itemId ? { ...i, name } : i)),
+      })),
+      pool: state.pool.map((i) => (i.id === itemId ? { ...i, name } : i)),
     })),
 
   moveItem: (itemId, fromTierId, toTierId, toIndex) =>

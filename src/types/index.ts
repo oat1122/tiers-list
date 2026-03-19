@@ -1,7 +1,10 @@
+export type CardSize = 'sm' | 'md' | 'lg';
+
 export interface TierItem {
   id: string;
   name: string;
   imageUrl?: string;
+  showCaption?: boolean;
 }
 
 export interface TierRow {
@@ -14,4 +17,5 @@ export interface TierRow {
 export interface TierListState {
   tiers: TierRow[];
   pool: TierItem[];
+  cardSize: CardSize;
 }

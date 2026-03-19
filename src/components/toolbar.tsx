@@ -6,6 +6,7 @@ import { useTierStore } from "@/store/useTierStore";
 import { Button } from "@/components/ui/button";
 import { AddItemDialog } from "@/components/add-item-dialog";
 import { TierSettingsDialog } from "@/components/tier-settings-dialog";
+import { ItemSettingsDialog } from "@/components/item-settings-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TierRow } from "@/types";
 import {
@@ -34,6 +35,7 @@ export function Toolbar({ captureRef }: ToolbarProps) {
   const { tiers, addTier, reset } = useTierStore();
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [itemSettingsOpen, setItemSettingsOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   const handleAddTier = () => {
@@ -98,6 +100,14 @@ export function Toolbar({ captureRef }: ToolbarProps) {
         <Button
           variant="outline"
           size="sm"
+          onClick={() => setItemSettingsOpen(true)}
+          className="gap-1.5"
+        >
+          <Settings2 className="w-4 h-4" /> Item Settings
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={reset}
           className="gap-1.5 text-muted-foreground hover:text-foreground"
         >
@@ -119,6 +129,10 @@ export function Toolbar({ captureRef }: ToolbarProps) {
       <TierSettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+      />
+      <ItemSettingsDialog
+        open={itemSettingsOpen}
+        onClose={() => setItemSettingsOpen(false)}
       />
     </>
   );
