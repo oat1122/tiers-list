@@ -1,12 +1,24 @@
-'use client';
+"use client";
 
-import { useRef, useState } from 'react';
-import { useTierStore } from '@/store/useTierStore';
+import { useRef, useState } from "react";
+import { useTierStore } from "@/store/useTierStore";
 
 const PRESET_COLORS = [
-  '#ff7f7f', '#ffbf7f', '#ffdf7f', '#ffff7f', '#bfff7f',
-  '#7fff7f', '#7fffff', '#7fbfff', '#7f7fff', '#ff7fff',
-  '#ffffff', '#d0d0d0', '#a0a0a0', '#606060', '#303030',
+  "#ff7f7f",
+  "#ffbf7f",
+  "#ffdf7f",
+  "#ffff7f",
+  "#bfff7f",
+  "#7fff7f",
+  "#7fffff",
+  "#7fbfff",
+  "#7f7fff",
+  "#ff7fff",
+  "#ffffff",
+  "#d0d0d0",
+  "#a0a0a0",
+  "#606060",
+  "#303030",
 ];
 
 interface TierLabelProps {
@@ -17,15 +29,15 @@ interface TierLabelProps {
 
 export function TierLabel({ tierId, label, color }: TierLabelProps) {
   const [editing, setEditing] = useState(false);
-  const [editValue, setEditValue] = useState('');
+  const [editValue, setEditValue] = useState("");
   const [editError, setEditError] = useState(false);
   const renameTier = useTierStore((s) => s.renameTier);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const getFontClass = (text: string) => {
-    if (text.length <= 3) return 'text-lg';
-    if (text.length <= 6) return 'text-sm';
-    return 'text-xs';
+    if (text.length <= 3) return "text-lg";
+    if (text.length <= 6) return "text-sm";
+    return "text-xs";
   };
 
   const handleDoubleClick = () => {
@@ -59,17 +71,23 @@ export function TierLabel({ tierId, label, color }: TierLabelProps) {
               setEditError(false);
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 const val = editValue.trim();
-                if (!val) { setEditError(true); return; }
+                if (!val) {
+                  setEditError(true);
+                  return;
+                }
                 renameTier(tierId, val);
                 setEditing(false);
                 setEditError(false);
               }
-              if (e.key === 'Escape') { setEditing(false); setEditError(false); }
+              if (e.key === "Escape") {
+                setEditing(false);
+                setEditError(false);
+              }
             }}
             className={`w-full text-center bg-transparent outline-none font-bold ${getFontClass(editValue)} ${
-              editError ? 'ring-1 ring-red-500 rounded' : ''
+              editError ? "ring-1 ring-red-500 rounded" : ""
             }`}
             style={{ color: getContrastColor(color) }}
           />
@@ -82,7 +100,6 @@ export function TierLabel({ tierId, label, color }: TierLabelProps) {
           ใส่อย่างน้อย 1 ตัวอักษร
         </div>
       )}
-
     </div>
   );
 }
@@ -92,5 +109,5 @@ function getContrastColor(hex: string): string {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? '#000000' : '#ffffff';
+  return luminance > 0.5 ? "#000000" : "#ffffff";
 }

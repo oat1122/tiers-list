@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { Draggable, Droppable } from '@hello-pangea/dnd';
-import { Trash2, GripVertical } from 'lucide-react';
-import { TierRow as TierRowType } from '@/types';
-import { useTierStore } from '@/store/useTierStore';
-import { TierLabel } from '@/components/tier-label';
-import { TierItemCard } from '@/components/tier-item-card';
+import { Draggable, Droppable } from "@hello-pangea/dnd";
+import { Trash2, GripVertical } from "lucide-react";
+import { TierRow as TierRowType } from "@/types";
+import { useTierStore } from "@/store/useTierStore";
+import { TierLabel } from "@/components/tier-label";
+import { TierItemCard } from "@/components/tier-item-card";
 
 interface TierRowProps {
   tier: TierRowType;
@@ -24,7 +24,9 @@ export function TierRow({ tier, index }: TierRowProps) {
           ref={provided.innerRef}
           {...provided.draggableProps}
           className={`flex items-stretch gap-0 border-b border-border last:border-b-0 transition-opacity duration-150 ${
-            snapshot.isDragging ? 'opacity-80 shadow-2xl ring-1 ring-border z-50' : 'opacity-100'
+            snapshot.isDragging
+              ? "opacity-80 shadow-2xl ring-1 ring-border z-50"
+              : "opacity-100"
           }`}
         >
           {/* Drag handle */}
@@ -45,7 +47,9 @@ export function TierRow({ tier, index }: TierRowProps) {
                 ref={drop.innerRef}
                 {...drop.droppableProps}
                 className={`flex-1 flex flex-wrap gap-2 p-2 min-h-[72px] transition-colors duration-150 ${
-                  dropSnapshot.isDraggingOver ? 'bg-primary/10' : 'bg-transparent'
+                  dropSnapshot.isDraggingOver
+                    ? "bg-primary/10"
+                    : "bg-transparent"
                 }`}
               >
                 {tier.items.map((item, i) => (

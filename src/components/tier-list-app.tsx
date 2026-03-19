@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useRef } from 'react';
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { useRef } from "react";
+import { DragDropContext, Droppable, DropResult } from "@hello-pangea/dnd";
 
-import { useTierStore } from '@/store/useTierStore';
-import { TierRow } from '@/components/tier-row';
-import { ItemPool } from '@/components/item-pool';
-import { Toolbar } from '@/components/toolbar';
+import { useTierStore } from "@/store/useTierStore";
+import { TierRow } from "@/components/tier-row";
+import { ItemPool } from "@/components/item-pool";
+import { Toolbar } from "@/components/toolbar";
 
 export function TierListApp() {
   const { tiers, moveRow, moveItem } = useTierStore();
@@ -15,16 +15,20 @@ export function TierListApp() {
   const onDragEnd = (result: DropResult) => {
     const { source, destination, type, draggableId } = result;
     if (!destination) return;
-    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+    if (
+      source.droppableId === destination.droppableId &&
+      source.index === destination.index
+    )
+      return;
 
-    if (type === 'TIER') {
+    if (type === "TIER") {
       moveRow(source.index, destination.index);
       return;
     }
 
     // type === 'ITEM'
     const itemId = draggableId;
-    const fromId = source.droppableId;   // tier.id or 'pool'
+    const fromId = source.droppableId; // tier.id or 'pool'
     const toId = destination.droppableId;
     moveItem(itemId, fromId, toId, destination.index);
   };

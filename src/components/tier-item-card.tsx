@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { Draggable } from '@hello-pangea/dnd';
-import { X } from 'lucide-react';
-import Image from 'next/image';
-import { TierItem } from '@/types';
-import { useTierStore } from '@/store/useTierStore';
-import { cn } from '@/lib/utils';
+import { Draggable } from "@hello-pangea/dnd";
+import { X } from "lucide-react";
+import Image from "next/image";
+import { TierItem } from "@/types";
+import { useTierStore } from "@/store/useTierStore";
+import { cn } from "@/lib/utils";
 
 interface TierItemCardProps {
   item: TierItem;
@@ -23,10 +23,10 @@ export function TierItemCard({ item, index }: TierItemCardProps) {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           className={cn(
-            'group relative shrink-0 w-16 h-16 rounded-md overflow-hidden',
-            'border border-border select-none cursor-grab active:cursor-grabbing',
-            'transition-shadow duration-150',
-            snapshot.isDragging && 'shadow-2xl ring-2 ring-primary'
+            "group relative shrink-0 w-16 h-16 rounded-md overflow-hidden",
+            "border border-border select-none cursor-grab active:cursor-grabbing",
+            "transition-shadow duration-150",
+            snapshot.isDragging && "shadow-2xl ring-2 ring-primary",
           )}
         >
           {item.imageUrl ? (
@@ -50,9 +50,9 @@ export function TierItemCard({ item, index }: TierItemCardProps) {
               removeItem(item.id);
             }}
             className={cn(
-              'absolute top-0.5 right-0.5 rounded-full bg-black/70 text-white',
-              'opacity-0 group-hover:opacity-100 transition-opacity duration-150',
-              'w-4 h-4 flex items-center justify-center'
+              "absolute top-0.5 right-0.5 rounded-full bg-black/70 text-white",
+              "opacity-0 group-hover:opacity-100 transition-opacity duration-150",
+              "w-4 h-4 flex items-center justify-center",
             )}
             aria-label={`Remove ${item.name}`}
           >

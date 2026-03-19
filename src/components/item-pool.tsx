@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Droppable } from '@hello-pangea/dnd';
-import { TierItemCard } from '@/components/tier-item-card';
-import { useTierStore } from '@/store/useTierStore';
-import { PackageOpen } from 'lucide-react';
+import { Droppable } from "@hello-pangea/dnd";
+import { TierItemCard } from "@/components/tier-item-card";
+import { useTierStore } from "@/store/useTierStore";
+import { PackageOpen } from "lucide-react";
 
 export function ItemPool() {
   const pool = useTierStore((s) => s.pool);
@@ -22,8 +22,8 @@ export function ItemPool() {
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={`flex flex-wrap gap-2 p-4 min-h-[100px] transition-colors ${
-              snapshot.isDraggingOver ? 'bg-primary/10' : ''
-            } ${pool.length === 0 && !snapshot.isDraggingOver ? 'items-center justify-center' : ''}`}
+              snapshot.isDraggingOver ? "bg-primary/10" : ""
+            } ${pool.length === 0 && !snapshot.isDraggingOver ? "items-center justify-center" : ""}`}
           >
             {pool.length === 0 && !snapshot.isDraggingOver && (
               <p className="text-sm text-muted-foreground/50 select-none">
