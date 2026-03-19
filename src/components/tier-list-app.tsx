@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { DragDropContext, Droppable, DropResult } from "@hello-pangea/dnd";
 
 import { useTierStore } from "@/store/useTierStore";
@@ -11,6 +11,20 @@ import { Toolbar } from "@/components/toolbar";
 export function TierListApp() {
   const { tiers, moveRow, moveItem } = useTierStore();
   const captureRef = useRef<HTMLDivElement>(null);
+  const [title, setTitle] = useState("Edit Your Title Name Tier List");
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
+
+  const startEditTitle = () => {
+    setTitleDraft(title);
+    setEditingTitle(true);
+  };
+
+  const commitTitle = () => {
+    const val = titleDraft.trim();
+    if (val) setTitle(val);
+    setEditingTitle(false);
+  };
 
   const onDragEnd = (result: DropResult) => {
     const { source, destination, type, draggableId } = result;
@@ -38,12 +52,31 @@ export function TierListApp() {
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-4 mb-3">
-            <h1 className="text-xl font-bold tracking-tight">
-              🏆 Tier List Maker
-            </h1>
+          <div className="flex flex-col items-center mb-3">
+            {editingTitle ? (
+              <input
+                autoFocus
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={commitTitle}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commitTitle();
+                  if (e.key === "Escape") setEditingTitle(false);
+                }}
+                className="text-xl font-bold tracking-tight text-center bg-transparent border-b-2 border-primary outline-none w-full max-w-xs"
+              />
+            ) : (
+              <h1
+                className="text-xl font-bold tracking-tight cursor-pointer hover:opacity-70 transition-opacity"
+                onClick={startEditTitle}
+                title="คลิกเพื่อแก้ไขชื่อ"
+              >
+                {title}
+              </h1>
+            )}
+            <p className="text-xs text-muted-foreground mt-0.5">BY mavelus</p>
           </div>
-          <Toolbar captureRef={captureRef} />
+          <Toolbar captureRef={captureRef} title={title} />
         </div>
       </header>
 
@@ -55,6 +88,11 @@ export function TierListApp() {
             ref={captureRef}
             className="border border-border rounded-xl overflow-hidden bg-card"
           >
+            {/* Export header – hidden in UI, shown only during PNG capture */}
+            <div data-export-only className="hidden flex flex-col items-center py-3 border-b border-border bg-card">
+              <h2 className="text-xl font-bold tracking-tight">{title}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">BY mavelus</p>
+            </div>
             <Droppable droppableId="tier-board" type="TIER">
               {(provided) => (
                 <div ref={provided.innerRef} {...provided.droppableProps}>

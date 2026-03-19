@@ -13,6 +13,9 @@ const kanit = Kanit({
 export const metadata: Metadata = {
   title: "Tier List",
   description: "Create and share beautiful tier lists",
+  metadataBase: new URL(
+    process.env.APP_URL ? `https://${process.env.APP_URL}` : "http://localhost:3000"
+  ),
 };
 
 export default function RootLayout({

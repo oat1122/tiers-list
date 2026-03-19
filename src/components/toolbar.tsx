@@ -15,10 +15,12 @@ import {
   RotateCcw,
   Download,
   Settings2,
+  ArrowLeft,
 } from "lucide-react";
 
 interface ToolbarProps {
   captureRef: React.RefObject<HTMLDivElement | null>;
+  title: string;
 }
 
 const TIER_COLORS = [
@@ -31,7 +33,7 @@ const TIER_COLORS = [
 ];
 const TIER_LABELS = ["S", "A", "B", "C", "D", "E", "F", "G"];
 
-export function Toolbar({ captureRef }: ToolbarProps) {
+export function Toolbar({ captureRef, title }: ToolbarProps) {
   const { tiers, addTier, reset } = useTierStore();
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -55,6 +57,8 @@ export function Toolbar({ captureRef }: ToolbarProps) {
   const handleExport = async () => {
     if (!captureRef.current) return;
     setExporting(true);
+    const exportOnlyEls = captureRef.current.querySelectorAll<HTMLElement>("[data-export-only]");
+    exportOnlyEls.forEach((el) => el.classList.remove("hidden"));
     try {
       const dataUrl = await toPng(captureRef.current, {
         quality: 1,
@@ -63,64 +67,87 @@ export function Toolbar({ captureRef }: ToolbarProps) {
       });
       const a = document.createElement("a");
       a.href = dataUrl;
-      a.download = "tier-list.png";
+      const safeName = title.trim().replace(/[/\\:*?"<>|]/g, "").replace(/\s+/g, "-") || "tier-list";
+      a.download = `${safeName}.png`;
       a.click();
     } finally {
+      exportOnlyEls.forEach((el) => el.classList.add("hidden"));
       setExporting(false);
     }
   };
 
   return (
     <>
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {process.env.HOME_URL && (
+          <a
+            href={`https://${process.env.HOME_URL}`}
+            className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md border border-border bg-background text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            title="Back"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Back</span>
+          </a>
+        )}
         <Button
           variant="outline"
           size="sm"
           onClick={handleAddTier}
-          className="gap-1.5"
+          className="gap-1.5 px-2 sm:px-2.5"
+          title="Add Tier"
         >
-          <PlusCircle className="w-4 h-4" /> Add Tier
+          <PlusCircle className="w-4 h-4" />
+          <span className="hidden sm:inline">Add Tier</span>
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={() => setAddItemOpen(true)}
-          className="gap-1.5"
+          className="gap-1.5 px-2 sm:px-2.5"
+          title="Add Item"
         >
-          <ImagePlus className="w-4 h-4" /> Add Item
+          <ImagePlus className="w-4 h-4" />
+          <span className="hidden sm:inline">Add Item</span>
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={() => setSettingsOpen(true)}
-          className="gap-1.5"
+          className="gap-1.5 px-2 sm:px-2.5"
+          title="Tier Settings"
         >
-          <Settings2 className="w-4 h-4" /> Tier Settings
+          <Settings2 className="w-4 h-4" />
+          <span className="hidden sm:inline">Tier Settings</span>
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={() => setItemSettingsOpen(true)}
-          className="gap-1.5"
+          className="gap-1.5 px-2 sm:px-2.5"
+          title="Item Settings"
         >
-          <Settings2 className="w-4 h-4" /> Item Settings
+          <Settings2 className="w-4 h-4" />
+          <span className="hidden sm:inline">Item Settings</span>
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={reset}
-          className="gap-1.5 text-muted-foreground hover:text-foreground"
+          className="gap-1.5 px-2 sm:px-2.5 text-muted-foreground hover:text-foreground"
+          title="Reset"
         >
-          <RotateCcw className="w-4 h-4" /> Reset
+          <RotateCcw className="w-4 h-4" />
+          <span className="hidden sm:inline">Reset</span>
         </Button>
         <Button
           size="sm"
           onClick={handleExport}
           disabled={exporting}
-          className="gap-1.5 ml-auto"
+          className="gap-1.5 ml-auto px-2 sm:px-2.5"
+          title="Export PNG"
         >
           <Download className="w-4 h-4" />
-          {exporting ? "Exporting…" : "Export PNG"}
+          <span className="hidden sm:inline">{exporting ? "Exporting…" : "Export PNG"}</span>
         </Button>
         <ThemeToggle />
       </div>
