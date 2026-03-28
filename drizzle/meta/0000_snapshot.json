@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "02311fd9-a82b-4b0a-b8e3-69151d542069",
+  "id": "80fc6154-0534-4fd0-ad4e-82954a75574a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "user": {
@@ -231,14 +231,14 @@
         },
         "access_token_expires_at": {
           "name": "access_token_expires_at",
-          "type": "timestamp",
+          "type": "datetime",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "refresh_token_expires_at": {
           "name": "refresh_token_expires_at",
-          "type": "timestamp",
+          "type": "datetime",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

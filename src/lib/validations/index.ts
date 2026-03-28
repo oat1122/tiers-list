@@ -1,0 +1,8 @@
+// src/lib/validations/index.ts
+// Barrel export — รวม Zod validation schemas ทั้งหมดเพื่อให้ import ได้จากที่เดียว
+// ตัวอย่าง: import { SignInSchema, CreateUserInput } from "@/lib/validations"
+
+export * from "./users.schema";
+export * from "./accounts.schema";
+export * from "./sessions.schema";
+export * from "./verifications.schema";
