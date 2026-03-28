@@ -31,7 +31,12 @@ export function ItemPool() {
               </p>
             )}
             {pool.map((item, i) => (
-              <TierItemCard key={item.id} item={item} index={i} location="pool" />
+              <TierItemCard
+                key={item.id}
+                item={item}
+                index={i}
+                location="pool"
+              />
             ))}
             {provided.placeholder}
           </div>

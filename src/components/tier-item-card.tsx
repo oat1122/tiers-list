@@ -7,16 +7,17 @@ import { CardSize, TierItem } from "@/types";
 import { useTierStore } from "@/store/useTierStore";
 import { cn } from "@/lib/utils";
 
-const SIZE_MAP: Record<CardSize, { card: string; img: string; text: string }> = {
-  sm: { card: 'w-16', img: 'h-16', text: 'text-[9px]' },
-  md: { card: 'w-20', img: 'h-20', text: 'text-[10px]' },
-  lg: { card: 'w-24', img: 'h-24', text: 'text-xs' },
-};
+const SIZE_MAP: Record<CardSize, { card: string; img: string; text: string }> =
+  {
+    sm: { card: "w-16", img: "h-16", text: "text-[9px]" },
+    md: { card: "w-20", img: "h-20", text: "text-[10px]" },
+    lg: { card: "w-24", img: "h-24", text: "text-xs" },
+  };
 
 interface TierItemCardProps {
   item: TierItem;
   index: number;
-  location: 'pool' | 'tier';
+  location: "pool" | "tier";
 }
 
 export function TierItemCard({ item, index, location }: TierItemCardProps) {
@@ -28,7 +29,7 @@ export function TierItemCard({ item, index, location }: TierItemCardProps) {
 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (location === 'tier') {
+    if (location === "tier") {
       returnItemToPool(item.id);
     } else {
       removeItem(item.id);
@@ -51,7 +52,12 @@ export function TierItemCard({ item, index, location }: TierItemCardProps) {
         >
           {item.imageUrl ? (
             <>
-              <div className={cn('relative w-full shrink-0', hasCaption ? sz.img : 'flex-1')}>
+              <div
+                className={cn(
+                  "relative w-full shrink-0",
+                  hasCaption ? sz.img : "flex-1",
+                )}
+              >
                 <Image
                   src={item.imageUrl}
                   alt={item.name}
@@ -61,10 +67,12 @@ export function TierItemCard({ item, index, location }: TierItemCardProps) {
                 />
               </div>
               {hasCaption && (
-                <div className={cn(
-                  'w-full bg-muted text-muted-foreground font-medium text-center px-0.5 py-0.5 leading-tight break-all',
-                  sz.text,
-                )}>
+                <div
+                  className={cn(
+                    "w-full bg-muted text-muted-foreground font-medium text-center px-0.5 py-0.5 leading-tight break-all",
+                    sz.text,
+                  )}
+                >
                   {item.name}
                 </div>
               )}
@@ -83,8 +91,12 @@ export function TierItemCard({ item, index, location }: TierItemCardProps) {
               "opacity-0 group-hover:opacity-100 transition-opacity duration-150",
               "w-4 h-4 flex items-center justify-center",
             )}
-            aria-label={location === 'tier' ? `Return ${item.name} to pool` : `Remove ${item.name}`}
-            title={location === 'tier' ? 'คืนกลับ Pool' : 'ลบ'}
+            aria-label={
+              location === "tier"
+                ? `Return ${item.name} to pool`
+                : `Remove ${item.name}`
+            }
+            title={location === "tier" ? "คืนกลับ Pool" : "ลบ"}
           >
             <X className="w-2.5 h-2.5" />
           </button>

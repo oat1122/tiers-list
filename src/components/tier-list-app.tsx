@@ -89,7 +89,10 @@ export function TierListApp() {
             className="border border-border rounded-xl overflow-hidden bg-card"
           >
             {/* Export header – hidden in UI, shown only during PNG capture */}
-            <div data-export-only className="hidden flex flex-col items-center py-3 border-b border-border bg-card">
+            <div
+              data-export-only
+              className="hidden flex flex-col items-center py-3 border-b border-border bg-card"
+            >
               <h2 className="text-xl font-bold tracking-tight">{title}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">BY mavelus</p>
             </div>

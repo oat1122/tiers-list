@@ -1,6 +1,5 @@
 "use client";
 
-
 interface TierLabelProps {
   tierId: string;
   label: string;

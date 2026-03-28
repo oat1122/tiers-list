@@ -57,7 +57,8 @@ export function Toolbar({ captureRef, title }: ToolbarProps) {
   const handleExport = async () => {
     if (!captureRef.current) return;
     setExporting(true);
-    const exportOnlyEls = captureRef.current.querySelectorAll<HTMLElement>("[data-export-only]");
+    const exportOnlyEls =
+      captureRef.current.querySelectorAll<HTMLElement>("[data-export-only]");
     exportOnlyEls.forEach((el) => el.classList.remove("hidden"));
     try {
       const dataUrl = await toPng(captureRef.current, {
@@ -67,7 +68,11 @@ export function Toolbar({ captureRef, title }: ToolbarProps) {
       });
       const a = document.createElement("a");
       a.href = dataUrl;
-      const safeName = title.trim().replace(/[/\\:*?"<>|]/g, "").replace(/\s+/g, "-") || "tier-list";
+      const safeName =
+        title
+          .trim()
+          .replace(/[/\\:*?"<>|]/g, "")
+          .replace(/\s+/g, "-") || "tier-list";
       a.download = `${safeName}.png`;
       a.click();
     } finally {
@@ -147,7 +152,9 @@ export function Toolbar({ captureRef, title }: ToolbarProps) {
           title="Export PNG"
         >
           <Download className="w-4 h-4" />
-          <span className="hidden sm:inline">{exporting ? "Exporting…" : "Export PNG"}</span>
+          <span className="hidden sm:inline">
+            {exporting ? "Exporting…" : "Export PNG"}
+          </span>
         </Button>
         <ThemeToggle />
       </div>

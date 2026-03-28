@@ -17,7 +17,10 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
   const [tab, setTab] = useState<"image" | "text" | "combo">("image");
   const [textValue, setTextValue] = useState("");
   const [comboText, setComboText] = useState("");
-  const [comboPreview, setComboPreview] = useState<{ url: string; name: string } | null>(null);
+  const [comboPreview, setComboPreview] = useState<{
+    url: string;
+    name: string;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const comboFileRef = useRef<HTMLInputElement>(null);
 
@@ -140,8 +143,12 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
               }}
             >
               <ImagePlus className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">คลิกหรือลากรูปมาวางที่นี่</p>
-              <p className="text-xs text-muted-foreground mt-1">รองรับหลายไฟล์พร้อมกัน</p>
+              <p className="text-sm text-muted-foreground">
+                คลิกหรือลากรูปมาวางที่นี่
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                รองรับหลายไฟล์พร้อมกัน
+              </p>
             </div>
             <input
               ref={fileInputRef}
@@ -179,15 +186,24 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
               className="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary/60 transition-colors relative overflow-hidden"
               onClick={() => comboFileRef.current?.click()}
               onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => { e.preventDefault(); handleComboFile(e.dataTransfer.files); }}
+              onDrop={(e) => {
+                e.preventDefault();
+                handleComboFile(e.dataTransfer.files);
+              }}
             >
               {comboPreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={comboPreview.url} alt="preview" className="h-32 mx-auto object-contain rounded" />
+                <img
+                  src={comboPreview.url}
+                  alt="preview"
+                  className="h-32 mx-auto object-contain rounded"
+                />
               ) : (
                 <>
                   <ImagePlus className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">คลิกเพื่อเลือกรูป (1 รูป)</p>
+                  <p className="text-sm text-muted-foreground">
+                    คลิกเพื่อเลือกรูป (1 รูป)
+                  </p>
                 </>
               )}
             </div>
@@ -206,7 +222,10 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
               placeholder="ชื่อ / caption…"
               className="w-full px-3 py-2 bg-input border border-border rounded-md text-sm outline-none focus:ring-2 focus:ring-ring"
             />
-            <Button onClick={handleComboAdd} disabled={!comboPreview || !comboText.trim()}>
+            <Button
+              onClick={handleComboAdd}
+              disabled={!comboPreview || !comboText.trim()}
+            >
               เพิ่ม Item
             </Button>
           </div>

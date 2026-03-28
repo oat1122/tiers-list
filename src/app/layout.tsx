@@ -14,7 +14,9 @@ export const metadata: Metadata = {
   title: "Tier List",
   description: "Create and share beautiful tier lists",
   metadataBase: new URL(
-    process.env.APP_URL ? `https://${process.env.APP_URL}` : "http://localhost:3000"
+    process.env.APP_URL
+      ? `https://${process.env.APP_URL}`
+      : "http://localhost:3000",
   ),
 };
 

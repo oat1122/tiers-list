@@ -53,7 +53,12 @@ export function TierRow({ tier, index }: TierRowProps) {
                 }`}
               >
                 {tier.items.map((item, i) => (
-                  <TierItemCard key={item.id} item={item} index={i} location="tier" />
+                  <TierItemCard
+                    key={item.id}
+                    item={item}
+                    index={i}
+                    location="tier"
+                  />
                 ))}
                 {drop.placeholder}
               </div>

@@ -1,4 +1,4 @@
-export type CardSize = 'sm' | 'md' | 'lg';
+export type CardSize = "sm" | "md" | "lg";
 
 export interface TierItem {
   id: string;

@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { useTierStore } from "@/store/useTierStore";
 import { TierRow } from "@/types";
 import { Button } from "@/components/ui/button";
-import { X, GripVertical, Trash2, PlusCircle } from "lucide-react";
+import { X, Trash2, PlusCircle } from "lucide-react";
 
 const PRESET_COLORS = [
   "#ff7f7f",
@@ -30,7 +30,7 @@ interface TierSettingsDialogProps {
 export function TierSettingsDialog({ open, onClose }: TierSettingsDialogProps) {
   const { tiers, renameTier, setTierColor, addTier, removeTier } =
     useTierStore();
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
+
   const [labelValues, setLabelValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(tiers.map((t) => [t.id, t.label])),
   );
@@ -76,7 +76,7 @@ export function TierSettingsDialog({ open, onClose }: TierSettingsDialogProps) {
 
         {/* Tier list */}
         <div className="flex-1 overflow-y-auto px-5 py-3 flex flex-col gap-2">
-          {tiers.map((tier, index) => (
+          {tiers.map((tier) => (
             <div
               key={tier.id}
               className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border border-border/50 hover:border-border transition-colors"
