@@ -33,7 +33,7 @@ export type SignInServiceResult = SignInResult | SignInError;
  * @returns SignInServiceResult พร้อม raw Response จาก Better Auth
  */
 export async function signInWithCredentials(
-  data: SignInInput
+  data: SignInInput,
 ): Promise<SignInServiceResult> {
   try {
     const response = await auth.api.signInEmail({

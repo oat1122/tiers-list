@@ -1,7 +1,10 @@
 import { eq, and, isNull, isNotNull, desc } from "drizzle-orm";
 import { db } from "@/db";
 import { tierLists, tierItems } from "@/db/schema";
-import type { CreateTierListInput, UpdateTierListInput } from "@/lib/validations";
+import type {
+  CreateTierListInput,
+  UpdateTierListInput,
+} from "@/lib/validations";
 
 // ดึง Tier Lists ของ User (เฉพาะที่ยังไม่ถูกลบ)
 export async function getMyTierLists(userId: string) {
@@ -37,12 +40,15 @@ export async function getTierListById(id: string) {
     .from(tierLists)
     .where(eq(tierLists.id, id))
     .limit(1);
-    
+
   return result[0] || null;
 }
 
 // สร้าง Tier List
-export async function createTierList(data: CreateTierListInput, userId: string) {
+export async function createTierList(
+  data: CreateTierListInput,
+  userId: string,
+) {
   await db.insert(tierLists).values({
     userId,
     title: data.title,
@@ -58,7 +64,7 @@ export async function createTierList(data: CreateTierListInput, userId: string) 
     .where(eq(tierLists.userId, userId))
     .orderBy(desc(tierLists.createdAt))
     .limit(1);
-    
+
   return created[0];
 }
 
@@ -89,7 +95,7 @@ export async function createFromTemplate(templateId: string, userId: string) {
 
   // โคลน items (รูปภาพจะใช้ path เดิมที่อยู่ในระบบอยู่แล้ว)
   if (items.length > 0) {
-    const newItems = items.map(item => ({
+    const newItems = items.map((item) => ({
       tierListId: generatedId,
       label: item.label,
       tier: item.tier,
@@ -115,7 +121,7 @@ export async function updateTierList(id: string, data: UpdateTierListInput) {
       isTemplate: data.isTemplate,
     })
     .where(eq(tierLists.id, id));
-    
+
   return await getTierListById(id);
 }
 

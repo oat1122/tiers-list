@@ -11,7 +11,14 @@ import { z } from "zod";
 export const CreateSessionSchema = z.object({
   expiresAt: z.date().min(new Date(), "วันหมดอายุต้องไม่อยู่ในอดีต"),
   token: z.string().min(1, "token ต้องไม่ว่าง"),
-  ipAddress: z.string().regex(/^(\d{1,3}\.){3}\d{1,3}$|^[0-9a-fA-F:]+$/, "รูปแบบ IP Address ไม่ถูกต้อง").optional().nullable(),
+  ipAddress: z
+    .string()
+    .regex(
+      /^(\d{1,3}\.){3}\d{1,3}$|^[0-9a-fA-F:]+$/,
+      "รูปแบบ IP Address ไม่ถูกต้อง",
+    )
+    .optional()
+    .nullable(),
   userAgent: z.string().optional().nullable(),
   userId: z.string().min(1, "userId ต้องไม่ว่าง"),
 });

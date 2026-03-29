@@ -19,7 +19,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (body === null) {
     return NextResponse.json(
       { error: "Request body ต้องเป็น JSON" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         error: "ข้อมูลไม่ถูกต้อง",
         fieldErrors: result.error.flatten().fieldErrors,
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!serviceResult.success) {
     return NextResponse.json(
       { error: serviceResult.message },
-      { status: serviceResult.status }
+      { status: serviceResult.status },
     );
   }
 

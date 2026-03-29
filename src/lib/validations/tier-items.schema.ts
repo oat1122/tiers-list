@@ -40,8 +40,9 @@ export const UploadTierItemMetaSchema = z.object({
 export type UploadTierItemMetaInput = z.infer<typeof UploadTierItemMetaSchema>;
 
 // สำหรับ Update (อนุญาตให้อัพเดตบางฟิลด์)
-export const UpdateTierItemSchema = TierItemBaseSchema
-  .omit({ tierListId: true })
+export const UpdateTierItemSchema = TierItemBaseSchema.omit({
+  tierListId: true,
+})
   .partial()
   .extend({
     showCaption: z.coerce.number().int().min(0).max(1).optional(),

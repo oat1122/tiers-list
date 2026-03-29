@@ -36,7 +36,7 @@ export async function saveImageFile(file: File): Promise<string> {
   const uniqueName = `${crypto.randomUUID()}.${extension}`;
 
   const uploadDir = path.join(process.cwd(), UPLOAD_DIR);
-  
+
   // ตรวจสอบและสร้างโฟลเดอร์ถ้ายังไม่มี
   try {
     await fs.access(uploadDir);

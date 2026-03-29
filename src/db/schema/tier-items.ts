@@ -31,13 +31,13 @@ export const tierItems = mysqlTable("tier_items", {
   /** ลำดับภายใน tier (เผื่อการจัดเรียง) */
   position: int("position").notNull().default(0),
 
-  /** 
+  /**
    * ชนิดของข้อมูล: "text" | "image"
    */
   itemType: varchar("item_type", { length: 20 }).notNull().default("text"),
 
-  /** 
-   * พาธของไฟล์ที่ถูกอัพโหลด (เฉพาะ itemType="image") 
+  /**
+   * พาธของไฟล์ที่ถูกอัพโหลด (เฉพาะ itemType="image")
    * เช่น "/uploads/tier-items/uuid.jpg"
    */
   imagePath: varchar("image_path", { length: 500 }),

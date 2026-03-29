@@ -12,6 +12,9 @@ export async function GET(request: NextRequest) {
     const lists = await getDeletedTierLists();
     return NextResponse.json(lists);
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 500 },
+    );
   }
 }

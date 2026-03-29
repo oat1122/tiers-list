@@ -6,6 +6,9 @@ export async function GET() {
     const templates = await getTemplates();
     return NextResponse.json(templates);
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 500 },
+    );
   }
 }

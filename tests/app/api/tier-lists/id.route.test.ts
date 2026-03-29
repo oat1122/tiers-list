@@ -21,11 +21,7 @@ vi.mock("@/services/tier-lists.service", () => ({
   softDeleteTierList: mocks.softDeleteTierList,
 }));
 
-import {
-  DELETE,
-  GET,
-  PATCH,
-} from "@/app/api/tier-lists/[id]/route";
+import { DELETE, GET, PATCH } from "@/app/api/tier-lists/[id]/route";
 
 function createJsonRequest(method: string, body?: unknown) {
   return new Request(`http://localhost/api/tier-lists/list-1`, {
@@ -204,4 +200,3 @@ describe("/api/tier-lists/[id] route", () => {
     expect(mocks.softDeleteTierList).toHaveBeenCalledWith("list-1");
   });
 });
-

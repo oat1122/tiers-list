@@ -11,7 +11,9 @@ describe("Drizzle schema contracts", () => {
     const source = readProjectFile("src/db/schema/users.ts");
 
     expect(source).toContain("crypto.randomUUID()");
-    expect(source).toContain('createdAt: timestamp("created_at").notNull().defaultNow()');
+    expect(source).toContain(
+      'createdAt: timestamp("created_at").notNull().defaultNow()',
+    );
     expect(source).toContain(
       'updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow()',
     );
@@ -21,7 +23,9 @@ describe("Drizzle schema contracts", () => {
     const source = readProjectFile("src/db/schema/tier-lists.ts");
 
     expect(source).toContain("crypto.randomUUID()");
-    expect(source).toContain('createdAt: timestamp("created_at").notNull().defaultNow()');
+    expect(source).toContain(
+      'createdAt: timestamp("created_at").notNull().defaultNow()',
+    );
     expect(source).toContain(
       'updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow()',
     );

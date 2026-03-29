@@ -165,7 +165,10 @@ export function Toolbar({ captureRef }: ToolbarProps) {
         <ThemeToggle />
       </div>
 
-      <AddItemDialog open={isAddItemOpen} onClose={() => setAddItemOpen(false)} />
+      <AddItemDialog
+        open={isAddItemOpen}
+        onClose={() => setAddItemOpen(false)}
+      />
       <TierSettingsDialog
         open={isTierSettingsOpen}
         onClose={() => setTierSettingsOpen(false)}

@@ -1,6 +1,12 @@
 // src/db/schema/accounts.ts
 // ตาราง Account — เชื่อมผู้ใช้กับ OAuth Provider ต่างๆ จัดการโดย Better Auth
-import { mysqlTable, varchar, text, timestamp, datetime } from "drizzle-orm/mysql-core";
+import {
+  mysqlTable,
+  varchar,
+  text,
+  timestamp,
+  datetime,
+} from "drizzle-orm/mysql-core";
 import { users } from "./users";
 
 /**

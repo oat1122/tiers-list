@@ -1,10 +1,10 @@
 import { eq, and, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { tierItems } from "@/db/schema";
-import type { 
-  CreateTierItemInput, 
+import type {
+  CreateTierItemInput,
   UpdateTierItemInput,
-  UploadTierItemMetaInput 
+  UploadTierItemMetaInput,
 } from "@/lib/validations";
 import { saveImageFile } from "@/lib/upload";
 
@@ -13,7 +13,9 @@ export async function getTierItems(tierListId: string) {
   return db
     .select()
     .from(tierItems)
-    .where(and(eq(tierItems.tierListId, tierListId), isNull(tierItems.deletedAt)))
+    .where(
+      and(eq(tierItems.tierListId, tierListId), isNull(tierItems.deletedAt)),
+    )
     .orderBy(tierItems.position);
 }
 
@@ -24,14 +26,14 @@ export async function getTierItemById(id: string) {
     .from(tierItems)
     .where(eq(tierItems.id, id))
     .limit(1);
-    
+
   return result[0] || null;
 }
 
 // สร้าง Text Item
 export async function createTextTierItem(data: CreateTierItemInput) {
   if (data.itemType !== "text") throw new Error("Invalid format");
-  
+
   await db.insert(tierItems).values({
     tierListId: data.tierListId,
     label: data.label,
@@ -42,9 +44,12 @@ export async function createTextTierItem(data: CreateTierItemInput) {
 }
 
 // อัปโหลดไฟล์และสร้าง Image Item
-export async function createImageTierItem(data: UploadTierItemMetaInput, file: File) {
+export async function createImageTierItem(
+  data: UploadTierItemMetaInput,
+  file: File,
+) {
   const imagePath = await saveImageFile(file);
-  
+
   await db.insert(tierItems).values({
     tierListId: data.tierListId,
     label: data.label,
