@@ -1,30 +1,26 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { DragDropContext, Droppable, DropResult } from "@hello-pangea/dnd";
 
 import { useTierStore } from "@/store/useTierStore";
+import { useUIStore } from "@/store/useUIStore";
 import { TierRow } from "@/components/tier-row";
 import { ItemPool } from "@/components/item-pool";
 import { Toolbar } from "@/components/toolbar";
 
 export function TierListApp() {
   const { tiers, moveRow, moveItem } = useTierStore();
+  const {
+    title,
+    titleDraft,
+    isEditingTitle,
+    startEditTitle,
+    setTitleDraft,
+    commitTitle,
+    cancelEditTitle,
+  } = useUIStore();
   const captureRef = useRef<HTMLDivElement>(null);
-  const [title, setTitle] = useState("Edit Your Title Name Tier List");
-  const [editingTitle, setEditingTitle] = useState(false);
-  const [titleDraft, setTitleDraft] = useState("");
-
-  const startEditTitle = () => {
-    setTitleDraft(title);
-    setEditingTitle(true);
-  };
-
-  const commitTitle = () => {
-    const val = titleDraft.trim();
-    if (val) setTitle(val);
-    setEditingTitle(false);
-  };
 
   const onDragEnd = (result: DropResult) => {
     const { source, destination, type, draggableId } = result;
@@ -53,7 +49,7 @@ export function TierListApp() {
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-4 py-3">
           <div className="flex flex-col items-center mb-3">
-            {editingTitle ? (
+            {isEditingTitle ? (
               <input
                 autoFocus
                 value={titleDraft}
@@ -61,7 +57,7 @@ export function TierListApp() {
                 onBlur={commitTitle}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") commitTitle();
-                  if (e.key === "Escape") setEditingTitle(false);
+                  if (e.key === "Escape") cancelEditTitle();
                 }}
                 className="text-xl font-bold tracking-tight text-center bg-transparent border-b-2 border-primary outline-none w-full max-w-xs"
               />
@@ -76,7 +72,7 @@ export function TierListApp() {
             )}
             <p className="text-xs text-muted-foreground mt-0.5">BY mavelus</p>
           </div>
-          <Toolbar captureRef={captureRef} title={title} />
+          <Toolbar captureRef={captureRef} />
         </div>
       </header>
 

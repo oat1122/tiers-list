@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { toPng } from "html-to-image";
 import { useTierStore } from "@/store/useTierStore";
+import { useUIStore } from "@/store/useUIStore";
 import { Button } from "@/components/ui/button";
 import { AddItemDialog } from "@/components/add-item-dialog";
 import { TierSettingsDialog } from "@/components/tier-settings-dialog";
@@ -20,7 +20,6 @@ import {
 
 interface ToolbarProps {
   captureRef: React.RefObject<HTMLDivElement | null>;
-  title: string;
 }
 
 const TIER_COLORS = [
@@ -33,12 +32,19 @@ const TIER_COLORS = [
 ];
 const TIER_LABELS = ["S", "A", "B", "C", "D", "E", "F", "G"];
 
-export function Toolbar({ captureRef, title }: ToolbarProps) {
+export function Toolbar({ captureRef }: ToolbarProps) {
   const { tiers, addTier, reset } = useTierStore();
-  const [addItemOpen, setAddItemOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [itemSettingsOpen, setItemSettingsOpen] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const {
+    title,
+    isAddItemOpen,
+    isTierSettingsOpen,
+    isItemSettingsOpen,
+    isExporting,
+    setAddItemOpen,
+    setTierSettingsOpen,
+    setItemSettingsOpen,
+    setExporting,
+  } = useUIStore();
 
   const handleAddTier = () => {
     const usedLabels = new Set(tiers.map((t) => t.label));
@@ -117,7 +123,7 @@ export function Toolbar({ captureRef, title }: ToolbarProps) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setSettingsOpen(true)}
+          onClick={() => setTierSettingsOpen(true)}
           className="gap-1.5 px-2 sm:px-2.5"
           title="Tier Settings"
         >
@@ -147,25 +153,25 @@ export function Toolbar({ captureRef, title }: ToolbarProps) {
         <Button
           size="sm"
           onClick={handleExport}
-          disabled={exporting}
+          disabled={isExporting}
           className="gap-1.5 ml-auto px-2 sm:px-2.5"
           title="Export PNG"
         >
           <Download className="w-4 h-4" />
           <span className="hidden sm:inline">
-            {exporting ? "Exporting…" : "Export PNG"}
+            {isExporting ? "Exporting…" : "Export PNG"}
           </span>
         </Button>
         <ThemeToggle />
       </div>
 
-      <AddItemDialog open={addItemOpen} onClose={() => setAddItemOpen(false)} />
+      <AddItemDialog open={isAddItemOpen} onClose={() => setAddItemOpen(false)} />
       <TierSettingsDialog
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+        open={isTierSettingsOpen}
+        onClose={() => setTierSettingsOpen(false)}
       />
       <ItemSettingsDialog
-        open={itemSettingsOpen}
+        open={isItemSettingsOpen}
         onClose={() => setItemSettingsOpen(false)}
       />
     </>

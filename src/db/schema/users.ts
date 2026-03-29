@@ -30,6 +30,9 @@ export const users = mysqlTable("user", {
   /** URL รูปโปรไฟล์ผู้ใช้ (อาจเป็น null) */
   image: text("image"),
 
+  /** Role ของผู้ใช้ (admin | user) */
+  role: varchar("role", { length: 50 }).notNull().default("user"),
+
   /** วันเวลาที่สร้างบัญชี */
   createdAt: timestamp("created_at").notNull().defaultNow(),
 

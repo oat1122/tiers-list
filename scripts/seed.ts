@@ -6,6 +6,7 @@ import { db } from "../src/db/index";
 import { users, accounts } from "../src/db/schema/index";
 import { eq } from "drizzle-orm";
 import crypto from "crypto";
+import { hashPassword } from "better-auth/crypto";
 
 // ─── Config ────────────────────────────────────────────────────────────────
 const ADMIN_EMAIL = "admin@tiers-list.com";
@@ -14,25 +15,7 @@ const ADMIN_PASSWORD = "Admin@1234"; // เปลี่ยนก่อน deploy
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-/**
- * Hash password ด้วย PBKDF2 (รูปแบบเดียวกับ Better Auth credential provider)
- * Better Auth ใช้ format: "v=1;pbkdf2;sha256;<salt_hex>;<hash_hex>;<iterations>"
- */
-async function hashPassword(password: string): Promise<string> {
-    const salt = crypto.randomBytes(16);
-    const iterations = 100_000;
-    const keylen = 32;
-    const digest = "sha256";
-
-    const hash = await new Promise<Buffer>((resolve, reject) => {
-        crypto.pbkdf2(password, salt, iterations, keylen, digest, (err, key) => {
-            if (err) reject(err);
-            else resolve(key);
-        });
-    });
-
-    return `v=1;pbkdf2;${digest};${salt.toString("hex")};${hash.toString("hex")};${iterations}`;
-}
+// Better Auth password hasher is injected from "better-auth/crypto"
 
 // ─── Seed ──────────────────────────────────────────────────────────────────
 
@@ -48,8 +31,9 @@ async function seed() {
 
     if (existing.length > 0) {
         console.log(`⚠️  Admin user already exists: ${ADMIN_EMAIL}`);
-        console.log("   ลบ user นี้ก่อนถ้าต้องการ re-seed\n");
-        process.exit(0);
+        console.log("   กำลังลบ user เก่าเพื่อสร้างใหม่ (re-seed)...\n");
+        await db.delete(accounts).where(eq(accounts.userId, existing[0].id));
+        await db.delete(users).where(eq(users.id, existing[0].id));
     }
 
     const userId = crypto.randomUUID();
