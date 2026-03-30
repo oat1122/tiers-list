@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Layers3, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import type { PublicTierListSummary } from "@/types/public-tier-lists";
 
@@ -86,13 +86,7 @@ export function PublicTierListGalleryCard({
     <Card className="border-border/70 bg-background/92 shadow-sm">
       <CardHeader className="gap-3">
         <div className="flex items-start justify-between gap-3">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
-              <Sparkles className="size-3" />
-              Public template
-            </div>
-            <CardTitle className="text-lg">{list.title}</CardTitle>
-          </div>
+          <CardTitle className="text-lg">{list.title}</CardTitle>
           <div className="rounded-full border border-border bg-muted/35 px-2.5 py-1 text-[11px] text-muted-foreground">
             {list.itemCount} items
           </div>
@@ -103,27 +97,17 @@ export function PublicTierListGalleryCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <PreviewBoard list={list} />
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-1">
-            <Layers3 className="size-3" />
-            พร้อมเปิดใน local editor
-          </span>
+        <div className="text-xs text-muted-foreground">
           <span>อัปเดตล่าสุด {formatUpdatedAt(list.updatedAt)}</span>
         </div>
       </CardContent>
-      <CardFooter className="flex items-center justify-between gap-3 border-border/70 bg-muted/35">
+      <CardFooter className="flex items-center gap-3 border-border/70 bg-muted/35">
         <Link
           href={`/create?source=${encodeURIComponent(list.id)}`}
           className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
         >
           Start from this list
           <ArrowRight className="size-4" />
-        </Link>
-        <Link
-          href="/create"
-          className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          เริ่มจากหน้าเปล่า
         </Link>
       </CardFooter>
     </Card>

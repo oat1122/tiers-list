@@ -67,7 +67,6 @@ export function Toolbar({
     setExporting,
     resetTitle,
   } = useUIStore();
-
   const handleAddTier = () => {
     const usedLabels = new Set(tiers.map((tier) => tier.label));
     const nextLabel =
@@ -125,20 +124,15 @@ export function Toolbar({
 
   const renderBackButton = () => {
     if (!backHref) {
-      if (process.env.HOME_URL) {
-        return (
-          <a
-            href={`https://${process.env.HOME_URL}`}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:px-3"
-            title="Back"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Back</span>
-          </a>
-        );
-      }
-
-      return null;
+      return (
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:px-3"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="hidden sm:inline">Back</span>
+        </Link>
+      );
     }
 
     return (
@@ -159,98 +153,104 @@ export function Toolbar({
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-1.5">
-        {renderBackButton()}
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:justify-start">
+            {renderBackButton()}
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleAddTier}
-          className="gap-1.5 px-2 sm:px-2.5"
-          title="Add Tier"
-        >
-          <PlusCircle className="h-4 w-4" />
-          <span className="hidden sm:inline">Add Tier</span>
-        </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAddTier}
+              className="gap-1.5 px-2 sm:px-2.5"
+              title="Add Tier"
+            >
+              <PlusCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Add Tier</span>
+            </Button>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setAddItemOpen(true)}
-          className="gap-1.5 px-2 sm:px-2.5"
-          title="Add Item"
-        >
-          <ImagePlus className="h-4 w-4" />
-          <span className="hidden sm:inline">Add Item</span>
-        </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAddItemOpen(true)}
+              className="gap-1.5 px-2 sm:px-2.5"
+              title="Add Item"
+            >
+              <ImagePlus className="h-4 w-4" />
+              <span className="hidden sm:inline">Add Item</span>
+            </Button>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setTierSettingsOpen(true)}
-          className="gap-1.5 px-2 sm:px-2.5"
-          title="Tier Settings"
-        >
-          <Settings2 className="h-4 w-4" />
-          <span className="hidden sm:inline">Tier Settings</span>
-        </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTierSettingsOpen(true)}
+              className="gap-1.5 px-2 sm:px-2.5"
+              title="Tier Settings"
+            >
+              <Settings2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Tier Settings</span>
+            </Button>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setItemSettingsOpen(true)}
-          className="gap-1.5 px-2 sm:px-2.5"
-          title="Item Settings"
-        >
-          <Settings2 className="h-4 w-4" />
-          <span className="hidden sm:inline">Item Settings</span>
-        </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setItemSettingsOpen(true)}
+              className="gap-1.5 px-2 sm:px-2.5"
+              title="Item Settings"
+            >
+              <Settings2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Item Settings</span>
+            </Button>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleReset}
-          className="gap-1.5 px-2 text-muted-foreground hover:text-foreground sm:px-2.5"
-          title="Reset"
-        >
-          <RotateCcw className="h-4 w-4" />
-          <span className="hidden sm:inline">Reset</span>
-        </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleReset}
+              className="gap-1.5 px-2 text-muted-foreground hover:text-foreground sm:px-2.5"
+              title="Reset"
+            >
+              <RotateCcw className="h-4 w-4" />
+              <span className="hidden sm:inline">Reset</span>
+            </Button>
+          </div>
 
-        {mode === "template" ? (
-          <Button
-            size="sm"
-            onClick={() => void handleSave()}
-            disabled={isSaving || !isDirty}
-            className="ml-auto gap-1.5 px-2 sm:px-2.5"
-            title="Save Template"
-          >
-            {isSaving ? (
-              <RotateCcw className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            <span className="hidden sm:inline">Save</span>
-          </Button>
-        ) : null}
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:justify-end">
+            {mode === "template" ? (
+              <Button
+                size="sm"
+                onClick={() => void handleSave()}
+                disabled={isSaving || !isDirty}
+                className="gap-1.5 px-2 sm:px-2.5"
+                title="Save Template"
+              >
+                {isSaving ? (
+                  <RotateCcw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Save</span>
+              </Button>
+            ) : null}
 
-        <Button
-          size="sm"
-          onClick={handleExport}
-          disabled={isExporting}
-          className="gap-1.5 px-2 sm:px-2.5"
-          title="Export PNG"
-        >
-          <Download className="h-4 w-4" />
-          <span className="hidden sm:inline">
-            {isExporting ? "Exporting..." : "Export PNG"}
-          </span>
-        </Button>
+            <Button
+              size="sm"
+              onClick={handleExport}
+              disabled={isExporting}
+              className="gap-1.5 px-2 sm:px-2.5"
+              title="Export PNG"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                {isExporting ? "Exporting..." : "Export PNG"}
+              </span>
+            </Button>
 
-        <ThemeToggle />
+            <ThemeToggle />
+          </div>
+        </div>
 
         {mode === "template" && saveStatusText ? (
-          <p className="basis-full text-xs text-muted-foreground sm:text-right">
+          <p className="text-center text-xs text-muted-foreground sm:text-right">
             {saveStatusText}
           </p>
         ) : null}

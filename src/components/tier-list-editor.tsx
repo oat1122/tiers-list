@@ -244,16 +244,7 @@ export function TierListEditor({
               </h1>
             )}
 
-            {mode === "template" ? (
-              <input
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="คำอธิบายของ template"
-                className="mt-2 w-full max-w-md rounded-md border border-transparent bg-transparent px-3 py-1 text-center text-sm text-muted-foreground outline-none transition-colors focus:border-border focus:bg-muted/40"
-              />
-            ) : (
-              <p className="mt-0.5 text-xs text-muted-foreground">BY mavelus</p>
-            )}
+            <p className="mt-0.5 text-xs text-muted-foreground">BY mavelus</p>
           </div>
 
           <Toolbar
@@ -278,14 +269,10 @@ export function TierListEditor({
           >
             <div
               data-export-only
-              className="hidden flex-col items-center border-b border-border bg-card py-3"
+              className="hidden flex flex-col items-center border-b border-border bg-card py-3 text-center"
             >
               <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-              {description ? (
-                <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-              ) : (
-                <p className="mt-0.5 text-xs text-muted-foreground">BY mavelus</p>
-              )}
+              <p className="mt-0.5 text-xs text-muted-foreground">BY mavelus</p>
             </div>
 
             <Droppable droppableId="tier-board" type="TIER">
