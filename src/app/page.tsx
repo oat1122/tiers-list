@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
 import {
   ArrowRight,
   Home as HomeIcon,
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
+  await connection();
   const publicLists = await getPublicTierListGallery();
 
   return (

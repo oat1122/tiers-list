@@ -244,7 +244,16 @@ export function TierListEditor({
               </h1>
             )}
 
-            <p className="mt-0.5 text-xs text-muted-foreground">BY mavelus</p>
+            {mode === "template" ? (
+              <input
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="คำอธิบายของ template"
+                className="mt-2 w-full max-w-md rounded-md border border-transparent bg-transparent px-3 py-1 text-center text-sm text-muted-foreground outline-none transition-colors focus:border-border focus:bg-muted/40"
+              />
+            ) : (
+              <p className="mt-0.5 text-xs text-muted-foreground">BY mavelus</p>
+            )}
           </div>
 
           <Toolbar
