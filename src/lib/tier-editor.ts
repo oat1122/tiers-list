@@ -33,15 +33,92 @@ export function createDefaultTierConfig(): TierEditorConfig {
   };
 }
 
+function normalizeCardSize(cardSize: unknown): TierEditorConfig["cardSize"] {
+  if (cardSize === "sm" || cardSize === "md" || cardSize === "lg") {
+    return cardSize;
+  }
+
+  return "md";
+}
+
 function createFallbackTierColor(index: number) {
   return DEFAULT_TIER_PALETTE[index % DEFAULT_TIER_PALETTE.length] ?? "#d4d4d8";
 }
 
+function parseRawEditorConfig(config: unknown): unknown {
+  if (typeof config !== "string") {
+    return config;
+  }
+
+  try {
+    return JSON.parse(config);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeTier(tier: unknown, index: number): TierEditorTier | null {
+  if (!tier || typeof tier !== "object") {
+    return null;
+  }
+
+  const candidate = tier as Partial<TierEditorTier>;
+  const fallbackLabel = DEFAULT_TIER_LABELS[index] ?? `Tier ${index + 1}`;
+  const id =
+    typeof candidate.id === "string" && candidate.id.trim().length > 0
+      ? candidate.id.trim()
+      : fallbackLabel;
+
+  return {
+    id,
+    label:
+      typeof candidate.label === "string" && candidate.label.trim().length > 0
+        ? candidate.label.trim()
+        : id,
+    color:
+      typeof candidate.color === "string" && candidate.color.trim().length > 0
+        ? candidate.color
+        : createFallbackTierColor(index),
+    order:
+      typeof candidate.order === "number" && Number.isFinite(candidate.order)
+        ? candidate.order
+        : index,
+  };
+}
+
+export function normalizeTierConfig(config: unknown): TierEditorConfig {
+  const parsedConfig = parseRawEditorConfig(config);
+
+  if (!parsedConfig || typeof parsedConfig !== "object") {
+    return createDefaultTierConfig();
+  }
+
+  const candidate = parsedConfig as Partial<TierEditorConfig>;
+  const normalizedTiers = Array.isArray(candidate.tiers)
+    ? candidate.tiers
+        .map((tier, index) => normalizeTier(tier, index))
+        .filter((tier): tier is TierEditorTier => tier !== null)
+    : [];
+
+  if (normalizedTiers.length === 0) {
+    return {
+      ...createDefaultTierConfig(),
+      cardSize: normalizeCardSize(candidate.cardSize),
+    };
+  }
+
+  return {
+    cardSize: normalizeCardSize(candidate.cardSize),
+    tiers: sortTiers(normalizedTiers),
+  };
+}
+
 function ensureTierConfigCoverage(
-  config: TierEditorConfig,
+  config: unknown,
   items: TierEditorItemDraft[],
 ) {
-  const tiers = sortTiers(config.tiers);
+  const normalizedConfig = normalizeTierConfig(config);
+  const tiers = sortTiers(normalizedConfig.tiers);
   const tierIds = new Set(tiers.map((tier) => tier.id));
   const missingTierIds = items
     .map((item) => item.tier)
@@ -49,7 +126,7 @@ function ensureTierConfigCoverage(
 
   if (missingTierIds.length === 0) {
     return {
-      ...config,
+      ...normalizedConfig,
       tiers,
     };
   }
@@ -64,7 +141,7 @@ function ensureTierConfigCoverage(
   }));
 
   return {
-    ...config,
+    ...normalizedConfig,
     tiers: [...tiers, ...appendedTiers],
   };
 }
@@ -86,7 +163,11 @@ export function createDefaultTierListState(): TierListState {
   };
 }
 
-function sortTiers(tiers: TierEditorTier[]) {
+function sortTiers(tiers: TierEditorTier[] | null | undefined) {
+  if (!Array.isArray(tiers)) {
+    return sortTiers(createDefaultTierConfig().tiers);
+  }
+
   return [...tiers].sort((a, b) => a.order - b.order);
 }
 
@@ -113,7 +194,8 @@ function toTierItem(
 }
 
 export function templateEditorPageDataToState(data: TemplateEditorPageData) {
-  const sortedTiers = sortTiers(data.editorConfig.tiers);
+  const normalizedConfig = normalizeTierConfig(data.editorConfig);
+  const sortedTiers = sortTiers(normalizedConfig.tiers);
   const tierMap = new Map<string, TierRow>(
     sortedTiers.map((tier) => [
       tier.id,
@@ -144,7 +226,7 @@ export function templateEditorPageDataToState(data: TemplateEditorPageData) {
     state: {
       tiers: sortedTiers.map((tier) => tierMap.get(tier.id)!),
       pool,
-      cardSize: data.editorConfig.cardSize,
+      cardSize: normalizedConfig.cardSize,
     },
   };
 }

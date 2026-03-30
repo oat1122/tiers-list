@@ -1,8 +1,14 @@
+import type { TierPreview, TierPreviewItem, TierPreviewRow } from "./tier-preview";
+
 export interface AdminTierListOwner {
   id: string;
   name: string;
   email: string;
 }
+
+export type AdminTierPreviewItem = TierPreviewItem;
+export type AdminTierPreviewRow = TierPreviewRow;
+export type AdminTierPreview = TierPreview;
 
 export interface AdminTierListSummary {
   id: string;
@@ -15,6 +21,7 @@ export interface AdminTierListSummary {
   deletedAt: Date | null;
   itemCount: number;
   owner: AdminTierListOwner;
+  preview?: AdminTierPreview | null;
 }
 
 export interface AdminDashboardStats {

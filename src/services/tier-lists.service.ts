@@ -13,6 +13,7 @@ import { tierItems, tierLists, users } from "@/db/schema";
 import {
   buildTemplateEditorPageData,
   createDefaultTierConfig,
+  POOL_TIER_ID,
 } from "@/lib/tier-editor";
 import type {
   CreateTierListInput,
@@ -27,8 +28,14 @@ import type {
 } from "@/types";
 import type {
   AdminDashboardResponse,
+  AdminTierPreviewItem,
+  AdminTierPreview,
   AdminTierListSummary,
 } from "@/types/admin-dashboard";
+import type {
+  PublicTierListEditorData,
+  PublicTierListSummary,
+} from "@/types/public-tier-lists";
 
 export async function getMyTierLists(userId: string) {
   return db
@@ -78,6 +85,102 @@ function mapTierItemsToDrafts(
   }));
 }
 
+function getPreviewItemLabel(item: TierEditorItemDraft) {
+  const trimmedLabel = item.label.trim();
+
+  if (trimmedLabel.length > 0) {
+    return trimmedLabel;
+  }
+
+  return item.itemType === "image" ? "Image" : "Untitled";
+}
+
+function buildPreviewItem(item: TierEditorItemDraft): AdminTierPreviewItem {
+  return {
+    label: getPreviewItemLabel(item),
+    itemType: item.itemType,
+    imagePath: item.imagePath ?? null,
+    showCaption: item.showCaption === 1,
+  };
+}
+
+function buildAdminTierPreview(params: {
+  listId: string;
+  title: string;
+  description: string | null;
+  editorConfig: typeof tierLists.$inferSelect.editorConfig;
+  items: Array<typeof tierItems.$inferSelect>;
+  updatedAt: Date | string;
+}): AdminTierPreview {
+  const normalizedData = buildTemplateEditorPageData({
+    listId: params.listId,
+    title: params.title,
+    description: params.description,
+    editorConfig: params.editorConfig ?? createDefaultTierConfig(),
+    items: mapTierItemsToDrafts(params.items),
+    updatedAt: params.updatedAt,
+  });
+
+  const rows = normalizedData.editorConfig.tiers.slice(0, 4).map((tier) => {
+    const rowItems = normalizedData.items.filter((item) => item.tier === tier.id);
+    const visibleItems = rowItems.slice(0, 3).map(buildPreviewItem);
+
+    return {
+      id: tier.id,
+      label: tier.label,
+      color: tier.color,
+      itemCount: rowItems.length,
+      items: visibleItems,
+      overflowCount: Math.max(rowItems.length - visibleItems.length, 0),
+    };
+  });
+
+  return {
+    rows,
+    poolCount: normalizedData.items.filter((item) => item.tier === POOL_TIER_ID)
+      .length,
+  };
+}
+
+export async function getPublicTierListGallery(): Promise<PublicTierListSummary[]> {
+  const itemCount = sql<number>`count(${tierItems.id})`
+    .mapWith(Number)
+    .as("itemCount");
+
+  const rows = await db
+    .select({
+      id: tierLists.id,
+      title: tierLists.title,
+      description: tierLists.description,
+      updatedAt: tierLists.updatedAt,
+      itemCount,
+    })
+    .from(tierLists)
+    .leftJoin(
+      tierItems,
+      and(eq(tierItems.tierListId, tierLists.id), isNull(tierItems.deletedAt)),
+    )
+    .where(and(eq(tierLists.isPublic, 1), isNull(tierLists.deletedAt)))
+    .groupBy(
+      tierLists.id,
+      tierLists.title,
+      tierLists.description,
+      tierLists.updatedAt,
+    )
+    .orderBy(desc(tierLists.createdAt));
+
+  const previews = await getAdminListPreviews(rows.map((row) => row.id));
+
+  return rows.map<PublicTierListSummary>((row) => ({
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    updatedAt: row.updatedAt,
+    itemCount: row.itemCount,
+    preview: previews.get(row.id) ?? null,
+  }));
+}
+
 export async function getTierItemsByListId(tierListId: string) {
   return db
     .select()
@@ -94,6 +197,27 @@ export async function getTemplateEditorPageData(
   const list = await getTierListById(listId);
 
   if (!list || list.deletedAt) {
+    return null;
+  }
+
+  const items = await getTierItemsByListId(listId);
+
+  return buildTemplateEditorPageData({
+    listId: list.id,
+    title: list.title,
+    description: list.description,
+    editorConfig: list.editorConfig ?? createDefaultTierConfig(),
+    items: mapTierItemsToDrafts(items),
+    updatedAt: list.updatedAt,
+  });
+}
+
+export async function getPublicTierListEditorData(
+  listId: string,
+): Promise<PublicTierListEditorData | null> {
+  const list = await getTierListById(listId);
+
+  if (!list || list.deletedAt || list.isPublic !== 1) {
     return null;
   }
 
@@ -345,23 +469,81 @@ async function getAdminTierLists(whereClause: SQL<unknown>) {
   }));
 }
 
+async function getAdminListPreviews(listIds: string[]) {
+  if (listIds.length === 0) {
+    return new Map<string, AdminTierPreview>();
+  }
+
+  const [listRows, listItems] = await Promise.all([
+    db
+      .select({
+        id: tierLists.id,
+        title: tierLists.title,
+        description: tierLists.description,
+        editorConfig: tierLists.editorConfig,
+        updatedAt: tierLists.updatedAt,
+      })
+      .from(tierLists)
+      .where(inArray(tierLists.id, listIds)),
+    db
+      .select()
+      .from(tierItems)
+      .where(
+        and(
+          inArray(tierItems.tierListId, listIds),
+          isNull(tierItems.deletedAt),
+        ),
+      )
+      .orderBy(tierItems.tierListId, tierItems.position, tierItems.createdAt),
+  ]);
+
+  const itemsByListId = new Map<string, Array<typeof tierItems.$inferSelect>>();
+
+  for (const item of listItems) {
+    const group = itemsByListId.get(item.tierListId) ?? [];
+    group.push(item);
+    itemsByListId.set(item.tierListId, group);
+  }
+
+  return new Map(
+    listRows.map((row) => [
+      row.id,
+      buildAdminTierPreview({
+        listId: row.id,
+        title: row.title,
+        description: row.description,
+        editorConfig: row.editorConfig,
+        items: itemsByListId.get(row.id) ?? [],
+        updatedAt: row.updatedAt,
+      }),
+    ]),
+  );
+}
+
 export async function getAdminDashboardData(): Promise<AdminDashboardResponse> {
   const [active, deleted] = await Promise.all([
     getAdminTierLists(isNull(tierLists.deletedAt)),
     getAdminTierLists(isNotNull(tierLists.deletedAt)),
   ]);
 
-  const publicLists = active.filter((list) => list.isPublic === 1);
-  const templates = active.filter((list) => list.isTemplate === 1);
+  const activePreviews = await getAdminListPreviews(
+    active.map((list) => list.id),
+  );
+  const activeWithPreview = active.map((list) => ({
+    ...list,
+    preview: activePreviews.get(list.id) ?? null,
+  }));
+  const publicLists = activeWithPreview.filter((list) => list.isPublic === 1);
+  const templates = activeWithPreview.filter((list) => list.isTemplate === 1);
 
   return {
     stats: {
-      activeCount: active.length,
+      activeCount: activeWithPreview.length,
       publicCount: publicLists.length,
       templateCount: templates.length,
       deletedCount: deleted.length,
     },
-    active,
+    active: activeWithPreview,
     public: publicLists,
     templates,
     deleted,

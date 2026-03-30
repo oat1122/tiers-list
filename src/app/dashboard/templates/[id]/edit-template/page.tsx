@@ -41,7 +41,7 @@ export default async function EditTemplatePage(
   return (
     <TierListEditor
       mode="template"
-      initialTemplateData={initialTemplateData}
+      initialData={initialTemplateData}
       backHref="/dashboard"
     />
   );

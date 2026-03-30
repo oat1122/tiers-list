@@ -22,6 +22,11 @@ import { motion, AnimatePresence } from "framer-motion";
 export function SignInForm() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
+  const homeUrl = process.env.HOME_URL
+    ? /^https?:\/\//i.test(process.env.HOME_URL)
+      ? process.env.HOME_URL
+      : `https://${process.env.HOME_URL}`
+    : "#";
 
   const {
     register,
@@ -228,7 +233,7 @@ export function SignInForm() {
           <p className="text-sm text-muted-foreground">
             ยังไม่มีบัญชีใช่หรือไม่?{" "}
             <a
-              href="#"
+              href={homeUrl}
               className="text-primary hover:text-primary/80 font-semibold hover:underline underline-offset-4 transition-colors"
             >
               ติดต่อแอดมิน

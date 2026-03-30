@@ -28,7 +28,7 @@ export default function DashboardLoading() {
             </CardHeader>
             <CardContent className="space-y-4">
               {Array.from({ length: 3 }).map((_, index) => (
-                <Skeleton key={index} className="h-52" />
+                <Skeleton key={index} className="h-40" />
               ))}
             </CardContent>
           </Card>
@@ -42,8 +42,13 @@ export default function DashboardLoading() {
                 <CardHeader>
                   <Skeleton className="h-7 w-36" />
                 </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-40" />
+                <CardContent className="space-y-3">
+                  <Skeleton className="h-5 w-2/3" />
+                  <Skeleton className="h-28 rounded-2xl" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-8 w-24" />
+                    <Skeleton className="h-8 w-32" />
+                  </div>
                 </CardContent>
               </Card>
             ))}

@@ -12,3 +12,9 @@ export type CreateTierListInput = z.infer<typeof CreateTierListSchema>;
 export const UpdateTierListSchema = CreateTierListSchema.partial();
 
 export type UpdateTierListInput = z.infer<typeof UpdateTierListSchema>;
+
+export const TierListIdParamSchema = z.object({
+  id: z.string().min(1, "Tier list id is required"),
+});
+
+export type TierListIdParamInput = z.infer<typeof TierListIdParamSchema>;

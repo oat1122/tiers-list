@@ -13,11 +13,13 @@ import {
 import { useTierStore } from "@/store/useTierStore";
 import { useUIStore } from "@/store/useUIStore";
 import type { TemplateEditorPageData } from "@/types";
+import type { PublicTierListEditorData } from "@/types/public-tier-lists";
 
 interface TierListEditorProps {
   mode?: "local" | "template";
-  initialTemplateData?: TemplateEditorPageData;
+  initialData?: TemplateEditorPageData | PublicTierListEditorData;
   backHref?: string;
+  warningMessage?: string | null;
 }
 
 function createLocalBaseline() {
@@ -49,8 +51,9 @@ function formatSaveStatus({
 
 export function TierListEditor({
   mode = "local",
-  initialTemplateData,
+  initialData,
   backHref,
+  warningMessage,
 }: TierListEditorProps) {
   const captureRef = useRef<HTMLDivElement>(null);
   const { tiers, pool, cardSize, initialize, moveItem, moveRow } =
@@ -66,17 +69,15 @@ export function TierListEditor({
     cancelEditTitle,
   } = useUIStore();
 
-  const [templateData, setTemplateData] = useState(initialTemplateData);
-  const [description, setDescription] = useState(
-    initialTemplateData?.description ?? "",
-  );
+  const [editorData, setEditorData] = useState(initialData);
+  const [description, setDescription] = useState(initialData?.description ?? "");
   const [baselineDraft, setBaselineDraft] = useState(() =>
     buildEditorDraft({
-      title: initialTemplateData?.title ?? createLocalBaseline().title,
-      description: initialTemplateData?.description ?? "",
+      title: initialData?.title ?? createLocalBaseline().title,
+      description: initialData?.description ?? "",
       state:
-        initialTemplateData
-          ? templateEditorPageDataToState(initialTemplateData).state
+        initialData
+          ? templateEditorPageDataToState(initialData).state
           : createLocalBaseline().state,
     }),
   );
@@ -84,8 +85,12 @@ export function TierListEditor({
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (mode === "template" && templateData) {
-      const nextState = templateEditorPageDataToState(templateData);
+    setEditorData(initialData);
+  }, [initialData]);
+
+  useEffect(() => {
+    if (editorData) {
+      const nextState = templateEditorPageDataToState(editorData);
       initialize(nextState.state);
       initializeTitle(nextState.title);
       setDescription(nextState.description);
@@ -110,7 +115,7 @@ export function TierListEditor({
         state: localBaseline.state,
       }),
     );
-  }, [initialize, initializeTitle, mode, templateData]);
+  }, [editorData, initialize, initializeTitle]);
 
   const draft = useMemo(
     () =>
@@ -158,13 +163,13 @@ export function TierListEditor({
   };
 
   const handleSave = async () => {
-    if (mode !== "template" || !templateData) return;
+    if (mode !== "template" || !editorData) return;
 
     setIsSaving(true);
     setSaveMessage(null);
 
     try {
-      const response = await fetch(`/api/tier-lists/${templateData.listId}/editor`, {
+      const response = await fetch(`/api/tier-lists/${editorData.listId}/editor`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(draft),
@@ -182,7 +187,7 @@ export function TierListEditor({
         );
       }
 
-      setTemplateData(payload as TemplateEditorPageData);
+      setEditorData(payload as TemplateEditorPageData);
       setSaveMessage("บันทึก template เรียบร้อยแล้ว");
     } catch (error) {
       setSaveMessage(
@@ -211,6 +216,11 @@ export function TierListEditor({
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-sm">
         <div className="mx-auto max-w-5xl px-4 py-3">
+          {warningMessage ? (
+            <div className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200">
+              {warningMessage}
+            </div>
+          ) : null}
           <div className="mb-3 flex flex-col items-center">
             {isEditingTitle ? (
               <input
@@ -249,7 +259,7 @@ export function TierListEditor({
           <Toolbar
             captureRef={captureRef}
             mode={mode}
-            listId={templateData?.listId}
+            listId={editorData?.listId}
             backHref={backHref}
             onBeforeNavigate={handleBeforeNavigate}
             onSave={mode === "template" ? handleSave : undefined}

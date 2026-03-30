@@ -1,4 +1,7 @@
 interface:
   display_name: "Route API"
   short_description: "Scaffold and protect route handlers"
-  default_prompt: "Use -api to add a protected /api/posts route with GET and POST handlers."
+  default_prompt: "Use $route-api to add a protected /api/posts route with GET and POST handlers."
+
+policy:
+  allow_implicit_invocation: true
