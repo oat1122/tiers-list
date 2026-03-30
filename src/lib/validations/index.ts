@@ -8,3 +8,4 @@ export * from "./sessions.schema";
 export * from "./verifications.schema";
 export * from "./tier-lists.schema";
 export * from "./tier-items.schema";
+export * from "./tier-editor.schema";

@@ -2,19 +2,24 @@
 
 import { create } from "zustand";
 import { TierRow, TierItem, CardSize } from "@/types";
+import { createDefaultTierListState } from "@/lib/tier-editor";
 
-const DEFAULT_TIERS: TierRow[] = [
-  { id: "S", label: "S", color: "#ff7f7f", items: [] },
-  { id: "A", label: "A", color: "#ffbf7f", items: [] },
-  { id: "B", label: "B", color: "#ffdf7f", items: [] },
-  { id: "C", label: "C", color: "#ffff7f", items: [] },
-  { id: "D", label: "D", color: "#bfff7f", items: [] },
-];
+const DEFAULT_STATE = createDefaultTierListState();
 
 interface TierStore {
+  initialState: {
+    tiers: TierRow[];
+    pool: TierItem[];
+    cardSize: CardSize;
+  };
   tiers: TierRow[];
   pool: TierItem[];
   cardSize: CardSize;
+  initialize: (state: {
+    tiers: TierRow[];
+    pool: TierItem[];
+    cardSize: CardSize;
+  }) => void;
   setCardSize: (size: CardSize) => void;
   addTier: (tier: TierRow) => void;
   removeTier: (tierId: string) => void;
@@ -35,10 +40,44 @@ interface TierStore {
   reset: () => void;
 }
 
+function cloneItem(item: TierItem): TierItem {
+  return { ...item };
+}
+
+function cloneTier(tier: TierRow): TierRow {
+  return {
+    ...tier,
+    items: tier.items.map(cloneItem),
+  };
+}
+
+function cloneState(state: {
+  tiers: TierRow[];
+  pool: TierItem[];
+  cardSize: CardSize;
+}) {
+  return {
+    tiers: state.tiers.map(cloneTier),
+    pool: state.pool.map(cloneItem),
+    cardSize: state.cardSize,
+  };
+}
+
 export const useTierStore = create<TierStore>((set) => ({
-  tiers: DEFAULT_TIERS,
-  pool: [],
-  cardSize: "md",
+  initialState: cloneState(DEFAULT_STATE),
+  tiers: cloneState(DEFAULT_STATE).tiers,
+  pool: cloneState(DEFAULT_STATE).pool,
+  cardSize: DEFAULT_STATE.cardSize,
+
+  initialize: (state) => {
+    const nextState = cloneState(state);
+    set({
+      initialState: nextState,
+      tiers: cloneState(nextState).tiers,
+      pool: cloneState(nextState).pool,
+      cardSize: nextState.cardSize,
+    });
+  },
 
   setCardSize: (size) => set({ cardSize: size }),
 
@@ -152,5 +191,13 @@ export const useTierStore = create<TierStore>((set) => ({
       tiers: state.tiers.map((t) => ({ ...t, items: [] })),
     })),
 
-  reset: () => set({ tiers: DEFAULT_TIERS, pool: [] }),
+  reset: () =>
+    set((state) => {
+      const nextState = cloneState(state.initialState);
+      return {
+        tiers: nextState.tiers,
+        pool: nextState.pool,
+        cardSize: nextState.cardSize,
+      };
+    }),
 }));

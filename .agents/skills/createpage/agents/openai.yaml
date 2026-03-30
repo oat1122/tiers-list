@@ -1,0 +1,7 @@
+interface:
+  display_name: "Create Page"
+  short_description: "Scaffold Next.js App Router pages"
+  default_prompt: "Use $createpage to scaffold a new Next.js App Router route for /pricing."
+
+policy:
+  allow_implicit_invocation: true

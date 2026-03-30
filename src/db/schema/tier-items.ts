@@ -25,8 +25,8 @@ export const tierItems = mysqlTable("tier_items", {
   /** ชื่อของ Item / ข้อความ (Label) */
   label: varchar("label", { length: 255 }).notNull(),
 
-  /** ระดับ (S, A, B, C, D, F) */
-  tier: varchar("tier", { length: 10 }).notNull(),
+  /** tier id แบบ dynamic หรือ "pool" */
+  tier: varchar("tier", { length: 255 }).notNull(),
 
   /** ลำดับภายใน tier (เผื่อการจัดเรียง) */
   position: int("position").notNull().default(0),

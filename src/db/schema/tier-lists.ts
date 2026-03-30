@@ -1,4 +1,5 @@
 import {
+  json,
   mysqlTable,
   varchar,
   text,
@@ -7,6 +8,7 @@ import {
   datetime,
 } from "drizzle-orm/mysql-core";
 import { users } from "./users";
+import type { TierEditorConfig } from "@/types";
 
 /**
  * tier_lists — เก็บข้อมูลโครงสร้างระดับของ Tier List
@@ -33,6 +35,9 @@ export const tierLists = mysqlTable("tier_lists", {
 
   /** 0 = Normal, 1 = Template (Admin only) */
   isTemplate: tinyint("is_template").notNull().default(0),
+
+  /** JSON config สำหรับ layout ของ editor */
+  editorConfig: json("editor_config").$type<TierEditorConfig | null>(),
 
   /** วันเวลาที่สร้าง */
   createdAt: timestamp("created_at").notNull().defaultNow(),

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { getTierListById } from "@/services/tier-lists.service";
 import { createImageTierItem } from "@/services/tier-items.service";
 import { UploadTierItemMetaSchema } from "@/lib/validations";
+import { buildTemplateEditorPageData } from "@/lib/tier-editor";
 
 type Params = { id: string };
 
@@ -51,8 +52,36 @@ export async function POST(
       );
     }
 
-    await createImageTierItem(result.data, image);
-    return NextResponse.json({ success: true }, { status: 201 });
+    const created = await createImageTierItem(result.data, image);
+
+    if (!created) {
+      return NextResponse.json(
+        { error: "Unable to create item" },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json(
+      buildTemplateEditorPageData({
+        listId: params.id,
+        title: list.title,
+        description: list.description,
+        editorConfig: list.editorConfig,
+        items: [
+          {
+            id: created.id,
+            label: created.label,
+            tier: created.tier,
+            position: created.position,
+            itemType: created.itemType === "image" ? "image" : "text",
+            imagePath: created.imagePath,
+            showCaption: created.showCaption,
+          },
+        ],
+        updatedAt: created.updatedAt,
+      }).items[0],
+      { status: 201 },
+    );
   } catch (error) {
     const errMessage = (error as Error).message;
     if (

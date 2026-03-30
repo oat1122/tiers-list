@@ -1,12 +1,35 @@
-import { eq, and, isNull, isNotNull, desc } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import { db } from "@/db";
-import { tierLists, tierItems } from "@/db/schema";
+import { tierItems, tierLists, users } from "@/db/schema";
+import {
+  buildTemplateEditorPageData,
+  createDefaultTierConfig,
+} from "@/lib/tier-editor";
 import type {
   CreateTierListInput,
   UpdateTierListInput,
 } from "@/lib/validations";
+import type {
+  UpdateTierListEditorInput,
+} from "@/lib/validations";
+import type {
+  TemplateEditorPageData,
+  TierEditorItemDraft,
+} from "@/types";
+import type {
+  AdminDashboardResponse,
+  AdminTierListSummary,
+} from "@/types/admin-dashboard";
 
-// ดึง Tier Lists ของ User (เฉพาะที่ยังไม่ถูกลบ)
 export async function getMyTierLists(userId: string) {
   return db
     .select()
@@ -15,7 +38,6 @@ export async function getMyTierLists(userId: string) {
     .orderBy(desc(tierLists.createdAt));
 }
 
-// ดึง Public Tier Lists (ยังไม่ลบ)
 export async function getPublicTierLists() {
   return db
     .select()
@@ -24,7 +46,6 @@ export async function getPublicTierLists() {
     .orderBy(desc(tierLists.createdAt));
 }
 
-// ดึง Template (Admin สร้างไว้ และยังไม่ลบ)
 export async function getTemplates() {
   return db
     .select()
@@ -33,7 +54,6 @@ export async function getTemplates() {
     .orderBy(desc(tierLists.createdAt));
 }
 
-// ดึงรายการเดียวเพื่อดูรายละเอียด
 export async function getTierListById(id: string) {
   const result = await db
     .select()
@@ -44,7 +64,51 @@ export async function getTierListById(id: string) {
   return result[0] || null;
 }
 
-// สร้าง Tier List
+function mapTierItemsToDrafts(
+  items: Array<typeof tierItems.$inferSelect>,
+): TierEditorItemDraft[] {
+  return items.map((item) => ({
+    id: item.id,
+    label: item.label,
+    tier: item.tier,
+    position: item.position,
+    itemType: item.itemType === "image" ? "image" : "text",
+    imagePath: item.imagePath,
+    showCaption: item.showCaption,
+  }));
+}
+
+export async function getTierItemsByListId(tierListId: string) {
+  return db
+    .select()
+    .from(tierItems)
+    .where(
+      and(eq(tierItems.tierListId, tierListId), isNull(tierItems.deletedAt)),
+    )
+    .orderBy(tierItems.position, tierItems.createdAt);
+}
+
+export async function getTemplateEditorPageData(
+  listId: string,
+): Promise<TemplateEditorPageData | null> {
+  const list = await getTierListById(listId);
+
+  if (!list || list.deletedAt) {
+    return null;
+  }
+
+  const items = await getTierItemsByListId(listId);
+
+  return buildTemplateEditorPageData({
+    listId: list.id,
+    title: list.title,
+    description: list.description,
+    editorConfig: list.editorConfig ?? createDefaultTierConfig(),
+    items: mapTierItemsToDrafts(items),
+    updatedAt: list.updatedAt,
+  });
+}
+
 export async function createTierList(
   data: CreateTierListInput,
   userId: string,
@@ -55,9 +119,9 @@ export async function createTierList(
     description: data.description,
     isPublic: data.isPublic ?? 0,
     isTemplate: data.isTemplate ?? 0,
+    editorConfig: createDefaultTierConfig(),
   });
 
-  // ค้นหารายการที่เพิ่งสร้างโดยเรียงล่าสุด
   const created = await db
     .select()
     .from(tierLists)
@@ -68,7 +132,6 @@ export async function createTierList(
   return created[0];
 }
 
-// Clone จาก Template
 export async function createFromTemplate(templateId: string, userId: string) {
   const template = await getTierListById(templateId);
   if (!template || template.isTemplate === 0) {
@@ -77,7 +140,6 @@ export async function createFromTemplate(templateId: string, userId: string) {
 
   const generatedId = crypto.randomUUID();
 
-  // สร้าง Tier List ใหม่
   await db.insert(tierLists).values({
     id: generatedId,
     userId,
@@ -85,17 +147,21 @@ export async function createFromTemplate(templateId: string, userId: string) {
     description: template.description,
     isPublic: 0,
     isTemplate: 0,
+    editorConfig: template.editorConfig ?? createDefaultTierConfig(),
   });
 
-  // ดึง items ของ template
   const items = await db
     .select()
     .from(tierItems)
-    .where(eq(tierItems.tierListId, templateId));
+    .where(
+      and(
+        eq(tierItems.tierListId, templateId),
+        isNull(tierItems.deletedAt),
+      ),
+    );
 
-  // โคลน items (รูปภาพจะใช้ path เดิมที่อยู่ในระบบอยู่แล้ว)
   if (items.length > 0) {
-    const newItems = items.map((item) => ({
+    const clonedItems = items.map((item) => ({
       tierListId: generatedId,
       label: item.label,
       tier: item.tier,
@@ -104,13 +170,13 @@ export async function createFromTemplate(templateId: string, userId: string) {
       imagePath: item.imagePath,
       showCaption: item.showCaption,
     }));
-    await db.insert(tierItems).values(newItems);
+
+    await db.insert(tierItems).values(clonedItems);
   }
 
   return await getTierListById(generatedId);
 }
 
-// อัปเดต Tier List
 export async function updateTierList(id: string, data: UpdateTierListInput) {
   await db
     .update(tierLists)
@@ -125,7 +191,78 @@ export async function updateTierList(id: string, data: UpdateTierListInput) {
   return await getTierListById(id);
 }
 
-// Soft Delete
+export async function saveTierListEditor(
+  id: string,
+  data: UpdateTierListEditorInput,
+) {
+  await db.transaction(async (tx) => {
+    await tx
+      .update(tierLists)
+      .set({
+        title: data.title,
+        description: data.description,
+        editorConfig: data.editorConfig,
+      })
+      .where(eq(tierLists.id, id));
+
+    const existingItems = await tx
+      .select()
+      .from(tierItems)
+      .where(and(eq(tierItems.tierListId, id), isNull(tierItems.deletedAt)));
+
+    const existingMap = new Map(existingItems.map((item) => [item.id, item]));
+    const keptIds: string[] = [];
+
+    for (const item of data.items) {
+      if (item.id && existingMap.has(item.id)) {
+        await tx
+          .update(tierItems)
+          .set({
+            label: item.label,
+            tier: item.tier,
+            position: item.position,
+            itemType: item.itemType,
+            imagePath: item.imagePath ?? null,
+            showCaption: item.showCaption ?? 1,
+            deletedAt: null,
+          })
+          .where(eq(tierItems.id, item.id));
+
+        keptIds.push(item.id);
+        continue;
+      }
+
+      const insertedId = crypto.randomUUID();
+
+      await tx.insert(tierItems).values({
+        id: insertedId,
+        tierListId: id,
+        label: item.label,
+        tier: item.tier,
+        position: item.position,
+        itemType: item.itemType,
+        imagePath: item.imagePath ?? null,
+        showCaption: item.showCaption ?? 1,
+      });
+
+      keptIds.push(insertedId);
+    }
+
+    const removedIds = existingItems
+      .filter((item) => !keptIds.includes(item.id))
+      .map((item) => item.id);
+
+    if (removedIds.length > 0) {
+      await tx
+        .update(tierItems)
+        .set({ deletedAt: new Date() })
+        .where(inArray(tierItems.id, removedIds));
+    }
+  });
+
+  return getTemplateEditorPageData(id);
+}
+
 export async function softDeleteTierList(id: string) {
   await db
     .update(tierLists)
@@ -133,7 +270,6 @@ export async function softDeleteTierList(id: string) {
     .where(eq(tierLists.id, id));
 }
 
-// Restore (Admin)
 export async function restoreTierList(id: string) {
   await db
     .update(tierLists)
@@ -141,11 +277,93 @@ export async function restoreTierList(id: string) {
     .where(eq(tierLists.id, id));
 }
 
-// ดูรายการที่ถูกลบ (Admin)
 export async function getDeletedTierLists() {
   return db
     .select()
     .from(tierLists)
     .where(isNotNull(tierLists.deletedAt))
     .orderBy(desc(tierLists.deletedAt));
+}
+
+async function getAdminTierLists(whereClause: SQL<unknown>) {
+  const itemCount = sql<number>`count(${tierItems.id})`
+    .mapWith(Number)
+    .as("itemCount");
+
+  const rows = await db
+    .select({
+      id: tierLists.id,
+      title: tierLists.title,
+      description: tierLists.description,
+      isPublic: tierLists.isPublic,
+      isTemplate: tierLists.isTemplate,
+      createdAt: tierLists.createdAt,
+      updatedAt: tierLists.updatedAt,
+      deletedAt: tierLists.deletedAt,
+      itemCount,
+      ownerId: users.id,
+      ownerName: users.name,
+      ownerEmail: users.email,
+    })
+    .from(tierLists)
+    .innerJoin(users, eq(tierLists.userId, users.id))
+    .leftJoin(
+      tierItems,
+      and(eq(tierItems.tierListId, tierLists.id), isNull(tierItems.deletedAt)),
+    )
+    .where(whereClause)
+    .groupBy(
+      tierLists.id,
+      tierLists.title,
+      tierLists.description,
+      tierLists.isPublic,
+      tierLists.isTemplate,
+      tierLists.createdAt,
+      tierLists.updatedAt,
+      tierLists.deletedAt,
+      users.id,
+      users.name,
+      users.email,
+    )
+    .orderBy(desc(tierLists.updatedAt), desc(tierLists.createdAt));
+
+  return rows.map<AdminTierListSummary>((row) => ({
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    isPublic: row.isPublic,
+    isTemplate: row.isTemplate,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    deletedAt: row.deletedAt,
+    itemCount: row.itemCount,
+    owner: {
+      id: row.ownerId,
+      name: row.ownerName,
+      email: row.ownerEmail,
+    },
+  }));
+}
+
+export async function getAdminDashboardData(): Promise<AdminDashboardResponse> {
+  const [active, deleted] = await Promise.all([
+    getAdminTierLists(isNull(tierLists.deletedAt)),
+    getAdminTierLists(isNotNull(tierLists.deletedAt)),
+  ]);
+
+  const publicLists = active.filter((list) => list.isPublic === 1);
+  const templates = active.filter((list) => list.isTemplate === 1);
+
+  return {
+    stats: {
+      activeCount: active.length,
+      publicCount: publicLists.length,
+      templateCount: templates.length,
+      deletedCount: deleted.length,
+    },
+    active,
+    public: publicLists,
+    templates,
+    deleted,
+  };
 }

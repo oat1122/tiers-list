@@ -1,0 +1,7 @@
+interface:
+  display_name: "Create Schema"
+  short_description: "Scaffold Drizzle schema and validation"
+  default_prompt: "Use $create-schema to add a new Drizzle table and matching Zod validation for posts."
+
+policy:
+  allow_implicit_invocation: true

@@ -52,7 +52,7 @@ export function SignInForm() {
       }
 
       // Success
-      router.push("/");
+      router.push("/dashboard");
       router.refresh();
     } catch (error) {
       setServerError(

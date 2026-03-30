@@ -2,17 +2,18 @@
 description: /createpage
 ---
 
-เมื่อผู้ใช้เรียก `/createpage [route_name]` ให้ทำตามขั้นตอนนี้:
+Use `$createpage` at `.agents/skills/createpage/SKILL.md` to handle `/createpage [route_name]`.
 
-1. สร้างโฟลเดอร์ `src/app/[route_name]`
-2. สร้างไฟล์ `page.tsx` โดยบังคับให้เป็น **Server Component**
-3. เพิ่ม Next.js Metadata (Title, Description) ไว้ด้านบนสุดของไฟล์ `page.tsx`
-4. ร่างโครงสร้าง UI เบื้องต้นด้วย Tailwind CSS (เช่น มี Header, Main Content)
-5. หากหน้าเว็บจำเป็นต้องมีการตอบสนอง (Interactivity / State):
-   - ให้สร้าง Private Folder ชื่อ `_components` (เช่น `src/app/[route_name]/_components/`)
-   - สร้างไฟล์ Client Component เช่น `[route_name]-form.tsx` หรือ `[route_name]-client.tsx` โดยใส่ `"use client";` ไว้บรรทัดแรก
-   - นำเข้า (Import) Client Component นั้นมาประกอบร่างใน `page.tsx`
-6. หากหน้าเว็บมี **Form:** ให้ใช้ Zod + react-hook-form ร่วมกันเสมอ
-   - สร้าง Zod schema สำหรับ Form ที่ `src/lib/validations/[route_name].schema.ts`
-   - ใน Client Component ให้ใช้ `useForm` จาก `react-hook-form` พร้อม `zodResolver` จาก `@hookform/resolvers/zod`
-   - การ Submit Form ให้ผ่าน **Server Action** ที่ validate ด้วย `schema.safeParse()` อีกครั้งฝั่ง Server
+Required behavior:
+
+1. Create `src/app/[route_name]`.
+2. Create `page.tsx` as a Server Component with static Next.js metadata near the top.
+3. Add a usable Tailwind layout shell instead of a bare placeholder.
+4. If the route needs interactivity, create `src/app/[route_name]/_components/` and place the Client Component there.
+5. If the route contains a form, require:
+   - `src/lib/validations/[route_name].schema.ts`
+   - `react-hook-form` with `zodResolver`
+   - a Server Action in `src/app/[route_name]/actions.ts`
+   - server-side `schema.safeParse()` before any mutation
+
+Read the skill for the full naming, file layout, and example patterns.
