@@ -2,18 +2,21 @@ import { z } from "zod";
 
 const TierIdSchema = z.string().min(1, "กรุณาระบุ tier");
 
-const TierItemBaseSchema = z.object({
+const TierItemRequiredFieldsSchema = z.object({
   tierListId: z.string().min(1, "ระบุ Tier List ID"),
   label: z.string().min(1, "กรุณากรอกชื่อ Item"),
   tier: TierIdSchema,
+});
+
+const CreateTierItemFieldsSchema = TierItemRequiredFieldsSchema.extend({
   position: z.coerce.number().int().min(0).default(0),
 });
 
-export const CreateTextTierItemSchema = TierItemBaseSchema.extend({
+export const CreateTextTierItemSchema = CreateTierItemFieldsSchema.extend({
   itemType: z.literal("text"),
 });
 
-export const CreateImageTierItemSchema = TierItemBaseSchema.extend({
+export const CreateImageTierItemSchema = CreateTierItemFieldsSchema.extend({
   itemType: z.literal("image"),
   showCaption: z.coerce.number().int().min(0).max(1).default(1),
 });
@@ -35,12 +38,11 @@ export const UploadTierItemMetaSchema = z.object({
 
 export type UploadTierItemMetaInput = z.infer<typeof UploadTierItemMetaSchema>;
 
-export const UpdateTierItemSchema = TierItemBaseSchema.omit({
-  tierListId: true,
-})
-  .partial()
-  .extend({
-    showCaption: z.coerce.number().int().min(0).max(1).optional(),
-  });
+export const UpdateTierItemSchema = z.object({
+  label: z.string().min(1, "กรุณากรอกชื่อ Item").optional(),
+  tier: TierIdSchema.optional(),
+  position: z.coerce.number().int().min(0).optional(),
+  showCaption: z.coerce.number().int().min(0).max(1).optional(),
+});
 
 export type UpdateTierItemInput = z.infer<typeof UpdateTierItemSchema>;

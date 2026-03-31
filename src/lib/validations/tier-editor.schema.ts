@@ -27,6 +27,7 @@ export const TierEditorItemDraftSchema = z.object({
   position: z.coerce.number().int().min(0),
   itemType: z.enum(["text", "image"]),
   imagePath: z.string().nullable().optional(),
+  tempUploadPath: z.string().nullable().optional(),
   showCaption: z.coerce.number().int().min(0).max(1).default(1),
 });
 
@@ -70,10 +71,14 @@ export const UpdateTierListEditorSchema = z
         });
       }
 
-      if (item.itemType === "image" && !item.imagePath) {
+      if (
+        item.itemType === "image" &&
+        !item.imagePath &&
+        !item.tempUploadPath
+      ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Image item ต้องมี imagePath",
+          message: "Image item ต้องมี imagePath หรือ tempUploadPath",
           path: ["items", index, "imagePath"],
         });
       }

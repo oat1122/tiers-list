@@ -9,7 +9,12 @@ export const CreateTierListSchema = z.object({
 
 export type CreateTierListInput = z.infer<typeof CreateTierListSchema>;
 
-export const UpdateTierListSchema = CreateTierListSchema.partial();
+export const UpdateTierListSchema = z.object({
+  title: z.string().min(1, "กรุณากรอกชื่อ Tier List").optional(),
+  description: z.string().optional(),
+  isPublic: z.coerce.number().int().min(0).max(1).optional(),
+  isTemplate: z.coerce.number().int().min(0).max(1).optional(),
+});
 
 export type UpdateTierListInput = z.infer<typeof UpdateTierListSchema>;
 

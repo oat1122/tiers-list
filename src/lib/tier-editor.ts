@@ -185,6 +185,7 @@ function toTierItem(
     itemType: item.itemType,
     imagePath: item.imagePath ?? null,
     imageUrl: item.imagePath ?? undefined,
+    tempUploadPath: item.tempUploadPath ?? null,
     showCaption:
       item.showCaption === undefined ? true : item.showCaption === 1,
     tierId: item.tier,
@@ -254,8 +255,10 @@ function serializeItem(
     label: item.name,
     tier: tierId,
     position,
-    itemType: item.itemType ?? (item.imagePath ? "image" : "text"),
+    itemType:
+      item.itemType ?? (item.imagePath || item.tempUploadPath ? "image" : "text"),
     imagePath: item.imagePath ?? null,
+    tempUploadPath: item.persistedId ? undefined : item.tempUploadPath ?? null,
     showCaption: item.showCaption ? 1 : 0,
   };
 }

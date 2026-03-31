@@ -170,7 +170,6 @@ describe("/api/tier-lists/[id] route", () => {
 
     expect(response.status).toBe(200);
     expect(mocks.updateTierList).toHaveBeenCalledWith("list-1", {
-      isPublic: 0,
       title: "Updated",
     });
   });

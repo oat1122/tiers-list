@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { buildTemplateEditorPageData } from "@/lib/tier-editor";
+import { UploadValidationError } from "@/lib/upload";
+import { UploadTierItemMetaSchema } from "@/lib/validations";
 import { getTierListById } from "@/services/tier-lists.service";
 import { createImageTierItem } from "@/services/tier-items.service";
-import { UploadTierItemMetaSchema } from "@/lib/validations";
-import { buildTemplateEditorPageData } from "@/lib/tier-editor";
 
 type Params = { id: string };
 
@@ -12,21 +13,24 @@ export async function POST(
   props: { params: Promise<Params> },
 ) {
   const params = await props.params;
+
   try {
     const session = await auth.api.getSession({ headers: request.headers });
-    if (!session)
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const list = await getTierListById(params.id);
-    if (!list || list.deletedAt)
+    if (!list || list.deletedAt) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     if (list.userId !== session.user.id && session.user.role !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const formData = await request.formData();
-    const image = formData.get("image") as File;
+    const image = formData.get("image");
 
     if (!image || typeof image === "string") {
       return NextResponse.json(
@@ -35,7 +39,6 @@ export async function POST(
       );
     }
 
-    // Extract raw metadata fields from FormData
     const rawData = {
       tierListId: params.id,
       label: formData.get("label"),
@@ -53,7 +56,6 @@ export async function POST(
     }
 
     const created = await createImageTierItem(result.data, image);
-
     if (!created) {
       return NextResponse.json(
         { error: "Unable to create item" },
@@ -83,13 +85,22 @@ export async function POST(
       { status: 201 },
     );
   } catch (error) {
-    const errMessage = (error as Error).message;
-    if (
-      errMessage.includes("ขนาดไฟล์") ||
-      errMessage.includes("รองรับเฉพาะไฟล์")
-    ) {
-      return NextResponse.json({ error: errMessage }, { status: 400 });
+    if (error instanceof UploadValidationError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: error.code,
+          limitBytes: error.limitBytes,
+          recommendedSize: error.recommendedSize,
+          recommendedMimeTypes: error.recommendedMimeTypes,
+        },
+        { status: 400 },
+      );
     }
-    return NextResponse.json({ error: errMessage }, { status: 500 });
+
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 500 },
+    );
   }
 }

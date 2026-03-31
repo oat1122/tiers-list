@@ -43,13 +43,17 @@ describe("CreateTierListSchema", () => {
 });
 
 describe("UpdateTierListSchema", () => {
-  it("accepts an empty object for partial updates", () => {
+  it("accepts an empty object without materializing defaults", () => {
     const result = UpdateTierListSchema.safeParse({});
 
     expect(result.success).toBe(true);
-    expect(result.data).toEqual({
-      isPublic: 0,
-      isTemplate: 0,
-    });
+    expect(result.data).toEqual({});
+  });
+
+  it("keeps partial payloads partial", () => {
+    const result = UpdateTierListSchema.safeParse({ title: "Updated" });
+
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({ title: "Updated" });
   });
 });

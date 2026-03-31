@@ -71,12 +71,7 @@ export async function createImageTierItem(
 export async function updateTierItem(id: string, data: UpdateTierItemInput) {
   await db
     .update(tierItems)
-    .set({
-      label: data.label,
-      tier: data.tier,
-      position: data.position,
-      showCaption: data.showCaption,
-    })
+    .set(data)
     .where(eq(tierItems.id, id));
 }
 

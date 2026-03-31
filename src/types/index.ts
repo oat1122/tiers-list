@@ -20,6 +20,7 @@ export interface TierItem {
   itemType?: TierItemType;
   imageUrl?: string;
   imagePath?: string | null;
+  tempUploadPath?: string | null;
   showCaption?: boolean;
 }
 
@@ -44,6 +45,7 @@ export interface TierEditorItemDraft {
   position: number;
   itemType: TierItemType;
   imagePath?: string | null;
+  tempUploadPath?: string | null;
   showCaption?: number;
 }
 

@@ -15,6 +15,7 @@ import {
   createDefaultTierConfig,
   POOL_TIER_ID,
 } from "@/lib/tier-editor";
+import { finalizeTempImageFile } from "@/lib/upload";
 import type {
   CreateTierListInput,
   UpdateTierListInput,
@@ -237,7 +238,10 @@ export async function createTierList(
   data: CreateTierListInput,
   userId: string,
 ) {
+  const createdId = crypto.randomUUID();
+
   await db.insert(tierLists).values({
+    id: createdId,
     userId,
     title: data.title,
     description: data.description,
@@ -249,16 +253,15 @@ export async function createTierList(
   const created = await db
     .select()
     .from(tierLists)
-    .where(eq(tierLists.userId, userId))
-    .orderBy(desc(tierLists.createdAt))
+    .where(eq(tierLists.id, createdId))
     .limit(1);
 
-  return created[0];
+  return created[0] ?? null;
 }
 
 export async function createFromTemplate(templateId: string, userId: string) {
   const template = await getTierListById(templateId);
-  if (!template || template.isTemplate === 0) {
+  if (!template || template.deletedAt || template.isTemplate !== 1) {
     throw new Error("Template not found");
   }
 
@@ -304,12 +307,7 @@ export async function createFromTemplate(templateId: string, userId: string) {
 export async function updateTierList(id: string, data: UpdateTierListInput) {
   await db
     .update(tierLists)
-    .set({
-      title: data.title,
-      description: data.description,
-      isPublic: data.isPublic,
-      isTemplate: data.isTemplate,
-    })
+    .set(data)
     .where(eq(tierLists.id, id));
 
   return await getTierListById(id);
@@ -346,7 +344,7 @@ export async function saveTierListEditor(
             tier: item.tier,
             position: item.position,
             itemType: item.itemType,
-            imagePath: item.imagePath ?? null,
+            imagePath: item.imagePath ?? existingMap.get(item.id)?.imagePath ?? null,
             showCaption: item.showCaption ?? 1,
             deletedAt: null,
           })
@@ -357,6 +355,13 @@ export async function saveTierListEditor(
       }
 
       const insertedId = crypto.randomUUID();
+      const imagePath =
+        item.itemType === "image"
+          ? item.imagePath ??
+            (item.tempUploadPath
+              ? await finalizeTempImageFile(item.tempUploadPath)
+              : null)
+          : null;
 
       await tx.insert(tierItems).values({
         id: insertedId,
@@ -365,7 +370,7 @@ export async function saveTierListEditor(
         tier: item.tier,
         position: item.position,
         itemType: item.itemType,
-        imagePath: item.imagePath ?? null,
+        imagePath,
         showCaption: item.showCaption ?? 1,
       });
 
