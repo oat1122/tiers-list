@@ -52,6 +52,8 @@ export interface TierEditorItemDraft {
 export interface UpdateTierListEditorInput {
   title: string;
   description: string;
+  coverImagePath?: string | null;
+  coverTempUploadPath?: string | null;
   editorConfig: TierEditorConfig;
   items: TierEditorItemDraft[];
 }
@@ -60,6 +62,7 @@ export interface TemplateEditorPageData {
   listId: string;
   title: string;
   description: string;
+  coverImagePath?: string | null;
   editorConfig: TierEditorConfig;
   items: TierEditorItemDraft[];
   updatedAt: string;

@@ -266,6 +266,8 @@ function serializeItem(
 export function buildEditorDraft(params: {
   title: string;
   description: string;
+  coverImagePath?: string | null;
+  coverTempUploadPath?: string | null;
   state: TierListState;
 }): UpdateTierListEditorInput {
   const tierItems = params.state.tiers.flatMap((tier) =>
@@ -278,6 +280,8 @@ export function buildEditorDraft(params: {
   return {
     title: params.title,
     description: params.description,
+    coverImagePath: params.coverImagePath ?? null,
+    coverTempUploadPath: params.coverTempUploadPath ?? null,
     editorConfig: buildEditorConfigFromState(params.state),
     items: [...tierItems, ...poolItems],
   };
@@ -287,6 +291,7 @@ export function buildTemplateEditorPageData(params: {
   listId: string;
   title: string;
   description: string | null;
+  coverImagePath?: string | null;
   editorConfig: TierEditorConfig | null;
   items: TierEditorItemDraft[];
   updatedAt: Date | string;
@@ -300,6 +305,7 @@ export function buildTemplateEditorPageData(params: {
     listId: params.listId,
     title: params.title,
     description: params.description ?? "",
+    coverImagePath: params.coverImagePath ?? null,
     editorConfig: normalizedConfig,
     items: params.items,
     updatedAt:

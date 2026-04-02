@@ -14,6 +14,7 @@ export interface AdminTierListSummary {
   id: string;
   title: string;
   description: string | null;
+  coverImagePath: string | null;
   isPublic: number;
   isTemplate: number;
   createdAt: Date;

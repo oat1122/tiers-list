@@ -29,6 +29,7 @@ export const tierLists = mysqlTable("tier_lists", {
 
   /** คำอธิบายเพิ่มเติม */
   description: text("description"),
+  coverImagePath: varchar("cover_image_path", { length: 500 }),
 
   /** 0 = Private, 1 = Public (สาธารณะ) */
   isPublic: tinyint("is_public").notNull().default(0),

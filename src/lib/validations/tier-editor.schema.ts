@@ -35,6 +35,8 @@ export const UpdateTierListEditorSchema = z
   .object({
     title: z.string().min(1, "กรุณากรอกชื่อ Tier List"),
     description: z.string().default(""),
+    coverImagePath: z.string().nullable().optional(),
+    coverTempUploadPath: z.string().nullable().optional(),
     editorConfig: TierEditorConfigSchema,
     items: z.array(TierEditorItemDraftSchema),
   })

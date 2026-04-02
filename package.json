@@ -10,7 +10,7 @@
     "gen-secret": "node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"",
     "db:seed": "tsx scripts/seed.ts",
     "test": "vitest run",
-    "db:push": "drizzle-kit db:push",
+    "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit db:migrate"
   },
   "dependencies": {

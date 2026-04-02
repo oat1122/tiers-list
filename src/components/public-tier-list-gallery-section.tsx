@@ -88,7 +88,7 @@ export function PublicTierListGallerySection({
           </p>
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {filteredLists.map((list) => (
             <PublicTierListGalleryCard key={list.id} list={list} />
           ))}

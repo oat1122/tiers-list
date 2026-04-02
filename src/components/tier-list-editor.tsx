@@ -1,15 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { DragDropContext, Droppable, type DropResult } from "@hello-pangea/dnd";
+import { ImagePlus, LoaderCircle, Trash2 } from "lucide-react";
+import { ImageCropDialog } from "@/components/image-crop-dialog";
 import { ItemPool } from "@/components/item-pool";
 import { TierRow } from "@/components/tier-row";
 import { Toolbar } from "@/components/toolbar";
+import { Button } from "@/components/ui/button";
+import {
+  CROPPABLE_IMAGE_MIME,
+  IMAGE_RECOMMENDED_RATIO_LABEL,
+  IMAGE_RECOMMENDED_SIZE_LABEL,
+  IMAGE_UPLOAD_LIMIT_BYTES,
+} from "@/lib/image-upload-config";
 import {
   buildEditorDraft,
   createDefaultTierListState,
   templateEditorPageDataToState,
 } from "@/lib/tier-editor";
+import { isCroppableImageType, isGifImageType } from "@/lib/image-processing";
 import { useTierStore } from "@/store/useTierStore";
 import { useUIStore } from "@/store/useUIStore";
 import type { TemplateEditorPageData } from "@/types";
@@ -22,10 +33,32 @@ interface TierListEditorProps {
   warningMessage?: string | null;
 }
 
+const ACCEPTED_FORMATS_LABEL = "JPEG, PNG, WEBP";
+
+function formatBytes(bytes: number) {
+  return `${Math.round(bytes / (1024 * 1024))}MB`;
+}
+
+function getUnsupportedTypeMessage(file: File) {
+  if (isGifImageType(file)) {
+    return "GIF ยังไม่รองรับใน crop flow นี้ กรุณาใช้ JPEG, PNG หรือ WEBP";
+  }
+
+  return "รองรับเฉพาะไฟล์ JPEG, PNG และ WEBP สำหรับการครอปรูป";
+}
+
+function createCoverHelperText() {
+  return `แนะนำ ${IMAGE_RECOMMENDED_SIZE_LABEL} อัตราส่วน ${IMAGE_RECOMMENDED_RATIO_LABEL} ไฟล์สุดท้ายต้องไม่เกิน ${formatBytes(
+    IMAGE_UPLOAD_LIMIT_BYTES,
+  )} และรองรับ ${ACCEPTED_FORMATS_LABEL}`;
+}
+
 function createLocalBaseline() {
   return {
     title: "Edit Your Title Name Tier List",
     description: "",
+    coverImagePath: null,
+    coverTempUploadPath: null,
     state: createDefaultTierListState(),
   };
 }
@@ -34,14 +67,17 @@ function formatSaveStatus({
   mode,
   isDirty,
   isSaving,
+  isCoverUploading,
   saveMessage,
 }: {
   mode: "local" | "template";
   isDirty: boolean;
   isSaving: boolean;
+  isCoverUploading: boolean;
   saveMessage: string | null;
 }) {
   if (mode !== "template") return null;
+  if (isCoverUploading) return "กำลังอัปโหลดหน้าปก...";
   if (isSaving) return "กำลังบันทึก template...";
   if (saveMessage) return saveMessage;
   return isDirty
@@ -56,6 +92,7 @@ export function TierListEditor({
   warningMessage,
 }: TierListEditorProps) {
   const captureRef = useRef<HTMLDivElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const { tiers, pool, cardSize, initialize, moveItem, moveRow } =
     useTierStore();
   const {
@@ -71,10 +108,19 @@ export function TierListEditor({
 
   const [editorData, setEditorData] = useState(initialData);
   const [description, setDescription] = useState(initialData?.description ?? "");
+  const [coverImagePath, setCoverImagePath] = useState<string | null>(
+    initialData?.coverImagePath ?? null,
+  );
+  const [coverTempUploadPath, setCoverTempUploadPath] = useState<string | null>(
+    null,
+  );
+  const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
   const [baselineDraft, setBaselineDraft] = useState(() =>
     buildEditorDraft({
       title: initialData?.title ?? createLocalBaseline().title,
       description: initialData?.description ?? "",
+      coverImagePath: initialData?.coverImagePath ?? null,
+      coverTempUploadPath: null,
       state:
         initialData
           ? templateEditorPageDataToState(initialData).state
@@ -82,7 +128,9 @@ export function TierListEditor({
     }),
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [isCoverUploading, setIsCoverUploading] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [coverError, setCoverError] = useState<string | null>(null);
 
   useEffect(() => {
     setEditorData(initialData);
@@ -94,10 +142,15 @@ export function TierListEditor({
       initialize(nextState.state);
       initializeTitle(nextState.title);
       setDescription(nextState.description);
+      setCoverImagePath(editorData.coverImagePath ?? null);
+      setCoverTempUploadPath(null);
+      setCoverError(null);
       setBaselineDraft(
         buildEditorDraft({
           title: nextState.title,
           description: nextState.description,
+          coverImagePath: editorData.coverImagePath ?? null,
+          coverTempUploadPath: null,
           state: nextState.state,
         }),
       );
@@ -108,10 +161,15 @@ export function TierListEditor({
     initialize(localBaseline.state);
     initializeTitle(localBaseline.title);
     setDescription(localBaseline.description);
+    setCoverImagePath(localBaseline.coverImagePath);
+    setCoverTempUploadPath(localBaseline.coverTempUploadPath);
+    setCoverError(null);
     setBaselineDraft(
       buildEditorDraft({
         title: localBaseline.title,
         description: localBaseline.description,
+        coverImagePath: localBaseline.coverImagePath,
+        coverTempUploadPath: localBaseline.coverTempUploadPath,
         state: localBaseline.state,
       }),
     );
@@ -122,9 +180,11 @@ export function TierListEditor({
       buildEditorDraft({
         title,
         description,
+        coverImagePath,
+        coverTempUploadPath,
         state: { tiers, pool, cardSize },
       }),
-    [cardSize, description, pool, tiers, title],
+    [cardSize, coverImagePath, coverTempUploadPath, description, pool, tiers, title],
   );
 
   const isDirty = useMemo(
@@ -162,8 +222,75 @@ export function TierListEditor({
     moveItem(draggableId, source.droppableId, destination.droppableId, destination.index);
   };
 
+  const handleCoverUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file || mode !== "template" || !editorData) {
+      return;
+    }
+
+    if (!isCroppableImageType(file)) {
+      setCoverError(getUnsupportedTypeMessage(file));
+      event.target.value = "";
+      return;
+    }
+
+    setCoverError(null);
+    setPendingCoverFile(file);
+    event.target.value = "";
+  };
+
+  const handleProcessedCover = async (processedFile: File) => {
+    if (mode !== "template" || !editorData) {
+      return;
+    }
+
+    setIsCoverUploading(true);
+    setCoverError(null);
+    setSaveMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", processedFile);
+
+      const response = await fetch(
+        `/api/tier-lists/${editorData.listId}/cover/upload-temp`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+
+      const payload = (await response.json()) as {
+        error?: string;
+        tempUploadPath?: string;
+      };
+
+      if (!response.ok || !payload.tempUploadPath) {
+        throw new Error(payload.error ?? "อัปโหลดรูปหน้าปกไม่สำเร็จ");
+      }
+
+      setCoverTempUploadPath(payload.tempUploadPath);
+      setCoverImagePath(payload.tempUploadPath);
+      setPendingCoverFile(null);
+    } catch (error) {
+      setCoverError(
+        error instanceof Error ? error.message : "อัปโหลดรูปหน้าปกไม่สำเร็จ",
+      );
+    } finally {
+      setIsCoverUploading(false);
+    }
+  };
+
+  const handleRemoveCover = () => {
+    setCoverImagePath(null);
+    setCoverTempUploadPath(null);
+    setCoverError(null);
+    setSaveMessage(null);
+  };
+
   const handleSave = async () => {
-    if (mode !== "template" || !editorData) return;
+    if (mode !== "template" || !editorData || isCoverUploading) return;
 
     setIsSaving(true);
     setSaveMessage(null);
@@ -200,20 +327,21 @@ export function TierListEditor({
 
   const handleBeforeNavigate = () => {
     if (!isDirty) return true;
-    return window.confirm(
-      "มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก ต้องการออกจากหน้านี้หรือไม่?",
-    );
+    return window.confirm("มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก ต้องการออกจากหน้านี้หรือไม่?");
   };
 
   const saveStatusText = formatSaveStatus({
     mode,
     isDirty,
     isSaving,
+    isCoverUploading,
     saveMessage,
   });
+  const coverHelperText = createCoverHelperText();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <>
+      <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-sm">
         <div className="mx-auto max-w-5xl px-4 py-3">
           {warningMessage ? (
@@ -264,13 +392,83 @@ export function TierListEditor({
             onBeforeNavigate={handleBeforeNavigate}
             onSave={mode === "template" ? handleSave : undefined}
             isDirty={isDirty}
-            isSaving={isSaving}
+            isSaving={isSaving || isCoverUploading}
             saveStatusText={saveStatusText}
           />
         </div>
       </header>
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-6">
+        {mode === "template" ? (
+          <section className="rounded-2xl border border-border bg-card p-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start">
+              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-border bg-muted/30 md:max-w-sm">
+                {coverImagePath ? (
+                  <Image
+                    src={coverImagePath}
+                    alt={`Cover for ${title}`}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                    ยังไม่มีรูปหน้าปก
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-1 flex-col gap-3">
+                <div>
+                  <h2 className="text-base font-semibold">หน้าปกเทมเพลต</h2>
+                  <p className="text-sm text-muted-foreground">
+                    อัปโหลดรูปสำหรับใช้เป็นภาพปกของเทมเพลต
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <input
+                    ref={coverInputRef}
+                    type="file"
+                    accept={CROPPABLE_IMAGE_MIME.join(",")}
+                    className="hidden"
+                    onChange={(event) => void handleCoverUpload(event)}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => coverInputRef.current?.click()}
+                    disabled={isCoverUploading}
+                  >
+                    {isCoverUploading ? (
+                      <LoaderCircle className="size-4 animate-spin" />
+                    ) : (
+                      <ImagePlus className="size-4" />
+                    )}
+                    {coverImagePath ? "เปลี่ยนหน้าปก" : "อัปโหลดหน้าปก"}
+                  </Button>
+                  {coverImagePath ? (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={handleRemoveCover}
+                      disabled={isCoverUploading}
+                    >
+                      <Trash2 className="size-4" />
+                      ลบรูป
+                    </Button>
+                  ) : null}
+                </div>
+
+                <p className="text-xs text-muted-foreground">{coverHelperText}</p>
+                {coverError ? (
+                  <p className="text-sm text-destructive">{coverError}</p>
+                ) : null}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         <DragDropContext onDragEnd={onDragEnd}>
           <div
             ref={captureRef}
@@ -301,8 +499,16 @@ export function TierListEditor({
       </main>
 
       <footer className="py-4 text-center text-xs text-muted-foreground/40">
-        Double-click tier label to rename • Drag items freely between tiers
+        Double-click tier label to rename | Drag items freely between tiers
       </footer>
-    </div>
+      </div>
+
+      <ImageCropDialog
+        open={!!pendingCoverFile}
+        file={pendingCoverFile}
+        onCancel={() => setPendingCoverFile(null)}
+        onConfirm={handleProcessedCover}
+      />
+    </>
   );
 }

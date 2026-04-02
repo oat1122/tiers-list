@@ -307,6 +307,17 @@ export function CompactListCard({
 
   return (
     <Card size="sm" className="border-border/70 bg-background/92 shadow-sm">
+      {list.coverImagePath ? (
+        <div className="relative aspect-[16/9] overflow-hidden rounded-t-xl border-b border-border/70">
+          <Image
+            src={list.coverImagePath}
+            alt={`Cover for ${list.title}`}
+            fill
+            className="object-cover"
+            unoptimized
+          />
+        </div>
+      ) : null}
       <CardHeader className="gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-2">
@@ -382,6 +393,17 @@ export function TemplatePreviewCard({
 
   return (
     <Card size="sm" className="border-border/70 bg-background/94 shadow-sm">
+      {list.coverImagePath ? (
+        <div className="relative aspect-[16/9] overflow-hidden rounded-t-xl border-b border-border/70">
+          <Image
+            src={list.coverImagePath}
+            alt={`Cover for ${list.title}`}
+            fill
+            className="object-cover"
+            unoptimized
+          />
+        </div>
+      ) : null}
       <CardHeader className="gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-2">

@@ -109,6 +109,7 @@ function buildAdminTierPreview(params: {
   listId: string;
   title: string;
   description: string | null;
+  coverImagePath?: string | null;
   editorConfig: typeof tierLists.$inferSelect.editorConfig;
   items: Array<typeof tierItems.$inferSelect>;
   updatedAt: Date | string;
@@ -117,6 +118,7 @@ function buildAdminTierPreview(params: {
     listId: params.listId,
     title: params.title,
     description: params.description,
+    coverImagePath: params.coverImagePath,
     editorConfig: params.editorConfig ?? createDefaultTierConfig(),
     items: mapTierItemsToDrafts(params.items),
     updatedAt: params.updatedAt,
@@ -153,6 +155,7 @@ export async function getPublicTierListGallery(): Promise<PublicTierListSummary[
       id: tierLists.id,
       title: tierLists.title,
       description: tierLists.description,
+      coverImagePath: tierLists.coverImagePath,
       updatedAt: tierLists.updatedAt,
       itemCount,
     })
@@ -166,6 +169,7 @@ export async function getPublicTierListGallery(): Promise<PublicTierListSummary[
       tierLists.id,
       tierLists.title,
       tierLists.description,
+      tierLists.coverImagePath,
       tierLists.updatedAt,
     )
     .orderBy(desc(tierLists.createdAt));
@@ -176,6 +180,7 @@ export async function getPublicTierListGallery(): Promise<PublicTierListSummary[
     id: row.id,
     title: row.title,
     description: row.description,
+    coverImagePath: row.coverImagePath,
     updatedAt: row.updatedAt,
     itemCount: row.itemCount,
     preview: previews.get(row.id) ?? null,
@@ -207,6 +212,7 @@ export async function getTemplateEditorPageData(
     listId: list.id,
     title: list.title,
     description: list.description,
+    coverImagePath: list.coverImagePath,
     editorConfig: list.editorConfig ?? createDefaultTierConfig(),
     items: mapTierItemsToDrafts(items),
     updatedAt: list.updatedAt,
@@ -228,6 +234,7 @@ export async function getPublicTierListEditorData(
     listId: list.id,
     title: list.title,
     description: list.description,
+    coverImagePath: list.coverImagePath,
     editorConfig: list.editorConfig ?? createDefaultTierConfig(),
     items: mapTierItemsToDrafts(items),
     updatedAt: list.updatedAt,
@@ -245,6 +252,7 @@ export async function createTierList(
     userId,
     title: data.title,
     description: data.description,
+    coverImagePath: null,
     isPublic: data.isPublic ?? 0,
     isTemplate: data.isTemplate ?? 0,
     editorConfig: createDefaultTierConfig(),
@@ -272,6 +280,7 @@ export async function createFromTemplate(templateId: string, userId: string) {
     userId,
     title: `Copy of ${template.title}`,
     description: template.description,
+    coverImagePath: template.coverImagePath,
     isPublic: 0,
     isTemplate: 0,
     editorConfig: template.editorConfig ?? createDefaultTierConfig(),
@@ -318,11 +327,16 @@ export async function saveTierListEditor(
   data: UpdateTierListEditorInput,
 ) {
   await db.transaction(async (tx) => {
+    const resolvedCoverImagePath = data.coverTempUploadPath
+      ? await finalizeTempImageFile(data.coverTempUploadPath)
+      : data.coverImagePath ?? null;
+
     await tx
       .update(tierLists)
       .set({
         title: data.title,
         description: data.description,
+        coverImagePath: resolvedCoverImagePath,
         editorConfig: data.editorConfig,
       })
       .where(eq(tierLists.id, id));
@@ -424,6 +438,7 @@ async function getAdminTierLists(whereClause: SQL<unknown>) {
       id: tierLists.id,
       title: tierLists.title,
       description: tierLists.description,
+      coverImagePath: tierLists.coverImagePath,
       isPublic: tierLists.isPublic,
       isTemplate: tierLists.isTemplate,
       createdAt: tierLists.createdAt,
@@ -445,6 +460,7 @@ async function getAdminTierLists(whereClause: SQL<unknown>) {
       tierLists.id,
       tierLists.title,
       tierLists.description,
+      tierLists.coverImagePath,
       tierLists.isPublic,
       tierLists.isTemplate,
       tierLists.createdAt,
@@ -460,6 +476,7 @@ async function getAdminTierLists(whereClause: SQL<unknown>) {
     id: row.id,
     title: row.title,
     description: row.description,
+    coverImagePath: row.coverImagePath,
     isPublic: row.isPublic,
     isTemplate: row.isTemplate,
     createdAt: row.createdAt,
@@ -485,6 +502,7 @@ async function getAdminListPreviews(listIds: string[]) {
         id: tierLists.id,
         title: tierLists.title,
         description: tierLists.description,
+        coverImagePath: tierLists.coverImagePath,
         editorConfig: tierLists.editorConfig,
         updatedAt: tierLists.updatedAt,
       })
@@ -517,6 +535,7 @@ async function getAdminListPreviews(listIds: string[]) {
         listId: row.id,
         title: row.title,
         description: row.description,
+        coverImagePath: row.coverImagePath,
         editorConfig: row.editorConfig,
         items: itemsByListId.get(row.id) ?? [],
         updatedAt: row.updatedAt,
