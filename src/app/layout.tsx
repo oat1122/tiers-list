@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Kanit } from "next/font/google";
+import { ConfirmDialogProvider } from "@/components/confirm-dialog-provider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AppToaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const kanit = Kanit({
@@ -38,7 +40,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <ConfirmDialogProvider>
+            {children}
+            <AppToaster />
+          </ConfirmDialogProvider>
         </ThemeProvider>
       </body>
     </html>

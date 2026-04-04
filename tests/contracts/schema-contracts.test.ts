@@ -30,6 +30,20 @@ describe("Drizzle schema contracts", () => {
       'updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow()',
     );
   });
+
+  it("defines automatic id and timestamp behavior for picture reveal games", () => {
+    const source = readProjectFile("src/db/schema/picture-reveal-games.ts");
+
+    expect(source).toContain("crypto.randomUUID()");
+    expect(source).toContain('imageWidth: int("image_width").notNull().default(1080)');
+    expect(source).toContain('imageHeight: int("image_height").notNull().default(1080)');
+    expect(source).toContain(
+      'createdAt: timestamp("created_at").notNull().defaultNow()',
+    );
+    expect(source).toContain(
+      'updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow()',
+    );
+  });
 });
 
 describe("Client-only store contracts", () => {

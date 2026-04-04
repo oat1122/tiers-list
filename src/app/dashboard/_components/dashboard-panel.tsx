@@ -464,7 +464,7 @@ export function DashboardPanel({ user, initialData }: DashboardPanelProps) {
                                     โคลน
                                   </Button>
                                   <Link
-                                    href={`/dashboard/templates/${list.id}/edit-template`}
+                                    href={`/dashboard/tier-lists/templates/${list.id}/edit-template`}
                                     className={cn(
                                       buttonVariants({
                                         variant: "outline",

@@ -5,11 +5,7 @@ import { createPortal } from "react-dom";
 import { Crop, Loader2, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  IMAGE_CROP_PREVIEW_SIZE,
-  IMAGE_RECOMMENDED_RATIO_LABEL,
-  IMAGE_RECOMMENDED_SIZE_LABEL,
-} from "@/lib/image-upload-config";
+import { IMAGE_CROP_PREVIEW_SIZE } from "@/lib/image-upload-config";
 import {
   clampCropState,
   createCroppedImageFile,
@@ -24,6 +20,8 @@ import {
 interface ImageCropDialogProps {
   open: boolean;
   file: File | null;
+  targetWidth?: number;
+  targetHeight?: number;
   onCancel: () => void;
   onConfirm: (file: File) => Promise<void> | void;
 }
@@ -36,11 +34,19 @@ interface DragState {
   originOffsetY: number;
 }
 
-const PREVIEW_SIZE_CLASS = "h-[320px] w-[320px]";
+function formatAspectRatioLabel(width: number, height: number) {
+  const gcd = (left: number, right: number): number =>
+    right === 0 ? left : gcd(right, left % right);
+  const divisor = gcd(width, height);
+
+  return `${width / divisor}:${height / divisor}`;
+}
 
 export function ImageCropDialog({
   open,
   file,
+  targetWidth = 1080,
+  targetHeight = 1080,
   onCancel,
   onConfirm,
 }: ImageCropDialogProps) {
@@ -72,7 +78,15 @@ export function ImageCropDialog({
         }
 
         setImageMetrics(metrics);
-        setCrop(getCenteredCropState(metrics.width, metrics.height));
+        setCrop(
+          getCenteredCropState(
+            metrics.width,
+            metrics.height,
+            1,
+            targetWidth,
+            targetHeight,
+          ),
+        );
       })
       .catch(() => {
         if (!cancelled) {
@@ -88,7 +102,7 @@ export function ImageCropDialog({
     return () => {
       cancelled = true;
     };
-  }, [file, open]);
+  }, [file, open, targetHeight, targetWidth]);
 
   useEffect(() => {
     return () => {
@@ -103,13 +117,31 @@ export function ImageCropDialog({
       return null;
     }
 
-    return getCropBounds(imageMetrics.width, imageMetrics.height, crop.zoom);
-  }, [crop, imageMetrics]);
+    return getCropBounds(
+      imageMetrics.width,
+      imageMetrics.height,
+      crop.zoom,
+      targetWidth,
+      targetHeight,
+    );
+  }, [crop, imageMetrics, targetHeight, targetWidth]);
 
-  const previewScale = bounds ? IMAGE_CROP_PREVIEW_SIZE / bounds.cropSide : 1;
+  const previewViewport = useMemo(() => {
+    const scale = Math.min(
+      IMAGE_CROP_PREVIEW_SIZE / Math.max(targetWidth, targetHeight),
+      1,
+    );
+
+    return {
+      width: targetWidth * scale,
+      height: targetHeight * scale,
+    };
+  }, [targetHeight, targetWidth]);
+
+  const previewScale = bounds ? previewViewport.width / bounds.cropWidth : 1;
 
   const previewStyle = useMemo(() => {
-    if (!imageMetrics || !crop || !bounds) {
+    if (!imageMetrics || !crop) {
       return undefined;
     }
 
@@ -119,7 +151,7 @@ export function ImageCropDialog({
       left: -(crop.offsetX * previewScale),
       top: -(crop.offsetY * previewScale),
     };
-  }, [bounds, crop, imageMetrics, previewScale]);
+  }, [crop, imageMetrics, previewScale]);
 
   if (!open || !file) {
     return null;
@@ -130,7 +162,16 @@ export function ImageCropDialog({
       return;
     }
 
-    setCrop(nextCropStateForZoom(imageMetrics.width, imageMetrics.height, crop, nextZoom));
+    setCrop(
+      nextCropStateForZoom(
+        imageMetrics.width,
+        imageMetrics.height,
+        crop,
+        nextZoom,
+        targetWidth,
+        targetHeight,
+      ),
+    );
   };
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -158,11 +199,17 @@ export function ImageCropDialog({
     const deltaY = (event.clientY - dragState.startY) / previewScale;
 
     setCrop(
-      clampCropState(imageMetrics.width, imageMetrics.height, {
-        zoom: crop.zoom,
-        offsetX: dragState.originOffsetX - deltaX,
-        offsetY: dragState.originOffsetY - deltaY,
-      }),
+      clampCropState(
+        imageMetrics.width,
+        imageMetrics.height,
+        {
+          zoom: crop.zoom,
+          offsetX: dragState.originOffsetX - deltaX,
+          offsetY: dragState.originOffsetY - deltaY,
+        },
+        targetWidth,
+        targetHeight,
+      ),
     );
   };
 
@@ -185,6 +232,8 @@ export function ImageCropDialog({
       const processedFile = await createCroppedImageFile({
         file,
         crop,
+        targetWidth,
+        targetHeight,
       });
 
       await onConfirm(processedFile);
@@ -196,6 +245,9 @@ export function ImageCropDialog({
       setIsSaving(false);
     }
   };
+
+  const sizeLabel = `${targetWidth}x${targetHeight}`;
+  const ratioLabel = formatAspectRatioLabel(targetWidth, targetHeight);
 
   return createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -213,7 +265,7 @@ export function ImageCropDialog({
             </div>
             <p className="text-sm text-muted-foreground">
               เลื่อนภาพเพื่อเลือกตำแหน่งที่ต้องการแสดง ระบบจะบันทึกผลลัพธ์เป็น{" "}
-              {IMAGE_RECOMMENDED_SIZE_LABEL} อัตราส่วน {IMAGE_RECOMMENDED_RATIO_LABEL}
+              {sizeLabel} อัตราส่วน {ratioLabel}
             </p>
           </div>
 
@@ -226,10 +278,10 @@ export function ImageCropDialog({
           <div className="flex flex-col items-center gap-4">
             <div
               className={cn(
-                PREVIEW_SIZE_CLASS,
                 "relative overflow-hidden rounded-2xl border border-border bg-muted shadow-inner",
                 dragState ? "cursor-grabbing" : "cursor-grab",
               )}
+              style={previewViewport}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerEnd}
@@ -266,7 +318,7 @@ export function ImageCropDialog({
           <div className="rounded-xl border border-border bg-muted/30 p-4">
             <p className="text-sm font-semibold text-foreground">ผลลัพธ์ที่จะได้</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              รูปปลายทาง {IMAGE_RECOMMENDED_SIZE_LABEL} แบบ square และบันทึกเป็น WEBP
+              รูปปลายทาง {sizeLabel} อัตราส่วน {ratioLabel} และบันทึกเป็น WEBP
             </p>
           </div>
 
@@ -294,7 +346,9 @@ export function ImageCropDialog({
 
           <div className="rounded-xl border border-border bg-muted/20 p-4 text-sm text-muted-foreground">
             <p>คำแนะนำ</p>
-            <p className="mt-1">รูปขนาดเล็กสามารถขยายได้ แต่ภาพอาจดูไม่คมชัดเท่ารูปต้นฉบับที่ใหญ่พอ</p>
+            <p className="mt-1">
+              รูปต้นฉบับควรใหญ่พอสำหรับสัดส่วนที่เลือก เพื่อให้ภาพหลังครอปยังคมชัด
+            </p>
           </div>
 
           <div className="flex justify-end gap-2">

@@ -8,6 +8,7 @@ import {
   useTransition,
 } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import type {
   AdminDashboardResponseDto,
   AdminTierListSummaryDto,
@@ -155,7 +156,7 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
     setFreshData(nextData);
 
     if (message) {
-      setFeedback({ tone: "success", message });
+      toast.success(message);
     }
   };
 
@@ -171,7 +172,7 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
       await action();
       await refreshData(successMessage);
     } catch (error) {
-      setFeedback({ tone: "error", message: getErrorMessage(error) });
+      toast.error(getErrorMessage(error));
     } finally {
       setBusyAction(null);
     }
@@ -389,7 +390,7 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
       router.push("/sign-in");
       router.refresh();
     } catch (error) {
-      setFeedback({ tone: "error", message: getErrorMessage(error) });
+      toast.error(getErrorMessage(error));
       setIsLoggingOut(false);
     }
   };
@@ -397,7 +398,7 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
   const openTemplateEditor: DashboardPanelActions["openTemplateEditor"] = (
     list,
   ) => {
-    router.push(`/dashboard/templates/${list.id}/edit-template`);
+    router.push(`/dashboard/tier-lists/templates/${list.id}/edit-template`);
   };
 
   const state: DashboardPanelState = {

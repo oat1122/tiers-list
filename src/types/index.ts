@@ -67,3 +67,6 @@ export interface TemplateEditorPageData {
   items: TierEditorItemDraft[];
   updatedAt: string;
 }
+
+export * from "./picture-reveal";
+export * from "./picture-reveal-admin";

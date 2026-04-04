@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { DragDropContext, Droppable, type DropResult } from "@hello-pangea/dnd";
 import { ImagePlus, LoaderCircle, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { useConfirmDialog } from "@/components/confirm-dialog-provider";
 import { ImageCropDialog } from "@/components/image-crop-dialog";
 import { ItemPool } from "@/components/item-pool";
 import { TierRow } from "@/components/tier-row";
@@ -68,18 +70,15 @@ function formatSaveStatus({
   isDirty,
   isSaving,
   isCoverUploading,
-  saveMessage,
 }: {
   mode: "local" | "template";
   isDirty: boolean;
   isSaving: boolean;
   isCoverUploading: boolean;
-  saveMessage: string | null;
 }) {
   if (mode !== "template") return null;
   if (isCoverUploading) return "กำลังอัปโหลดหน้าปก...";
   if (isSaving) return "กำลังบันทึก template...";
-  if (saveMessage) return saveMessage;
   return isDirty
     ? "มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก"
     : "ข้อมูลล่าสุดถูกบันทึกแล้ว";
@@ -93,6 +92,7 @@ export function TierListEditor({
 }: TierListEditorProps) {
   const captureRef = useRef<HTMLDivElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const { confirm } = useConfirmDialog();
   const { tiers, pool, cardSize, initialize, moveItem, moveRow } =
     useTierStore();
   const {
@@ -121,15 +121,13 @@ export function TierListEditor({
       description: initialData?.description ?? "",
       coverImagePath: initialData?.coverImagePath ?? null,
       coverTempUploadPath: null,
-      state:
-        initialData
-          ? templateEditorPageDataToState(initialData).state
-          : createLocalBaseline().state,
+      state: initialData
+        ? templateEditorPageDataToState(initialData).state
+        : createLocalBaseline().state,
     }),
   );
   const [isSaving, setIsSaving] = useState(false);
   const [isCoverUploading, setIsCoverUploading] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [coverError, setCoverError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -232,6 +230,7 @@ export function TierListEditor({
     if (!isCroppableImageType(file)) {
       setCoverError(getUnsupportedTypeMessage(file));
       event.target.value = "";
+      toast.error(getUnsupportedTypeMessage(file));
       return;
     }
 
@@ -247,7 +246,6 @@ export function TierListEditor({
 
     setIsCoverUploading(true);
     setCoverError(null);
-    setSaveMessage(null);
 
     try {
       const formData = new FormData();
@@ -267,33 +265,47 @@ export function TierListEditor({
       };
 
       if (!response.ok || !payload.tempUploadPath) {
-        throw new Error(payload.error ?? "อัปโหลดรูปหน้าปกไม่สำเร็จ");
+        throw new Error(payload.error ?? "อัปโหลดหน้าปกไม่สำเร็จ");
       }
 
       setCoverTempUploadPath(payload.tempUploadPath);
       setCoverImagePath(payload.tempUploadPath);
       setPendingCoverFile(null);
+      toast.success("อัปโหลดหน้าปกสำเร็จ");
     } catch (error) {
-      setCoverError(
-        error instanceof Error ? error.message : "อัปโหลดรูปหน้าปกไม่สำเร็จ",
-      );
+      const message =
+        error instanceof Error ? error.message : "อัปโหลดหน้าปกไม่สำเร็จ";
+      setCoverError(message);
+      toast.error(message);
     } finally {
       setIsCoverUploading(false);
     }
   };
 
-  const handleRemoveCover = () => {
+  const handleRemoveCover = async () => {
+    if (
+      coverImagePath &&
+      !(await confirm({
+        title: "ลบหน้าปกตอนนี้ไหม?",
+        description: "หน้าปกที่ตั้งไว้จะถูกนำออกจาก draft นี้ทันที",
+        confirmLabel: "ลบหน้าปก",
+        cancelLabel: "ยกเลิก",
+        variant: "destructive",
+      }))
+    ) {
+      return;
+    }
+
     setCoverImagePath(null);
     setCoverTempUploadPath(null);
     setCoverError(null);
-    setSaveMessage(null);
+    toast.success("ลบหน้าปกออกจาก draft แล้ว");
   };
 
   const handleSave = async () => {
     if (mode !== "template" || !editorData || isCoverUploading) return;
 
     setIsSaving(true);
-    setSaveMessage(null);
 
     try {
       const response = await fetch(`/api/tier-lists/${editorData.listId}/editor`, {
@@ -315,9 +327,9 @@ export function TierListEditor({
       }
 
       setEditorData(payload as TemplateEditorPageData);
-      setSaveMessage("บันทึก template เรียบร้อยแล้ว");
+      toast.success("บันทึก template สำเร็จ");
     } catch (error) {
-      setSaveMessage(
+      toast.error(
         error instanceof Error ? error.message : "บันทึก template ไม่สำเร็จ",
       );
     } finally {
@@ -325,9 +337,29 @@ export function TierListEditor({
     }
   };
 
-  const handleBeforeNavigate = () => {
+  const handleBeforeNavigate = async () => {
     if (!isDirty) return true;
-    return window.confirm("มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก ต้องการออกจากหน้านี้หรือไม่?");
+
+    return confirm({
+      title: "ออกจากหน้านี้โดยไม่บันทึก?",
+      description:
+        "มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก หากออกตอนนี้ข้อมูลที่แก้ไว้จะหายไป",
+      confirmLabel: "ออกจากหน้า",
+      cancelLabel: "อยู่ต่อ",
+      variant: "destructive",
+    });
+  };
+
+  const handleBeforeReset = async () => {
+    if (!isDirty) return true;
+
+    return confirm({
+      title: "รีเซ็ต tier list ตอนนี้ไหม?",
+      description: "การจัด tier และชื่อรายการที่ยังไม่ได้บันทึกจะถูกล้างออก",
+      confirmLabel: "รีเซ็ต",
+      cancelLabel: "ยกเลิก",
+      variant: "destructive",
+    });
   };
 
   const saveStatusText = formatSaveStatus({
@@ -335,172 +367,172 @@ export function TierListEditor({
     isDirty,
     isSaving,
     isCoverUploading,
-    saveMessage,
   });
   const coverHelperText = createCoverHelperText();
 
   return (
     <>
       <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-sm">
-        <div className="mx-auto max-w-5xl px-4 py-3">
-          {warningMessage ? (
-            <div className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200">
-              {warningMessage}
-            </div>
-          ) : null}
-          <div className="mb-3 flex flex-col items-center">
-            {isEditingTitle ? (
-              <input
-                autoFocus
-                value={titleDraft}
-                onChange={(event) => setTitleDraft(event.target.value)}
-                onBlur={commitTitle}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") commitTitle();
-                  if (event.key === "Escape") cancelEditTitle();
-                }}
-                className="w-full max-w-xs border-b-2 border-primary bg-transparent text-center text-xl font-bold tracking-tight outline-none"
-              />
-            ) : (
-              <h1
-                className="cursor-pointer text-xl font-bold tracking-tight transition-opacity hover:opacity-70"
-                onClick={startEditTitle}
-                title="คลิกเพื่อแก้ไขชื่อ"
-              >
-                {title}
-              </h1>
-            )}
-
-            {mode === "template" ? (
-              <input
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="คำอธิบายของ template"
-                className="mt-2 w-full max-w-md rounded-md border border-transparent bg-transparent px-3 py-1 text-center text-sm text-muted-foreground outline-none transition-colors focus:border-border focus:bg-muted/40"
-              />
-            ) : (
-              <p className="mt-0.5 text-xs text-muted-foreground">BY mavelus</p>
-            )}
-          </div>
-
-          <Toolbar
-            captureRef={captureRef}
-            mode={mode}
-            listId={editorData?.listId}
-            backHref={backHref}
-            onBeforeNavigate={handleBeforeNavigate}
-            onSave={mode === "template" ? handleSave : undefined}
-            isDirty={isDirty}
-            isSaving={isSaving || isCoverUploading}
-            saveStatusText={saveStatusText}
-          />
-        </div>
-      </header>
-
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-6">
-        {mode === "template" ? (
-          <section className="rounded-2xl border border-border bg-card p-4">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start">
-              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-border bg-muted/30 md:max-w-sm">
-                {coverImagePath ? (
-                  <Image
-                    src={coverImagePath}
-                    alt={`Cover for ${title}`}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                    ยังไม่มีรูปหน้าปก
-                  </div>
-                )}
+        <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-sm">
+          <div className="mx-auto max-w-5xl px-4 py-3">
+            {warningMessage ? (
+              <div className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200">
+                {warningMessage}
               </div>
+            ) : null}
+            <div className="mb-3 flex flex-col items-center">
+              {isEditingTitle ? (
+                <input
+                  autoFocus
+                  value={titleDraft}
+                  onChange={(event) => setTitleDraft(event.target.value)}
+                  onBlur={commitTitle}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") commitTitle();
+                    if (event.key === "Escape") cancelEditTitle();
+                  }}
+                  className="w-full max-w-xs border-b-2 border-primary bg-transparent text-center text-xl font-bold tracking-tight outline-none"
+                />
+              ) : (
+                <h1
+                  className="cursor-pointer text-xl font-bold tracking-tight transition-opacity hover:opacity-70"
+                  onClick={startEditTitle}
+                  title="คลิกเพื่อแก้ไขชื่อ"
+                >
+                  {title}
+                </h1>
+              )}
 
-              <div className="flex flex-1 flex-col gap-3">
-                <div>
-                  <h2 className="text-base font-semibold">หน้าปกเทมเพลต</h2>
-                  <p className="text-sm text-muted-foreground">
-                    อัปโหลดรูปสำหรับใช้เป็นภาพปกของเทมเพลต
-                  </p>
+              {mode === "template" ? (
+                <input
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  placeholder="คำอธิบายของ template"
+                  className="mt-2 w-full max-w-md rounded-md border border-transparent bg-transparent px-3 py-1 text-center text-sm text-muted-foreground outline-none transition-colors focus:border-border focus:bg-muted/40"
+                />
+              ) : (
+                <p className="mt-0.5 text-xs text-muted-foreground">BY mavelus</p>
+              )}
+            </div>
+
+            <Toolbar
+              captureRef={captureRef}
+              mode={mode}
+              listId={editorData?.listId}
+              backHref={backHref}
+              onBeforeNavigate={handleBeforeNavigate}
+              onBeforeReset={handleBeforeReset}
+              onSave={mode === "template" ? handleSave : undefined}
+              isDirty={isDirty}
+              isSaving={isSaving || isCoverUploading}
+              saveStatusText={saveStatusText}
+            />
+          </div>
+        </header>
+
+        <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-6">
+          {mode === "template" ? (
+            <section className="rounded-2xl border border-border bg-card p-4">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start">
+                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-border bg-muted/30 md:max-w-sm">
+                  {coverImagePath ? (
+                    <Image
+                      src={coverImagePath}
+                      alt={`Cover for ${title}`}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                      ยังไม่มีรูปหน้าปก
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <input
-                    ref={coverInputRef}
-                    type="file"
-                    accept={CROPPABLE_IMAGE_MIME.join(",")}
-                    className="hidden"
-                    onChange={(event) => void handleCoverUpload(event)}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => coverInputRef.current?.click()}
-                    disabled={isCoverUploading}
-                  >
-                    {isCoverUploading ? (
-                      <LoaderCircle className="size-4 animate-spin" />
-                    ) : (
-                      <ImagePlus className="size-4" />
-                    )}
-                    {coverImagePath ? "เปลี่ยนหน้าปก" : "อัปโหลดหน้าปก"}
-                  </Button>
-                  {coverImagePath ? (
+                <div className="flex flex-1 flex-col gap-3">
+                  <div>
+                    <h2 className="text-base font-semibold">หน้าปกเทมเพลต</h2>
+                    <p className="text-sm text-muted-foreground">
+                      อัปโหลดรูปสำหรับใช้เป็นภาพปกของเทมเพลต
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <input
+                      ref={coverInputRef}
+                      type="file"
+                      accept={CROPPABLE_IMAGE_MIME.join(",")}
+                      className="hidden"
+                      onChange={(event) => void handleCoverUpload(event)}
+                    />
                     <Button
                       type="button"
-                      variant="destructive"
-                      onClick={handleRemoveCover}
+                      variant="outline"
+                      onClick={() => coverInputRef.current?.click()}
                       disabled={isCoverUploading}
                     >
-                      <Trash2 className="size-4" />
-                      ลบรูป
+                      {isCoverUploading ? (
+                        <LoaderCircle className="size-4 animate-spin" />
+                      ) : (
+                        <ImagePlus className="size-4" />
+                      )}
+                      {coverImagePath ? "เปลี่ยนหน้าปก" : "อัปโหลดหน้าปก"}
                     </Button>
+                    {coverImagePath ? (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() => void handleRemoveCover()}
+                        disabled={isCoverUploading}
+                      >
+                        <Trash2 className="size-4" />
+                        ลบรูป
+                      </Button>
+                    ) : null}
+                  </div>
+
+                  <p className="text-xs text-muted-foreground">{coverHelperText}</p>
+                  {coverError ? (
+                    <p className="text-sm text-destructive">{coverError}</p>
                   ) : null}
                 </div>
-
-                <p className="text-xs text-muted-foreground">{coverHelperText}</p>
-                {coverError ? (
-                  <p className="text-sm text-destructive">{coverError}</p>
-                ) : null}
               </div>
-            </div>
-          </section>
-        ) : null}
+            </section>
+          ) : null}
 
-        <DragDropContext onDragEnd={onDragEnd}>
-          <div
-            ref={captureRef}
-            className="overflow-hidden rounded-xl border border-border bg-card"
-          >
+          <DragDropContext onDragEnd={onDragEnd}>
             <div
-              data-export-only
-              className="hidden flex flex-col items-center border-b border-border bg-card py-3 text-center"
+              ref={captureRef}
+              className="overflow-hidden rounded-xl border border-border bg-card"
             >
-              <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-              <p className="mt-0.5 text-xs text-muted-foreground">BY mavelus</p>
+              <div
+                data-export-only
+                className="hidden flex flex-col items-center border-b border-border bg-card py-3 text-center"
+              >
+                <h2 className="text-xl font-bold tracking-tight">{title}</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">BY mavelus</p>
+              </div>
+
+              <Droppable droppableId="tier-board" type="TIER">
+                {(provided) => (
+                  <div ref={provided.innerRef} {...provided.droppableProps}>
+                    {tiers.map((tier, index) => (
+                      <TierRow key={tier.id} tier={tier} index={index} />
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
             </div>
 
-            <Droppable droppableId="tier-board" type="TIER">
-              {(provided) => (
-                <div ref={provided.innerRef} {...provided.droppableProps}>
-                  {tiers.map((tier, index) => (
-                    <TierRow key={tier.id} tier={tier} index={index} />
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </div>
+            <ItemPool />
+          </DragDropContext>
+        </main>
 
-          <ItemPool />
-        </DragDropContext>
-      </main>
-
-      <footer className="py-4 text-center text-xs text-muted-foreground/40">
-        Double-click tier label to rename | Drag items freely between tiers
-      </footer>
+        <footer className="py-4 text-center text-xs text-muted-foreground/40">
+          Double-click tier label to rename | Drag items freely between tiers
+        </footer>
       </div>
 
       <ImageCropDialog

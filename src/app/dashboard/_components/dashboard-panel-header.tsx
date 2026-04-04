@@ -1,7 +1,9 @@
-﻿"use client";
+"use client";
 
+import Link from "next/link";
 import {
   AlertTriangle,
+  ArrowLeft,
   ClipboardList,
   Crown,
   Loader2,
@@ -13,7 +15,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -106,6 +108,13 @@ export function DashboardPanelHeader({
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+            <Link
+              href="/dashboard"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              <ArrowLeft className="size-4" />
+              กลับหน้า Dashboard
+            </Link>
             <ThemeToggle />
             <Button
               variant="outline"

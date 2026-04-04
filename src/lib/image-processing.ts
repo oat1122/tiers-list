@@ -49,19 +49,28 @@ export function getCropBounds(
   width: number,
   height: number,
   zoom: number,
+  targetWidth = IMAGE_TARGET_SIZE,
+  targetHeight = IMAGE_TARGET_SIZE,
 ) {
   const clampedZoom = Math.min(
     IMAGE_CROP_MAX_ZOOM,
     Math.max(IMAGE_CROP_MIN_ZOOM, zoom),
   );
-  const baseSide = Math.min(width, height);
-  const cropSide = baseSide / clampedZoom;
+  const targetAspect = targetWidth / targetHeight;
+  const imageAspect = width / height;
+  const baseCropWidth =
+    imageAspect > targetAspect ? height * targetAspect : width;
+  const baseCropHeight =
+    imageAspect > targetAspect ? height : width / targetAspect;
+  const cropWidth = baseCropWidth / clampedZoom;
+  const cropHeight = baseCropHeight / clampedZoom;
 
   return {
     zoom: clampedZoom,
-    cropSide,
-    maxOffsetX: Math.max(width - cropSide, 0),
-    maxOffsetY: Math.max(height - cropSide, 0),
+    cropWidth,
+    cropHeight,
+    maxOffsetX: Math.max(width - cropWidth, 0),
+    maxOffsetY: Math.max(height - cropHeight, 0),
   };
 }
 
@@ -69,8 +78,16 @@ export function clampCropState(
   width: number,
   height: number,
   crop: SquareCropState,
+  targetWidth = IMAGE_TARGET_SIZE,
+  targetHeight = IMAGE_TARGET_SIZE,
 ): SquareCropState {
-  const bounds = getCropBounds(width, height, crop.zoom);
+  const bounds = getCropBounds(
+    width,
+    height,
+    crop.zoom,
+    targetWidth,
+    targetHeight,
+  );
 
   return {
     zoom: bounds.zoom,
@@ -83,8 +100,16 @@ export function getCenteredCropState(
   width: number,
   height: number,
   zoom = 1,
+  targetWidth = IMAGE_TARGET_SIZE,
+  targetHeight = IMAGE_TARGET_SIZE,
 ): SquareCropState {
-  const bounds = getCropBounds(width, height, zoom);
+  const bounds = getCropBounds(
+    width,
+    height,
+    zoom,
+    targetWidth,
+    targetHeight,
+  );
 
   return {
     zoom: bounds.zoom,
@@ -115,17 +140,37 @@ export function nextCropStateForZoom(
   height: number,
   crop: SquareCropState,
   nextZoom: number,
+  targetWidth = IMAGE_TARGET_SIZE,
+  targetHeight = IMAGE_TARGET_SIZE,
 ) {
-  const currentBounds = getCropBounds(width, height, crop.zoom);
-  const nextBounds = getCropBounds(width, height, nextZoom);
-  const centerX = crop.offsetX + currentBounds.cropSide / 2;
-  const centerY = crop.offsetY + currentBounds.cropSide / 2;
+  const currentBounds = getCropBounds(
+    width,
+    height,
+    crop.zoom,
+    targetWidth,
+    targetHeight,
+  );
+  const nextBounds = getCropBounds(
+    width,
+    height,
+    nextZoom,
+    targetWidth,
+    targetHeight,
+  );
+  const centerX = crop.offsetX + currentBounds.cropWidth / 2;
+  const centerY = crop.offsetY + currentBounds.cropHeight / 2;
 
-  return clampCropState(width, height, {
-    zoom: nextBounds.zoom,
-    offsetX: centerX - nextBounds.cropSide / 2,
-    offsetY: centerY - nextBounds.cropSide / 2,
-  });
+  return clampCropState(
+    width,
+    height,
+    {
+      zoom: nextBounds.zoom,
+      offsetX: centerX - nextBounds.cropWidth / 2,
+      offsetY: centerY - nextBounds.cropHeight / 2,
+    },
+    targetWidth,
+    targetHeight,
+  );
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality?: number) {
@@ -144,24 +189,32 @@ function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality?: number)
 export async function createCroppedImageFile(params: {
   file: File;
   crop: SquareCropState;
+  targetWidth?: number;
+  targetHeight?: number;
 }) {
   const src = createObjectUrl(params.file);
 
   try {
     const image = await loadImage(src);
+    const targetWidth = params.targetWidth ?? IMAGE_TARGET_SIZE;
+    const targetHeight = params.targetHeight ?? IMAGE_TARGET_SIZE;
     const normalizedCrop = clampCropState(
       image.naturalWidth,
       image.naturalHeight,
       params.crop,
+      targetWidth,
+      targetHeight,
     );
     const bounds = getCropBounds(
       image.naturalWidth,
       image.naturalHeight,
       normalizedCrop.zoom,
+      targetWidth,
+      targetHeight,
     );
     const canvas = document.createElement("canvas");
-    canvas.width = IMAGE_TARGET_SIZE;
-    canvas.height = IMAGE_TARGET_SIZE;
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
 
     const context = canvas.getContext("2d");
     if (!context) {
@@ -172,12 +225,12 @@ export async function createCroppedImageFile(params: {
       image,
       normalizedCrop.offsetX,
       normalizedCrop.offsetY,
-      bounds.cropSide,
-      bounds.cropSide,
+      bounds.cropWidth,
+      bounds.cropHeight,
       0,
       0,
-      IMAGE_TARGET_SIZE,
-      IMAGE_TARGET_SIZE,
+      targetWidth,
+      targetHeight,
     );
 
     const blob = await canvasToBlob(canvas, IMAGE_OUTPUT_MIME, 0.92);

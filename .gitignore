@@ -41,5 +41,6 @@ yarn-error.log*
 next-env.d.ts
 
 # Uploads
+public/uploads/*
 public/uploads/tier-items/*
 !public/uploads/tier-items/.gitkeep

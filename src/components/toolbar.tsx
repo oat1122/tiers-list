@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toPng } from "html-to-image";
 import {
   ArrowLeft,
@@ -25,7 +26,8 @@ interface ToolbarProps {
   mode?: "local" | "template";
   listId?: string;
   backHref?: string;
-  onBeforeNavigate?: () => boolean;
+  onBeforeNavigate?: () => Promise<boolean> | boolean;
+  onBeforeReset?: () => Promise<boolean> | boolean;
   onSave?: () => Promise<void>;
   isDirty?: boolean;
   isSaving?: boolean;
@@ -49,11 +51,13 @@ export function Toolbar({
   listId,
   backHref,
   onBeforeNavigate,
+  onBeforeReset,
   onSave,
   isDirty = false,
   isSaving = false,
   saveStatusText,
 }: ToolbarProps) {
+  const router = useRouter();
   const { tiers, addTier, reset } = useTierStore();
   const {
     title,
@@ -112,7 +116,11 @@ export function Toolbar({
     }
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
+    if (onBeforeReset && !(await onBeforeReset())) {
+      return;
+    }
+
     reset();
     resetTitle();
   };
@@ -136,18 +144,20 @@ export function Toolbar({
     }
 
     return (
-      <Link
-        href={backHref}
-        onClick={(event) => {
-          if (onBeforeNavigate && !onBeforeNavigate()) {
-            event.preventDefault();
-          }
-        }}
-        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:px-3"
+        <button
+          type="button"
+          onClick={async () => {
+            if (onBeforeNavigate && !(await onBeforeNavigate())) {
+              return;
+            }
+
+            router.push(backHref);
+          }}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:px-3"
       >
         <ArrowLeft className="h-4 w-4" />
         <span className="hidden sm:inline">Back</span>
-      </Link>
+      </button>
     );
   };
 
@@ -205,7 +215,7 @@ export function Toolbar({
             <Button
               variant="outline"
               size="sm"
-              onClick={handleReset}
+              onClick={() => void handleReset()}
               className="gap-1.5 px-2 text-muted-foreground hover:text-foreground sm:px-2.5"
               title="Reset"
             >

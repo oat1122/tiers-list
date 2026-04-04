@@ -3,6 +3,7 @@
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ConfirmDialogProvider } from "@/components/confirm-dialog-provider";
 import type { TemplateEditorPageData } from "@/types";
 
 const mocks = vi.hoisted(() => ({
@@ -126,7 +127,11 @@ describe("TierListEditor initialization", () => {
 
   it("initializes a blank local editor when no preload data is provided", async () => {
     await act(async () => {
-      root.render(<TierListEditor mode="local" />);
+      root.render(
+        <ConfirmDialogProvider>
+          <TierListEditor mode="local" />
+        </ConfirmDialogProvider>,
+      );
     });
 
     expect(mocks.initializeTitle).toHaveBeenLastCalledWith(
@@ -143,7 +148,9 @@ describe("TierListEditor initialization", () => {
   it("hydrates local mode from preloaded public editor data", async () => {
     await act(async () => {
       root.render(
-        <TierListEditor mode="local" initialData={createInitialData()} />,
+        <ConfirmDialogProvider>
+          <TierListEditor mode="local" initialData={createInitialData()} />
+        </ConfirmDialogProvider>,
       );
     });
 
@@ -174,7 +181,9 @@ describe("TierListEditor initialization", () => {
   it("keeps template mode wired to the template save toolbar flow", async () => {
     await act(async () => {
       root.render(
-        <TierListEditor mode="template" initialData={createInitialData()} />,
+        <ConfirmDialogProvider>
+          <TierListEditor mode="template" initialData={createInitialData()} />
+        </ConfirmDialogProvider>,
       );
     });
 
