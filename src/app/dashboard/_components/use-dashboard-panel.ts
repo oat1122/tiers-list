@@ -259,7 +259,7 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
           body: JSON.stringify({ [field]: value }),
         });
 
-        const result = await readJsonOrNull(response);
+        await readJsonOrNull(response);
       },
       successMessage,
     );
@@ -279,7 +279,7 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
           body: JSON.stringify({ isPublic: 0, isTemplate: 1 }),
         });
 
-        const result = await readJsonOrNull(response);
+        await readJsonOrNull(response);
       },
       "เปลี่ยนเป็นรายการส่วนตัวและบันทึกเป็นเทมเพลตแล้ว",
     );
@@ -318,7 +318,7 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
           method: "DELETE",
         });
 
-        const result = await readJsonOrNull(response);
+        await readJsonOrNull(response);
 
         setDeleteTarget(null);
       },
@@ -334,7 +334,7 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
           method: "POST",
         });
 
-        const result = await readJsonOrNull(response);
+        await readJsonOrNull(response);
       },
       "กู้คืนรายการเรียบร้อยแล้ว",
     );
@@ -348,7 +348,7 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
           method: "POST",
         });
 
-        const result = await readJsonOrNull(response);
+        await readJsonOrNull(response);
       },
       "สร้างสำเนาจากเทมเพลตเรียบร้อยแล้ว",
     );

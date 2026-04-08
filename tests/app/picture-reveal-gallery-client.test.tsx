@@ -9,7 +9,9 @@ import type { PublicPictureRevealGameSummary } from "@/types/picture-reveal-publ
 vi.mock("next/image", () => ({
   default: ({
     alt,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     fill: _fill,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     unoptimized: _unoptimized,
     ...props
   }: {
@@ -17,7 +19,10 @@ vi.mock("next/image", () => ({
     fill?: boolean;
     unoptimized?: boolean;
     [key: string]: unknown;
-  }) => <img alt={alt} {...props} />,
+  }) => {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img alt={alt} {...props} />;
+  },
 }));
 
 vi.mock("next/link", () => ({
@@ -102,7 +107,7 @@ describe("PictureRevealGalleryClient", () => {
     await flush();
 
     expect(container.querySelector('a[href="/picture-reveal/create"]')).toBeTruthy();
-    expect(container.textContent).toContain("Create your own game");
+    expect(container.textContent).toContain("สร้างเกมของคุณเอง");
   });
 });
 

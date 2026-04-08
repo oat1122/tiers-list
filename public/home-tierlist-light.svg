@@ -1,6 +1,51 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="100%" height="100%">
   <defs>
     <style>
+      :root {
+        --bg: #f8fafc;
+        --card-bg: #ffffff;
+        --head-blue-bg: #eff6ff;
+        --head-blue-stroke: #3b82f6;
+        --text-primary: #0f172a;
+        --text-muted: #64748b;
+        --tier-plh-bg: #f1f5f9;
+        --tier-plh-stroke: #e2e8f0;
+        --text-tier: #1e293b;
+        --tier-bg-s: #ff7f7f;
+        --tier-bg-a: #ffbf7f;
+        --tier-bg-b: #ffff7f;
+        --head-purple-bg: #f5f3ff;
+        --head-purple-stroke: #8b5cf6;
+        --main-row-bg: #f8fafc;
+        --main-row-stroke: #e2e8f0;
+        --dashed-row-bg: #f1f5f9;
+        --dashed-row-stroke: #cbd5e1;
+        --cursor-stroke: #0f172a;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f172a;
+          --card-bg: #1e293b;
+          --head-blue-bg: #172554;
+          --head-blue-stroke: #60a5fa;
+          --text-primary: #f8fafc;
+          --text-muted: #94a3b8;
+          --tier-plh-bg: #334155;
+          --tier-plh-stroke: #475569;
+          --text-tier: #f8fafc;
+          --tier-bg-s: #ef4444;
+          --tier-bg-a: #f97316;
+          --tier-bg-b: #eab308;
+          --head-purple-bg: #2e1065;
+          --head-purple-stroke: #a78bfa;
+          --main-row-bg: #334155;
+          --main-row-stroke: #475569;
+          --dashed-row-bg: #1e293b;
+          --dashed-row-stroke: #475569;
+          --cursor-stroke: #ffffff;
+        }
+      }
+
       /* กำหนด Keyframes สำหรับ Animation */
       @keyframes cursorAnim {
         0%, 10% { transform: translate(150px, 380px); }
@@ -18,8 +63,8 @@
       }
       
       @keyframes cardGlow {
-        0%, 25% { stroke: #e2e8f0; stroke-width: 2; }
-        30%, 100% { stroke: #3b82f6; stroke-width: 3; }
+        0%, 25% { stroke: var(--tier-plh-stroke); stroke-width: 2; }
+        30%, 100% { stroke: var(--head-blue-stroke); stroke-width: 3; }
       }
       
       @keyframes item1Anim {
@@ -61,39 +106,39 @@
     </style>
     
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0f172a" flood-opacity="0.08" />
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.15" />
     </filter>
   </defs>
 
-  <rect width="800" height="400" fill="#f8fafc" />
+  <rect width="800" height="400" fill="var(--bg)" />
 
   <g transform="translate(40, 40)">
-    <rect width="250" height="320" fill="#ffffff" rx="16" filter="url(#shadow)" />
+    <rect width="250" height="320" fill="var(--card-bg)" rx="16" filter="url(#shadow)" />
     
-    <path d="M20 30 Q20 20 30 20 L50 20 Q60 20 60 30 L60 40 Q60 50 50 50 L30 50 Q20 50 20 40 Z" fill="#eff6ff" />
-    <path d="M33 28 L47 28 M33 35 L47 35 M33 42 L41 42" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+    <path d="M20 30 Q20 20 30 20 L50 20 Q60 20 60 30 L60 40 Q60 50 50 50 L30 50 Q20 50 20 40 Z" fill="var(--head-blue-bg)" />
+    <path d="M33 28 L47 28 M33 35 L47 35 M33 42 L41 42" stroke="var(--head-blue-stroke)" stroke-width="2" stroke-linecap="round"/>
     
-    <text x="75" y="36" font-family="sans-serif" font-weight="700" font-size="16" fill="#0f172a">Public Gallery</text>
-    <text x="75" y="52" font-family="sans-serif" font-size="11" fill="#64748b">Community Tier Lists</text>
+    <text x="75" y="36" font-family="sans-serif" font-weight="700" font-size="16" fill="var(--text-primary)">Public Gallery</text>
+    <text x="75" y="52" font-family="sans-serif" font-size="11" fill="var(--text-muted)">Community Tier Lists</text>
 
-    <rect x="25" y="80" width="90" height="95" rx="8" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1.5" />
-    <rect x="33" y="90" width="74" height="10" rx="3" fill="#ff7f7f" opacity="0.4" />
-    <rect x="33" y="104" width="74" height="10" rx="3" fill="#ffbf7f" opacity="0.4" />
-    <rect x="33" y="118" width="74" height="10" rx="3" fill="#ffff7f" opacity="0.4" />
+    <rect x="25" y="80" width="90" height="95" rx="8" fill="var(--tier-plh-bg)" stroke="var(--tier-plh-stroke)" stroke-width="1.5" />
+    <rect x="33" y="90" width="74" height="10" rx="3" fill="var(--tier-bg-s)" opacity="0.4" />
+    <rect x="33" y="104" width="74" height="10" rx="3" fill="var(--tier-bg-a)" opacity="0.4" />
+    <rect x="33" y="118" width="74" height="10" rx="3" fill="var(--tier-bg-b)" opacity="0.4" />
 
-    <rect class="card-target" x="135" y="80" width="90" height="95" rx="8" fill="#f1f5f9" />
-    <rect x="143" y="90" width="74" height="10" rx="3" fill="#ff7f7f" />
-    <rect x="143" y="104" width="74" height="10" rx="3" fill="#ffbf7f" />
-    <rect x="143" y="118" width="74" height="10" rx="3" fill="#ffff7f" />
+    <rect class="card-target" x="135" y="80" width="90" height="95" rx="8" fill="var(--tier-plh-bg)" />
+    <rect x="143" y="90" width="74" height="10" rx="3" fill="var(--tier-bg-s)" />
+    <rect x="143" y="104" width="74" height="10" rx="3" fill="var(--tier-bg-a)" />
+    <rect x="143" y="118" width="74" height="10" rx="3" fill="var(--tier-bg-b)" />
     <circle cx="155" cy="145" r="7" fill="#3b82f6" />
     <circle cx="175" cy="145" r="7" fill="#8b5cf6" />
     <circle cx="195" cy="145" r="7" fill="#ec4899" />
 
-    <rect x="25" y="195" width="90" height="95" rx="8" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="25" y="195" width="90" height="95" rx="8" fill="var(--tier-plh-bg)" stroke="var(--tier-plh-stroke)" stroke-width="1.5" />
     <rect x="33" y="205" width="74" height="10" rx="3" fill="#93c5fd" opacity="0.4" />
     <rect x="33" y="219" width="74" height="10" rx="3" fill="#86efac" opacity="0.4" />
 
-    <rect x="135" y="195" width="90" height="95" rx="8" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="135" y="195" width="90" height="95" rx="8" fill="var(--tier-plh-bg)" stroke="var(--tier-plh-stroke)" stroke-width="1.5" />
     <rect x="143" y="205" width="74" height="10" rx="3" fill="#fca5a5" opacity="0.4" />
     <rect x="143" y="219" width="74" height="10" rx="3" fill="#fcd34d" opacity="0.4" />
   </g>
@@ -104,27 +149,27 @@
   </g>
 
   <g class="editor-panel" transform="translate(320, 40)">
-    <rect width="440" height="320" fill="#ffffff" rx="16" filter="url(#shadow)" />
+    <rect width="440" height="320" fill="var(--card-bg)" rx="16" filter="url(#shadow)" />
     
-    <path d="M20 30 Q20 20 30 20 L50 20 Q60 20 60 30 L60 40 Q60 50 50 50 L30 50 Q20 50 20 40 Z" fill="#f5f3ff" />
-    <path d="M32 30 L48 30 M32 36 L44 36 M32 42 L40 42" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round"/>
+    <path d="M20 30 Q20 20 30 20 L50 20 Q60 20 60 30 L60 40 Q60 50 50 50 L30 50 Q20 50 20 40 Z" fill="var(--head-purple-bg)" />
+    <path d="M32 30 L48 30 M32 36 L44 36 M32 42 L40 42" stroke="var(--head-purple-stroke)" stroke-width="2" stroke-linecap="round"/>
 
-    <text x="75" y="36" font-family="sans-serif" font-weight="700" font-size="16" fill="#0f172a">Local Editor</text>
-    <text x="75" y="52" font-family="sans-serif" font-size="11" fill="#64748b">Tweak &amp; Extend immediately</text>
+    <text x="75" y="36" font-family="sans-serif" font-weight="700" font-size="16" fill="var(--text-primary)">Local Editor</text>
+    <text x="75" y="52" font-family="sans-serif" font-size="11" fill="var(--text-muted)">Tweak &amp; Extend immediately</text>
 
-    <rect x="20" y="80" width="400" height="50" fill="#f8fafc" rx="4" stroke="#e2e8f0" stroke-width="1"/>
-    <rect x="20" y="80" width="60" height="50" fill="#ff7f7f" rx="4" />
-    <text x="50" y="112" font-family="sans-serif" font-weight="bold" font-size="22" fill="#1e293b" text-anchor="middle">S</text>
+    <rect x="20" y="80" width="400" height="50" fill="var(--main-row-bg)" rx="4" stroke="var(--main-row-stroke)" stroke-width="1"/>
+    <rect x="20" y="80" width="60" height="50" fill="var(--tier-bg-s)" rx="4" />
+    <text x="50" y="112" font-family="sans-serif" font-weight="bold" font-size="22" fill="var(--text-tier)" text-anchor="middle">S</text>
 
-    <rect x="20" y="135" width="400" height="50" fill="#f8fafc" rx="4" stroke="#e2e8f0" stroke-width="1"/>
-    <rect x="20" y="135" width="60" height="50" fill="#ffbf7f" rx="4" />
-    <text x="50" y="167" font-family="sans-serif" font-weight="bold" font-size="22" fill="#1e293b" text-anchor="middle">A</text>
+    <rect x="20" y="135" width="400" height="50" fill="var(--main-row-bg)" rx="4" stroke="var(--main-row-stroke)" stroke-width="1"/>
+    <rect x="20" y="135" width="60" height="50" fill="var(--tier-bg-a)" rx="4" />
+    <text x="50" y="167" font-family="sans-serif" font-weight="bold" font-size="22" fill="var(--text-tier)" text-anchor="middle">A</text>
 
-    <rect x="20" y="190" width="400" height="50" fill="#f8fafc" rx="4" stroke="#e2e8f0" stroke-width="1"/>
-    <rect x="20" y="190" width="60" height="50" fill="#ffff7f" rx="4" />
-    <text x="50" y="222" font-family="sans-serif" font-weight="bold" font-size="22" fill="#1e293b" text-anchor="middle">B</text>
+    <rect x="20" y="190" width="400" height="50" fill="var(--main-row-bg)" rx="4" stroke="var(--main-row-stroke)" stroke-width="1"/>
+    <rect x="20" y="190" width="60" height="50" fill="var(--tier-bg-b)" rx="4" />
+    <text x="50" y="222" font-family="sans-serif" font-weight="bold" font-size="22" fill="var(--text-tier)" text-anchor="middle">B</text>
 
-    <rect x="20" y="255" width="400" height="50" fill="#f1f5f9" rx="8" stroke="#cbd5e1" stroke-dasharray="4" stroke-width="1.5" />
+    <rect x="20" y="255" width="400" height="50" fill="var(--dashed-row-bg)" rx="8" stroke="var(--dashed-row-stroke)" stroke-dasharray="4" stroke-width="1.5" />
   </g>
 
   <g class="item-3" transform="translate(500, 300)">
@@ -143,7 +188,7 @@
   </g>
 
   <g class="cursor">
-    <path d="M0,0 L16,16 L9,16 L5,24 L0,24 Z" fill="#ffffff" stroke="#0f172a" stroke-width="1.5" filter="url(#shadow)"/>
+    <path d="M0,0 L16,16 L9,16 L5,24 L0,24 Z" fill="#ffffff" stroke="var(--cursor-stroke)" stroke-width="1.5" filter="url(#shadow)"/>
   </g>
 
 </svg>

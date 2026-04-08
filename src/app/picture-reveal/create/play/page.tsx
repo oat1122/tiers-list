@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { PictureRevealLocalPlayClient } from "../_components/picture-reveal-local-play-client";
 
 export const metadata: Metadata = {
-  title: "Play Local Picture Reveal",
+  title: "เล่นเกมทายภาพ (Picture Reveal)",
   description:
-    "Play the Picture Reveal game stored locally in your browser.",
+    "เล่นเกมทายภาพ (Picture Reveal) จากแบบร่างที่บันทึกไว้ในเบราว์เซอร์ของคุณ",
 };
 
 export default function PictureRevealCreatePlayPage() {

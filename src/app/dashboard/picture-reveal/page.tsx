@@ -7,8 +7,8 @@ import { getAdminPictureRevealGames } from "@/services/picture-reveal-games.serv
 import type { PictureRevealGameSummaryDto } from "@/types/picture-reveal-admin";
 
 export const metadata: Metadata = {
-  title: "Picture Reveal Admin | Dashboard",
-  description: "จัดการเกม Picture Reveal สำหรับแอดมิน",
+  title: "การจัดการเกมทายภาพ (Picture Reveal) | Dashboard",
+  description: "ระบบจัดการเกมทายภาพสำหรับผู้ดูแลระบบ",
 };
 
 function serializeGames(

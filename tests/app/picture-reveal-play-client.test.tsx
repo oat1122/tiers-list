@@ -9,8 +9,11 @@ import type { PublicPictureRevealGameDetail } from "@/types/picture-reveal-publi
 vi.mock("next/image", () => ({
   default: ({
     alt,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     fill: _fill,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     unoptimized: _unoptimized,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     sizes: _sizes,
     ...props
   }: {
@@ -19,7 +22,10 @@ vi.mock("next/image", () => ({
     unoptimized?: boolean;
     sizes?: string;
     [key: string]: unknown;
-  }) => <img alt={alt} {...props} />,
+  }) => {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img alt={alt} {...props} />;
+  },
 }));
 
 vi.mock("next/link", () => ({
@@ -134,6 +140,16 @@ function getBoardSizeWrapper(container: HTMLElement) {
   return wrapper;
 }
 
+function getBoardScrollRegion(container: HTMLElement) {
+  const region = container.querySelector(
+    "[data-board-scroll-region]",
+  ) as HTMLElement | null;
+
+  expect(region).toBeTruthy();
+
+  return region;
+}
+
 describe("PictureRevealPlayClient", () => {
   let container: HTMLDivElement;
   let root: ReturnType<typeof createRoot>;
@@ -185,10 +201,23 @@ describe("PictureRevealPlayClient", () => {
 
     expect(container.textContent).toContain("Hide Live Leaderboard");
     expect(container.textContent).toContain("No one has scored yet.");
+    expect(
+      container
+        .querySelector("[data-floating-leaderboard]")
+        ?.className.includes("pointer-events-none"),
+    ).toBe(true);
+    expect(
+      container
+        .querySelector("[data-floating-leaderboard-card]")
+        ?.className.includes("pointer-events-auto"),
+    ).toBe(true);
 
     const boardWrapper = getBoardSizeWrapper(container);
+    const boardScrollRegion = getBoardScrollRegion(container);
 
     expect(boardWrapper.getAttribute("data-board-size")).toBe("full");
+    expect(boardWrapper.getAttribute("style")).toContain("min-width: 240px");
+    expect(boardScrollRegion.className).toContain("overflow-x-auto");
 
     await clickButton(container, "70%");
 
@@ -306,6 +335,11 @@ describe("PictureRevealPlayClient", () => {
 
     expect(container.textContent).toContain("Hide Live Leaderboard");
     expect(container.textContent).toContain("No one has scored yet.");
+    expect(
+      container
+        .querySelector("[data-floating-leaderboard-card]")
+        ?.className.includes("pointer-events-auto"),
+    ).toBe(true);
 
     await clickButton(container, "Reveal Answer");
     await clickButton(container, "No Correct Answer");
@@ -401,6 +435,39 @@ describe("PictureRevealPlayClient", () => {
 
     expect(container.textContent).toContain("Start Host Run");
     expect(container.textContent).not.toContain("Run Summary");
+  });
+
+  it("keeps a minimum playable board width even on the smallest resize preset", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+
+    const game = createGame({
+      images: [
+        {
+          id: "image-1",
+          imagePath: "/uploads/panorama.webp",
+          answer: "Panorama",
+          rows: 2,
+          cols: 8,
+          totalTiles: 16,
+          specialTileCount: 0,
+          specialPattern: "plus",
+        },
+      ],
+    });
+
+    await act(async () => {
+      root.render(<PictureRevealPlayClient game={game} />);
+    });
+    await flush();
+
+    await clickButton(container, "Start Host Run");
+    await clickButton(container, "20%");
+
+    const boardWrapper = getBoardSizeWrapper(container);
+
+    expect(boardWrapper.getAttribute("data-board-size")).toBe("tiny");
+    expect(boardWrapper.getAttribute("style")).toContain("max-width: 20%");
+    expect(boardWrapper.getAttribute("style")).toContain("min-width: 320px");
   });
 });
 

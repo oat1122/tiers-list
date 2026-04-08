@@ -33,7 +33,7 @@ export default async function PictureRevealPage() {
                   <Gamepad2 className="mr-1 size-3.5" />
                   Picture Reveal
                 </Badge>
-                <Badge variant="secondary">{games.length} public games</Badge>
+                <Badge variant="secondary">{games.length} เกมสาธารณะ</Badge>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -42,26 +42,26 @@ export default async function PictureRevealPage() {
                   className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   <HomeIcon className="size-4" />
-                  Back to home
+                  กลับหน้าหลัก
                 </a>
                 <Link
                   href="/"
                   className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
-                  Public Portal
+                  หน้าหลักรวมเกม
                 </Link>
                 <Link
                   href="/tier-lists"
                   className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
-                  Tier Lists
+                  จัดอันดับ (Tier Lists)
                 </Link>
                 <Link
                   href="/sign-in"
                   className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-primary px-3.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
                 >
                   <LogIn className="size-4" />
-                  Login
+                  เข้าสู่ระบบ
                 </Link>
                 <ThemeToggle />
               </div>

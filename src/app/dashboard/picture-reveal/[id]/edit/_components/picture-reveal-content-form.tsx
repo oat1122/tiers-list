@@ -105,7 +105,7 @@ async function uploadRemoteCover(gameId: string, file: File) {
   const payload = await readJsonOrNull(response);
 
   if (!response.ok) {
-    throw new Error(extractPictureRevealApiError(payload) ?? "Cover upload failed");
+    throw new Error(extractPictureRevealApiError(payload) ?? "อัปโหลดรูปภาพหน้าปกไม่สำเร็จ");
   }
 
   const result = payload as { tempUploadPath: string };
@@ -138,7 +138,7 @@ async function uploadRemoteImage(
   const payload = await readJsonOrNull(response);
 
   if (!response.ok) {
-    throw new Error(extractPictureRevealApiError(payload) ?? "Image upload failed");
+    throw new Error(extractPictureRevealApiError(payload) ?? "อัปโหลดรูปภาพไม่สำเร็จ");
   }
 
   const result = payload as {
@@ -167,7 +167,7 @@ async function loadRemoteRecropFile(
   const response = await fetch(recropSourcePath, { cache: "no-store" });
 
   if (!response.ok) {
-    throw new Error("Could not load the current image for recropping.");
+    throw new Error("ไม่สามารถโหลดรูปภาพเดิมเพื่อทำการครอปใหม่ได้");
   }
 
   const blob = await response.blob();
@@ -257,10 +257,10 @@ function PictureRevealCoverCard({
         URL.revokeObjectURL(previousPreviewPath);
       }
 
-      toast.success("Uploaded game cover.");
+      toast.success("อัปโหลดรูปภาพหน้าปกแล้ว");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Cover upload failed";
+        error instanceof Error ? error.message : "อัปโหลดรูปภาพหน้าปกไม่สำเร็จ";
       setUploadError(message);
       toast.error(message);
     } finally {
@@ -302,7 +302,7 @@ function PictureRevealCoverCard({
       shouldValidate: true,
     });
     setUploadError(null);
-    toast.success("Removed game cover from the draft.");
+    toast.success("ลบรูปภาพหน้าปกออกจากแบบร่างแล้ว");
   };
 
   return (
@@ -310,9 +310,9 @@ function PictureRevealCoverCard({
       <div className="rounded-2xl border border-border bg-muted/20 p-4">
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold">Game Cover</h3>
+            <h3 className="text-lg font-semibold">รูปภาพหน้าปกเกม</h3>
             <p className="text-sm text-muted-foreground">
-              Upload the cover image used on the public game gallery.
+              อัปโหลดรูปภาพหน้าปกสำหรับแสดงในหน้าแกลเลอรีรวมเกม
             </p>
           </div>
 
@@ -320,14 +320,14 @@ function PictureRevealCoverCard({
             {previewPath ? (
               <Image
                 src={previewPath}
-                alt="Picture reveal game cover"
+                alt="รูปภาพหน้าปกเกมทายภาพ"
                 fill
                 className="object-cover"
                 unoptimized
               />
             ) : (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                No cover uploaded yet
+                ยังไม่ได้อัปโหลดรูปหน้าปก
               </div>
             )}
           </div>
@@ -342,7 +342,7 @@ function PictureRevealCoverCard({
               ) : (
                 <ImagePlus className="size-4" />
               )}
-              {previewPath ? "Replace Cover" : "Upload Cover"}
+              {previewPath ? "เปลี่ยนรูปหน้าปก" : "อัปโหลดรูปหน้าปก"}
             </Label>
             <input
               id="picture-reveal-cover-upload"
@@ -363,7 +363,7 @@ function PictureRevealCoverCard({
                 disabled={uploading}
               >
                 <Trash2 className="size-4" />
-                Remove Cover
+                ลบรูปหน้าปก
               </Button>
             ) : null}
           </div>
@@ -524,10 +524,10 @@ function PictureRevealImageCard({
         URL.revokeObjectURL(previousOriginalPath);
       }
 
-      toast.success(`Uploaded image ${index + 1}.`);
+      toast.success(`อัปโหลดรูปภาพที่ ${index + 1} แล้ว`);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Image upload failed";
+        error instanceof Error ? error.message : "อัปโหลดรูปภาพไม่สำเร็จ";
       setUploadError(message);
       toast.error(message);
     } finally {
@@ -548,7 +548,7 @@ function PictureRevealImageCard({
     }
 
     if (targetWidth < 100 || targetHeight < 100) {
-      const message = "Set a valid image size before uploading.";
+      const message = "กรุณากำหนดขนาดรูปภาพให้ถูกต้องก่อนทำการอัปโหลด";
       setUploadError(message);
       toast.error(message);
       return;
@@ -589,7 +589,7 @@ function PictureRevealImageCard({
         : await loadRemoteRecropFile(image, index);
 
       if (!file) {
-        throw new Error("Could not load the current image for recropping.");
+        throw new Error("ไม่สามารถโหลดรูปภาพเดิมเพื่อทำการครอปใหม่ได้");
       }
 
       setSourceImageFile(file);
@@ -598,7 +598,7 @@ function PictureRevealImageCard({
       const message =
         error instanceof Error
           ? error.message
-          : "Could not load the current image for recropping.";
+          : "ไม่สามารถโหลดรูปภาพเดิมเพื่อทำการครอปใหม่ได้";
       setUploadError(message);
       toast.error(message);
     } finally {
@@ -621,20 +621,20 @@ function PictureRevealImageCard({
                 <>
                   <Image
                     src={previewPath}
-                    alt={`Picture reveal image ${index + 1}`}
+                    alt={`รูปภาพเกมทายภาพที่ ${index + 1}`}
                     fill
                     className="object-cover"
                     unoptimized
                   />
                   <div className="absolute inset-x-3 bottom-3 rounded-lg bg-background/80 px-2.5 py-1 text-xs text-muted-foreground backdrop-blur-sm">
                     {canRecropFromPreview
-                      ? "Click the image to crop again."
-                      : "Save first to crop from the stored original image."}
+                      ? "คลิกที่รูปภาพเพื่อครอปใหม่"
+                      : "กรุณาบันทึกข้อมูลก่อนเพื่อครอปรูปจากต้นฉบับ"}
                   </div>
                 </>
               ) : (
                 <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                  No image uploaded yet
+                  ยังไม่ได้อัปโหลดรูปภาพ
                 </div>
               )}
             </button>
@@ -649,7 +649,7 @@ function PictureRevealImageCard({
                 ) : (
                   <Scissors className="size-4" />
                 )}
-                {previewPath ? "Replace Image" : "Upload Image"}
+                {previewPath ? "เปลี่ยนรูปภาพ" : "อัปโหลดรูปภาพ"}
               </Label>
               <input
                 id={`image-upload-${index}`}
@@ -669,7 +669,7 @@ function PictureRevealImageCard({
                 disabled={index === 0}
               >
                 <MoveUp className="size-4" />
-                Up
+                เลื่อนขึ้น
               </Button>
               <Button
                 type="button"
@@ -679,7 +679,7 @@ function PictureRevealImageCard({
                 disabled={index === total - 1}
               >
                 <MoveDown className="size-4" />
-                Down
+                เลื่อนลง
               </Button>
               <Button
                 type="button"
@@ -688,12 +688,12 @@ function PictureRevealImageCard({
                 onClick={removeImage}
               >
                 <Trash2 className="size-4" />
-                Remove
+                ลบรูปนี้
               </Button>
             </div>
 
             <p className="mt-2 text-xs text-muted-foreground">
-              Every image will be cropped to {targetWidth}x{targetHeight}px.
+              ทุกๆ รูปภาพจะถูกครอปให้เป็นขนาด {targetWidth}x{targetHeight} พิกเซล
             </p>
             {uploadError ? (
               <p className="mt-2 text-sm text-destructive">{uploadError}</p>
@@ -702,18 +702,17 @@ function PictureRevealImageCard({
 
           <div className="flex-1 space-y-4">
             <div>
-              <h3 className="text-lg font-semibold">Image {index + 1}</h3>
+              <h3 className="text-lg font-semibold">รูปที่ {index + 1}</h3>
               <p className="text-sm text-muted-foreground">
-                Configure the board and store the single hidden answer for this
-                image.
+                ตั้งค่าแผ่นป้ายและกำหนดคำตอบของรูปภาพนี้ (มีเพียง 1 คำตอบต่อรูป)
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label>Answer</Label>
+              <Label>คำตอบ</Label>
               <Input
                 {...register(`images.${index}.answer`)}
-                placeholder="Type the correct answer"
+                placeholder="พิมพ์ข้อความคำตอบที่ถูกต้อง"
               />
               {answerError ? (
                 <p className="text-sm text-destructive">{answerError}</p>
@@ -722,7 +721,7 @@ function PictureRevealImageCard({
 
             <div className="grid gap-4 md:grid-cols-4">
               <div className="space-y-2">
-                <Label>Rows</Label>
+                <Label>จำนวนแถว (แนวนอน)</Label>
                 <Input
                   type="number"
                   aria-invalid={rowsError ? "true" : "false"}
@@ -735,7 +734,7 @@ function PictureRevealImageCard({
                 ) : null}
               </div>
               <div className="space-y-2">
-                <Label>Cols</Label>
+                <Label>จำนวนคอลัมน์ (แนวตั้ง)</Label>
                 <Input
                   type="number"
                   aria-invalid={colsError ? "true" : "false"}
@@ -749,11 +748,10 @@ function PictureRevealImageCard({
               </div>
               <div className="space-y-2">
                 <Label>
-                  Special Tiles
+                  จำนวนแผ่นป้ายพิเศษ
                   <InfoHint label="Special tile count">
                     <span>
-                      When a host opens a special tile, nearby tiles are opened
-                      automatically based on the selected pattern.
+                      เมื่อผู้จัดรายการเปิดแผ่นป้ายพิเศษ แผ่นป้ายรอบๆ จะถูกเปิดให้อัตโนมัติตามรูปแบบที่เลือก
                     </span>
                   </InfoHint>
                 </Label>
@@ -772,11 +770,10 @@ function PictureRevealImageCard({
               </div>
               <div className="space-y-2">
                 <Label>
-                  Pattern
+                  รูปแบบการเปิดแผ่นป้ายพิเศษ
                   <InfoHint label="Special tile pattern">
                     <span>
-                      This controls which neighboring tiles are revealed when a
-                      special tile is opened.
+                      ควบคุมว่าแผ่นป้ายใดรอบๆ แผ่นป้ายพิเศษจะถูกเปิดบ้าง
                     </span>
                   </InfoHint>
                 </Label>
@@ -786,7 +783,7 @@ function PictureRevealImageCard({
                   render={({ field }) => (
                     <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a pattern" />
+                        <SelectValue placeholder="เลือกรูปแบบ" />
                       </SelectTrigger>
                       <SelectContent>
                         {pictureRevealSpecialPatternOptions.map((option) => (
@@ -812,7 +809,7 @@ function PictureRevealImageCard({
           <div className="mt-4 flex justify-end opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
             <Button type="button" variant="outline" onClick={appendNextImage}>
               <Plus className="size-4" />
-              Add Next Image
+              เพิ่มรูปภาพถัดไป
             </Button>
           </div>
         ) : null}
@@ -854,7 +851,7 @@ export function PictureRevealContentForm({
   onDirtyChange,
   onSnapshotChange,
   uploadAdapter,
-  submitLabel = "Save Content",
+  submitLabel = "บันทึกข้อมูล",
 }: PictureRevealContentFormProps) {
   const form = useForm<PictureRevealContentFormState>({
     resolver: zodResolver(
@@ -942,7 +939,7 @@ export function PictureRevealContentForm({
       shouldValidate: true,
     });
     toast.warning(
-      "Image size changed. Re-upload images so they match the new crop size.",
+      "เปลี่ยนขนาดรูปภาพแล้ว กรุณาอัปโหลดรูปภาพทั้งหมดอีกครั้งเพื่อให้ตรงกับขนาดใหม่",
     );
   };
 
@@ -981,10 +978,9 @@ export function PictureRevealContentForm({
       <div className="space-y-4 rounded-2xl border border-border bg-background/85 px-4 py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">Content</h2>
+            <h2 className="text-lg font-semibold">เนื้อหา/รูปภาพ</h2>
             <p className="text-sm text-muted-foreground">
-              Configure the cover, image size, upload images, and store one
-              hidden answer for each board.
+              ตั้งค่ารูปหน้าปก, ขนาดรูปภาพของเกม, อัปโหลดรูปรวมถึงกำหนดคำตอบให้แต่ละรูป
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -998,7 +994,7 @@ export function PictureRevealContentForm({
               }
             >
               <Plus className="size-4" />
-              Add Image
+              เพิ่มรูปภาพ
             </Button>
             {onSave ? (
               <Button type="submit" disabled={saving}>
@@ -1021,11 +1017,10 @@ export function PictureRevealContentForm({
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <Label>Ratio Presets</Label>
+                  <Label>รูปแบบขนาดสัดส่วน (Ratio)</Label>
                   <InfoHint label="Ratio presets">
                     <span>
-                      Pick a preset crop ratio or unlock manual editing for custom
-                      dimensions.
+                      เลือกสัดส่วนจากรูปแบบสำเร็จรูป หรือปลดล็อกเพื่อแก้ไขขนาดโดยกำหนดเอง
                     </span>
                   </InfoHint>
                 </div>
@@ -1036,7 +1031,7 @@ export function PictureRevealContentForm({
                     <Lock className="size-4 text-muted-foreground" />
                   )}
                   <Label htmlFor="toggle-ratio-editing" className="text-xs">
-                    Unlock custom size
+                    อัปเดตขนาดเอง
                   </Label>
                   <Switch
                     id="toggle-ratio-editing"
@@ -1063,7 +1058,7 @@ export function PictureRevealContentForm({
 
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
               <div className="space-y-2">
-                <Label htmlFor="content-image-width">Image Width (px)</Label>
+                <Label htmlFor="content-image-width">ความกว้าง (px)</Label>
                 <Input
                   id="content-image-width"
                   type="number"
@@ -1073,7 +1068,7 @@ export function PictureRevealContentForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="content-image-height">Image Height (px)</Label>
+                <Label htmlFor="content-image-height">ความสูง (px)</Label>
                 <Input
                   id="content-image-height"
                   type="number"
@@ -1084,7 +1079,7 @@ export function PictureRevealContentForm({
               </div>
               <div className="flex items-end">
                 <div className="rounded-xl border border-border bg-background/70 px-3 py-2 text-sm text-muted-foreground">
-                  Current size: {parsedImageWidth}x{parsedImageHeight}px
+                  ขนาดปัจจุบัน: {parsedImageWidth}x{parsedImageHeight} พิกเซล
                 </div>
               </div>
             </div>
@@ -1112,9 +1107,9 @@ export function PictureRevealContentForm({
 
       {imagesFieldArray.fields.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-10 text-center">
-          <p className="font-medium text-foreground">No images yet</p>
+          <p className="font-medium text-foreground">ยังไม่มีรูปภาพ</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Add at least one image before playing or publishing the game.
+            กรุณาเพิ่มรูปภาพอย่างน้อย 1 รูปภาพ ก่อนทำการนำไปเล่นจริงหรือเผยแพร่
           </p>
         </div>
       ) : null}

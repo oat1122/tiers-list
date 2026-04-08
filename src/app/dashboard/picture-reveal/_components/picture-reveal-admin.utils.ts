@@ -3,7 +3,6 @@ import type { PictureRevealContentFormState } from "@/lib/picture-reveal-content
 import {
   CreatePictureRevealGameSchema,
   SavePictureRevealGameContentSchema,
-  type CreatePictureRevealGameInput,
   type SavePictureRevealGameContentInput,
   type UpdatePictureRevealGameInput,
 } from "@/lib/validations";

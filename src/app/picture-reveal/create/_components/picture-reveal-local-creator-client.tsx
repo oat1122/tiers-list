@@ -48,7 +48,7 @@ import { PictureRevealContentForm } from "@/app/dashboard/picture-reveal/[id]/ed
 
 const HOME_URL = "https://mavelus-jk.com";
 
-const LocalPictureRevealSettingsSchema = z.object({
+export const LocalPictureRevealSettingsSchema = z.object({
   title: z.string().default(""),
   description: z.string().default(""),
   mode: z.enum(["single", "marathon"]),
@@ -74,7 +74,7 @@ function buildSettingsValues(draft: LocalPictureRevealDraft): LocalPictureReveal
 
 function formatSavedAt(value: string | null) {
   if (!value) {
-    return "Local draft ready";
+    return "แบบร่างพร้อมใช้งาน";
   }
 
   return new Intl.DateTimeFormat("th-TH", {
@@ -308,11 +308,11 @@ export function PictureRevealLocalCreatorClient() {
 
   const handleStartOver = async () => {
     const shouldReset = await confirm({
-      title: "Start over?",
+      title: "เริ่มใหม่ทั้งหมดหรือไม่?",
       description:
-        "This removes the current local picture reveal draft and all uploaded local images from this browser.",
-      confirmLabel: "Reset local draft",
-      cancelLabel: "Keep editing",
+        "การกระทำนี้จะลบแบบร่างเกมทายภาพและรูปภาพทั้งหมดที่คุณอัปโหลดไว้ในเบราว์เซอร์นี้ทิ้งถาวร",
+      confirmLabel: "ลบแบบร่างและเริ่มใหม่",
+      cancelLabel: "แก้ไขต่อ",
       variant: "destructive",
     });
 
@@ -333,7 +333,7 @@ export function PictureRevealLocalCreatorClient() {
     setLastSavedAt(nextDraft.updatedAt);
     setSaveError(null);
     setEditorKey((value) => value + 1);
-    toast.success("Started a fresh local picture reveal draft.");
+    toast.success("เริ่มสร้างแบบร่างเกมทายภาพใหม่เรียบร้อยแล้ว");
   };
 
   const handlePlay = async () => {
@@ -370,7 +370,7 @@ export function PictureRevealLocalCreatorClient() {
       <div className="rounded-[2rem] border border-border/70 bg-background/90 px-6 py-16 text-center shadow-sm">
         <Loader2 className="mx-auto size-6 animate-spin text-muted-foreground" />
         <p className="mt-3 text-sm text-muted-foreground">
-          Loading your local picture reveal draft...
+          กำลังโหลดแบบร่างเกมทายภาพของคุณ...
         </p>
       </div>
     );
@@ -380,7 +380,7 @@ export function PictureRevealLocalCreatorClient() {
     return (
       <Card className="border-destructive/30 bg-destructive/5 shadow-sm">
         <CardHeader>
-          <CardTitle>Local draft is unavailable</CardTitle>
+          <CardTitle>ไม่พบแบบร่างในเบราว์เซอร์</CardTitle>
           <CardDescription>{loadError}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
@@ -389,7 +389,7 @@ export function PictureRevealLocalCreatorClient() {
             className={cn(buttonVariants({ variant: "outline" }))}
           >
             <ArrowLeft className="size-4" />
-            Back to Picture Reveal
+            กลับหน้าเกมทายภาพ
           </Link>
         </CardContent>
       </Card>
@@ -402,8 +402,8 @@ export function PictureRevealLocalCreatorClient() {
         <CardContent className="space-y-6 px-6 py-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="warning">Picture Reveal Creator</Badge>
-              <Badge variant="secondary">Local only</Badge>
+              <Badge variant="warning">เครื่องมือสร้างเกมทายภาพ</Badge>
+              <Badge variant="secondary">บันทึกเฉพาะในเบราว์เซอร์</Badge>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -412,14 +412,14 @@ export function PictureRevealLocalCreatorClient() {
                 className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <HomeIcon className="size-4" />
-                Back to home
+                กลับหน้าหลัก
               </a>
               <Link
                 href="/picture-reveal"
                 className={cn(buttonVariants({ variant: "outline" }))}
               >
                 <ArrowLeft className="size-4" />
-                Public Games
+                เกมสาธารณะ
               </Link>
               <ThemeToggle />
             </div>
@@ -427,22 +427,20 @@ export function PictureRevealLocalCreatorClient() {
 
           <div className="space-y-2">
             <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-              Create Your Own Picture Reveal
+              สร้างเกมทายภาพของคุณเอง
             </h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground md:text-base">
-              Build a host-run picture reveal game in this browser only. Your
-              draft and uploaded images stay on this device, and nothing is sent
-              to the database.
+              สร้างเกมทายภาพ (Picture Reveal) สำหรับนำไปใช้จัดกิจกรรม ข้อมูลแบบร่างและรูปภาพทั้งหมดที่คุณอัปโหลดจะถูกบันทึกไว้ในเบราว์เซอร์ของอุปกรณ์นี้เท่านั้น ไม่มีการส่งข้อมูลใด ๆ ไปยังเซิร์ฟเวอร์
             </p>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
             <div>
-              <p className="text-sm font-semibold text-foreground">Local Draft</p>
+              <p className="text-sm font-semibold text-foreground">สถานะแบบร่าง (Local Draft)</p>
               <p className="text-sm text-muted-foreground">
                 {isAutosaving
-                  ? "Autosaving locally..."
-                  : `Last local save ${formatSavedAt(lastSavedAt)}`}
+                  ? "กำลังบันทึกอัตโนมัติ..."
+                  : `บันทึกล่าสุดเมื่อ: ${formatSavedAt(lastSavedAt)}`}
               </p>
               {saveError ? (
                 <p className="mt-1 text-sm text-destructive">{saveError}</p>
@@ -452,11 +450,11 @@ export function PictureRevealLocalCreatorClient() {
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="outline" onClick={() => void handleStartOver()}>
                 <RotateCcw className="size-4" />
-                Start Over
+                เริ่มใหม่ทั้งหมด
               </Button>
               <Button type="button" onClick={() => void handlePlay()}>
                 <Play className="size-4" />
-                Play This Game
+                เริ่มเล่นเกมนี้
               </Button>
             </div>
           </div>
@@ -465,24 +463,23 @@ export function PictureRevealLocalCreatorClient() {
 
       <Card className="border-border/70 bg-background/92 shadow-sm">
         <CardHeader>
-          <CardTitle>Settings</CardTitle>
+          <CardTitle>การตั้งค่าเกม</CardTitle>
           <CardDescription>
-            These values are saved locally while you edit and used directly by
-            the host-run play screen.
+            ค่าเหล่านี้จะถูกบันทึกไว้ในเบราว์เซอร์ขณะที่คุณแก้ไข และจะถูกนำไปใช้ในหน้าเล่นเกมสำหรับผู้จัดกิจกรรมทันที
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-5">
             <div className="grid gap-5 lg:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="local-picture-reveal-title">Game Title</Label>
+                <Label htmlFor="local-picture-reveal-title">ชื่อเกม</Label>
                 <Input
                   id="local-picture-reveal-title"
                   {...settingsForm.register("title")}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="local-picture-reveal-mode">Mode</Label>
+                <Label htmlFor="local-picture-reveal-mode">โหมดการเล่น</Label>
                   <Select
                   value={settingsSnapshot.mode}
                   onValueChange={(value) =>
@@ -492,18 +489,18 @@ export function PictureRevealLocalCreatorClient() {
                   }
                 >
                   <SelectTrigger id="local-picture-reveal-mode">
-                    <SelectValue placeholder="Select a mode" />
+                    <SelectValue placeholder="เลือกโหมดการเล่น" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="single">Single</SelectItem>
-                    <SelectItem value="marathon">Marathon</SelectItem>
+                    <SelectItem value="single">แบบข้อเดียว (Single)</SelectItem>
+                    <SelectItem value="marathon">แบบต่อเนื่อง (Marathon)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="local-picture-reveal-description">Description</Label>
+              <Label htmlFor="local-picture-reveal-description">คำอธิบายเกม</Label>
               <Textarea
                 id="local-picture-reveal-description"
                 {...settingsForm.register("description")}
@@ -512,7 +509,7 @@ export function PictureRevealLocalCreatorClient() {
 
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="local-start-score">Start Score</Label>
+                <Label htmlFor="local-start-score">คะแนนเริ่มต้น (เต็ม)</Label>
                 <Input
                   id="local-start-score"
                   type="number"
@@ -522,7 +519,7 @@ export function PictureRevealLocalCreatorClient() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="local-open-tile-penalty">Open Tile Penalty</Label>
+                <Label htmlFor="local-open-tile-penalty">คะแนนที่ลดลงเมื่อเปิด 1 ป้าย</Label>
                 <Input
                   id="local-open-tile-penalty"
                   type="number"
@@ -533,7 +530,7 @@ export function PictureRevealLocalCreatorClient() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="local-special-tile-penalty">
-                  Special Tile Penalty
+                  คะแนนที่ลดลงสำหรับป้ายพิเศษ
                 </Label>
                 <Input
                   id="local-special-tile-penalty"
@@ -560,7 +557,7 @@ export function PictureRevealLocalCreatorClient() {
 
       {contentDirty ? (
         <p className="text-sm text-muted-foreground">
-          Changes are stored locally in this browser only.
+          การแก้ไขของคุณจะถูกบันทึกไว้ในเบราว์เซอร์นี้โดยอัตโนมัติ
         </p>
       ) : null}
     </div>

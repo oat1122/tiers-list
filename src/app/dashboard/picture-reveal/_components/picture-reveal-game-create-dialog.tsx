@@ -115,8 +115,8 @@ export function PictureRevealGameCreateDialog({
                     <SelectValue placeholder="เลือกโหมดเกม" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="single">Single</SelectItem>
-                    <SelectItem value="marathon">Marathon</SelectItem>
+                    <SelectItem value="single">แบบข้อเดียว (Single)</SelectItem>
+                    <SelectItem value="marathon">แบบต่อเนื่อง (Marathon)</SelectItem>
                   </SelectContent>
                 </Select>
               )}

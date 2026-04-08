@@ -192,8 +192,8 @@ export function PictureRevealDashboardClient({
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="warning">Picture Reveal Admin</Badge>
-                    <Badge variant="secondary">v1 dashboard</Badge>
+                    <Badge variant="warning">ผู้ดูแลระบบเกมทายภาพ</Badge>
+                    <Badge variant="secondary">แผงควบคุมหลัก</Badge>
                   </div>
                   <div className="space-y-2">
                     <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
@@ -247,13 +247,13 @@ export function PictureRevealDashboardClient({
                 </Card>
                 <Card className="border-border/70 bg-background/88 shadow-sm">
                   <CardHeader className="pb-2">
-                    <CardDescription>Draft</CardDescription>
+                    <CardDescription>แบบร่าง (Draft)</CardDescription>
                     <CardTitle className="text-3xl">{counts.draft}</CardTitle>
                   </CardHeader>
                 </Card>
                 <Card className="border-border/70 bg-background/88 shadow-sm">
                   <CardHeader className="pb-2">
-                    <CardDescription>Published</CardDescription>
+                    <CardDescription>เผยแพร่แล้ว (Published)</CardDescription>
                     <CardTitle className="text-3xl">
                       {counts.published}
                     </CardTitle>

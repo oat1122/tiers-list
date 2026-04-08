@@ -1,6 +1,53 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="100%" height="100%">
   <defs>
     <style>
+      :root {
+        --bg: #f4f6f8;
+        --card-bg: #ffffff;
+        --pill-bg: #f8f9fa;
+        --pill-inner: #ffffff;
+        --text-primary: #212529;
+        --text-muted: #adb5bd;
+        --score-box-bg: #f8f9fa;
+        --score-box-stroke: #ced4da;
+        --score-label: #495057;
+        --score-num: #845ef7;
+        --answer-btn: #f06595;
+        --answer-text: #ffffff;
+        --board-bg: #e7f5ff;
+        --sun: #ffe066;
+        --mount-1: #ced4da;
+        --mount-2: #adb5bd;
+        --grass: #b2f2bb;
+        --bush: #8ce99a;
+        --tile-bg: #d0ebff;
+        --tile-text: #74c0fc;
+        --cursor-outline: #1c1c1c;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f172a;
+          --card-bg: #1e293b;
+          --pill-bg: #334155;
+          --pill-inner: #475569;
+          --text-primary: #f8fafc;
+          --text-muted: #94a3b8;
+          --score-box-bg: #334155;
+          --score-box-stroke: #475569;
+          --score-label: #e2e8f0;
+          --score-num: #a78bfa;
+          --board-bg: #1e3a8a;
+          --sun: #fcd34d;
+          --mount-1: #475569;
+          --mount-2: #334155;
+          --grass: #065f46;
+          --bush: #047857;
+          --tile-bg: #1e40af;
+          --tile-text: #60a5fa;
+          --cursor-outline: #e2e8f0;
+        }
+      }
+
       /* กำหนด Keyframes สำหรับแอนิเมชันต่างๆ */
       @keyframes cursorAnim {
         0%, 10% { transform: translate(750px, 350px); }
@@ -68,13 +115,13 @@
       .score-10 { animation: s1 9s infinite; }
       .score-20 { animation: s2 9s infinite; }
       .score-50 { animation: s3 9s infinite; }
-      .float-1 { animation: floatUp1 9s infinite ease-out; font-family: sans-serif; font-weight: 800; font-size: 24px; fill: #f06595; text-anchor: middle; }
-      .float-2 { animation: floatUp2 9s infinite ease-out; font-family: sans-serif; font-weight: 800; font-size: 24px; fill: #f06595; text-anchor: middle; }
-      .float-3 { animation: floatUp3 9s infinite ease-out; font-family: sans-serif; font-weight: 800; font-size: 28px; fill: #f06595; text-anchor: middle; }
+      .float-1 { animation: floatUp1 9s infinite ease-out; font-family: sans-serif; font-weight: 800; font-size: 24px; fill: var(--answer-btn); text-anchor: middle; }
+      .float-2 { animation: floatUp2 9s infinite ease-out; font-family: sans-serif; font-weight: 800; font-size: 24px; fill: var(--answer-btn); text-anchor: middle; }
+      .float-3 { animation: floatUp3 9s infinite ease-out; font-family: sans-serif; font-weight: 800; font-size: 28px; fill: var(--answer-btn); text-anchor: middle; }
     </style>
     
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="12" stdDeviation="24" flood-color="#868e96" flood-opacity="0.1" />
+      <feDropShadow dx="0" dy="12" stdDeviation="24" flood-color="#000000" flood-opacity="0.15" />
     </filter>
 
     <clipPath id="board-clip">
@@ -82,71 +129,59 @@
     </clipPath>
   </defs>
 
-  <rect width="800" height="400" fill="#f4f6f8" />
-  <rect x="40" y="40" width="720" height="320" rx="20" fill="#ffffff" filter="url(#shadow)" />
-
-  <g transform="translate(60, 60)">
-    <rect x="0" y="0" width="36" height="36" rx="10" fill="#f3f0ff" />
-    <g transform="translate(6, 6) scale(0.8)">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#845ef7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="6" x2="10" y1="11" y2="11"></line><line x1="8" x2="8" y1="9" y2="13"></line>
-        <line x1="15" x2="15.01" y1="12" y2="12"></line><line x1="18" x2="18.01" y1="10" y2="10"></line>
-        <path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"></path>
-      </svg>
-    </g>
-    <text x="48" y="23" font-family="sans-serif" font-size="14" font-weight="700" fill="#495057">Picture Reveal</text>
-  </g>
+  <rect width="800" height="400" fill="var(--bg)" />
+  <rect x="40" y="40" width="720" height="320" rx="20" fill="var(--card-bg)" filter="url(#shadow)" />
 
   <g transform="translate(60, 120)">
-    <rect width="180" height="44" rx="22" fill="#f8f9fa" />
-    <rect x="4" y="4" width="90" height="36" rx="18" fill="#ffffff" filter="url(#shadow)" />
-    <text x="49" y="26" font-family="sans-serif" font-size="14" font-weight="700" fill="#212529" text-anchor="middle">Single</text>
-    <text x="135" y="26" font-family="sans-serif" font-size="14" font-weight="600" fill="#adb5bd" text-anchor="middle">Marathon</text>
+    <rect width="180" height="44" rx="22" fill="var(--pill-bg)" />
+    <rect x="4" y="4" width="90" height="36" rx="18" fill="var(--pill-inner)" filter="url(#shadow)" />
+    <text x="49" y="26" font-family="sans-serif" font-size="14" font-weight="700" fill="var(--text-primary)" text-anchor="middle">Single</text>
+    <text x="135" y="26" font-family="sans-serif" font-size="14" font-weight="600" fill="var(--text-muted)" text-anchor="middle">Marathon</text>
   </g>
 
   <g transform="translate(60, 184)">
-    <rect width="180" height="64" rx="12" fill="#f8f9fa" stroke="#ced4da" stroke-width="2" stroke-dasharray="6,6" />
-    <text x="35" y="42" font-family="sans-serif" font-size="16" font-weight="700" fill="#495057">SCORE</text>
-    <text class="score-0" x="145" y="44" font-family="sans-serif" font-size="28" font-weight="900" fill="#845ef7" text-anchor="end">0</text>
-    <text class="score-10" x="145" y="44" font-family="sans-serif" font-size="28" font-weight="900" fill="#845ef7" text-anchor="end">10</text>
-    <text class="score-20" x="145" y="44" font-family="sans-serif" font-size="28" font-weight="900" fill="#845ef7" text-anchor="end">20</text>
-    <text class="score-50" x="145" y="44" font-family="sans-serif" font-size="28" font-weight="900" fill="#845ef7" text-anchor="end">50</text>
+    <rect width="180" height="64" rx="12" fill="var(--score-box-bg)" stroke="var(--score-box-stroke)" stroke-width="2" stroke-dasharray="6,6" />
+    <text x="35" y="42" font-family="sans-serif" font-size="16" font-weight="700" fill="var(--score-label)">SCORE</text>
+    <text class="score-0" x="145" y="44" font-family="sans-serif" font-size="28" font-weight="900" fill="var(--score-num)" text-anchor="end">0</text>
+    <text class="score-10" x="145" y="44" font-family="sans-serif" font-size="28" font-weight="900" fill="var(--score-num)" text-anchor="end">10</text>
+    <text class="score-20" x="145" y="44" font-family="sans-serif" font-size="28" font-weight="900" fill="var(--score-num)" text-anchor="end">20</text>
+    <text class="score-50" x="145" y="44" font-family="sans-serif" font-size="28" font-weight="900" fill="var(--score-num)" text-anchor="end">50</text>
   </g>
 
   <g transform="translate(60, 268)">
-    <rect width="100" height="44" rx="12" fill="#f06595" />
-    <text x="50" y="28" font-family="sans-serif" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">คำตอบ</text>
+    <rect width="100" height="44" rx="12" fill="var(--answer-btn)" />
+    <text x="50" y="28" font-family="sans-serif" font-size="15" font-weight="700" fill="var(--answer-text)" text-anchor="middle">คำตอบ</text>
   </g>
 
   <g clip-path="url(#board-clip)">
-    <rect x="400" y="60" width="280" height="280" fill="#e7f5ff" />
-    <circle cx="470" cy="120" r="45" fill="#ffe066" />
-    <polygon points="380,355 520,150 660,355" fill="#ced4da" />
-    <polygon points="490,355 630,190 770,355" fill="#adb5bd" />
-    <rect x="400" y="270" width="280" height="70" fill="#b2f2bb" />
-    <circle cx="440" cy="280" r="25" fill="#8ce99a" />
-    <circle cx="490" cy="270" r="30" fill="#8ce99a" />
-    <circle cx="630" cy="285" r="20" fill="#8ce99a" />
+    <rect x="400" y="60" width="280" height="280" fill="var(--board-bg)" />
+    <circle cx="470" cy="120" r="45" fill="var(--sun)" />
+    <polygon points="380,355 520,150 660,355" fill="var(--mount-1)" />
+    <polygon points="490,355 630,190 770,355" fill="var(--mount-2)" />
+    <rect x="400" y="270" width="280" height="70" fill="var(--grass)" />
+    <circle cx="440" cy="280" r="25" fill="var(--bush)" />
+    <circle cx="490" cy="270" r="30" fill="var(--bush)" />
+    <circle cx="630" cy="285" r="20" fill="var(--bush)" />
   </g>
 
-  <g class="tile"><rect x="400" y="60" width="90" height="90" rx="12" fill="#d0ebff" /><text x="445" y="115" font-family="sans-serif" font-size="36" font-weight="bold" fill="#74c0fc" text-anchor="middle" opacity="0.6">?</text></g>
-  <g class="tile"><rect x="495" y="60" width="90" height="90" rx="12" fill="#d0ebff" /><text x="540" y="115" font-family="sans-serif" font-size="36" font-weight="bold" fill="#74c0fc" text-anchor="middle" opacity="0.6">?</text></g>
-  <g class="tile t3"><rect x="590" y="60" width="90" height="90" rx="12" fill="#d0ebff" /><text x="635" y="115" font-family="sans-serif" font-size="36" font-weight="bold" fill="#74c0fc" text-anchor="middle" opacity="0.6">?</text></g>
+  <g class="tile"><rect x="400" y="60" width="90" height="90" rx="12" fill="var(--tile-bg)" /><text x="445" y="115" font-family="sans-serif" font-size="36" font-weight="bold" fill="var(--tile-text)" text-anchor="middle" opacity="0.6">?</text></g>
+  <g class="tile"><rect x="495" y="60" width="90" height="90" rx="12" fill="var(--tile-bg)" /><text x="540" y="115" font-family="sans-serif" font-size="36" font-weight="bold" fill="var(--tile-text)" text-anchor="middle" opacity="0.6">?</text></g>
+  <g class="tile t3"><rect x="590" y="60" width="90" height="90" rx="12" fill="var(--tile-bg)" /><text x="635" y="115" font-family="sans-serif" font-size="36" font-weight="bold" fill="var(--tile-text)" text-anchor="middle" opacity="0.6">?</text></g>
   
-  <g class="tile"><rect x="400" y="155" width="90" height="90" rx="12" fill="#d0ebff" /><text x="445" y="210" font-family="sans-serif" font-size="36" font-weight="bold" fill="#74c0fc" text-anchor="middle" opacity="0.6">?</text></g>
-  <g class="tile t5"><rect x="495" y="155" width="90" height="90" rx="12" fill="#d0ebff" /><text x="540" y="210" font-family="sans-serif" font-size="36" font-weight="bold" fill="#74c0fc" text-anchor="middle" opacity="0.6">?</text></g>
-  <g class="tile"><rect x="590" y="155" width="90" height="90" rx="12" fill="#d0ebff" /><text x="635" y="210" font-family="sans-serif" font-size="36" font-weight="bold" fill="#74c0fc" text-anchor="middle" opacity="0.6">?</text></g>
+  <g class="tile"><rect x="400" y="155" width="90" height="90" rx="12" fill="var(--tile-bg)" /><text x="445" y="210" font-family="sans-serif" font-size="36" font-weight="bold" fill="var(--tile-text)" text-anchor="middle" opacity="0.6">?</text></g>
+  <g class="tile t5"><rect x="495" y="155" width="90" height="90" rx="12" fill="var(--tile-bg)" /><text x="540" y="210" font-family="sans-serif" font-size="36" font-weight="bold" fill="var(--tile-text)" text-anchor="middle" opacity="0.6">?</text></g>
+  <g class="tile"><rect x="590" y="155" width="90" height="90" rx="12" fill="var(--tile-bg)" /><text x="635" y="210" font-family="sans-serif" font-size="36" font-weight="bold" fill="var(--tile-text)" text-anchor="middle" opacity="0.6">?</text></g>
   
-  <g class="tile t7"><rect x="400" y="250" width="90" height="90" rx="12" fill="#d0ebff" /><text x="445" y="305" font-family="sans-serif" font-size="36" font-weight="bold" fill="#74c0fc" text-anchor="middle" opacity="0.6">?</text></g>
-  <g class="tile"><rect x="495" y="250" width="90" height="90" rx="12" fill="#d0ebff" /><text x="540" y="305" font-family="sans-serif" font-size="36" font-weight="bold" fill="#74c0fc" text-anchor="middle" opacity="0.6">?</text></g>
-  <g class="tile"><rect x="590" y="250" width="90" height="90" rx="12" fill="#d0ebff" /><text x="635" y="305" font-family="sans-serif" font-size="36" font-weight="bold" fill="#74c0fc" text-anchor="middle" opacity="0.6">?</text></g>
+  <g class="tile t7"><rect x="400" y="250" width="90" height="90" rx="12" fill="var(--tile-bg)" /><text x="445" y="305" font-family="sans-serif" font-size="36" font-weight="bold" fill="var(--tile-text)" text-anchor="middle" opacity="0.6">?</text></g>
+  <g class="tile"><rect x="495" y="250" width="90" height="90" rx="12" fill="var(--tile-bg)" /><text x="540" y="305" font-family="sans-serif" font-size="36" font-weight="bold" fill="var(--tile-text)" text-anchor="middle" opacity="0.6">?</text></g>
+  <g class="tile"><rect x="590" y="250" width="90" height="90" rx="12" fill="var(--tile-bg)" /><text x="635" y="305" font-family="sans-serif" font-size="36" font-weight="bold" fill="var(--tile-text)" text-anchor="middle" opacity="0.6">?</text></g>
 
   <text class="float-1">+10</text>
   <text class="float-2">+10</text>
   <text class="float-3">+30</text>
 
   <g class="cursor">
-    <path d="M2,2 L20,18 L13,19 L8.5,29 Z" fill="#ffffff" stroke="#1c1c1c" stroke-width="2.5" stroke-linejoin="round" filter="url(#shadow)"/>
+    <path d="M2,2 L20,18 L13,19 L8.5,29 Z" fill="#ffffff" stroke="var(--cursor-outline)" stroke-width="2.5" stroke-linejoin="round" filter="url(#shadow)"/>
     <polygon points="6,7.5 14,15.5 10.5,16 7,23" fill="#9775fa" />
   </g>
 

@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { PictureRevealLocalCreatorClient } from "./_components/picture-reveal-local-creator-client";
 
 export const metadata: Metadata = {
-  title: "Create Picture Reveal | Local Creator",
+  title: "สร้างเกมทายภาพ (Picture Reveal) | Local Creator",
   description:
-    "Create a Picture Reveal game locally in your browser without logging in or saving to the database.",
+    "สร้างเกมทายภาพ (Picture Reveal) ของคุณเอง เล่นในเบราว์เซอร์ได้ทันทีโดยไม่ต้องล็อกอินหรือบันทึกลงฐานข้อมูล",
 };
 
 export default function PictureRevealCreatePage() {

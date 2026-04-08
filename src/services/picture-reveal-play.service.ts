@@ -5,6 +5,8 @@ import type {
 } from "@/lib/validations";
 import { PictureRevealServiceError } from "@/services/picture-reveal-errors";
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 export const PICTURE_REVEAL_PLAYER_TOKEN_COOKIE = "picture_reveal_player_token";
 
 function removedRouteError() {

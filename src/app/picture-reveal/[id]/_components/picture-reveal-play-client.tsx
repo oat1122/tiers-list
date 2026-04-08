@@ -47,6 +47,8 @@ const BOARD_SIZE_OPTIONS: Array<{
   { label: "35%", scale: 0.35, value: "small" },
   { label: "20%", scale: 0.2, value: "tiny" },
 ];
+const MIN_BOARD_TILE_TARGET_PX = 40;
+const MIN_BOARD_WIDTH_PX = 240;
 
 function modeLabel(mode: PublicPictureRevealGameDetail["mode"]) {
   return mode === "single" ? "Single" : "Marathon";
@@ -183,7 +185,7 @@ function LeaderboardCard({
           type="button"
           size="sm"
           variant="outline"
-          className="shrink-0"
+          className="pointer-events-auto shrink-0"
           onClick={onToggle}
         >
           <ChevronDown className="size-4" />
@@ -194,7 +196,13 @@ function LeaderboardCard({
   }
 
   return (
-    <Card className={cn("border-border/70 bg-background/92 shadow-sm", className)}>
+    <Card
+      data-floating-leaderboard-card
+      className={cn(
+        "pointer-events-auto border-border/70 bg-background/92 shadow-sm",
+        className,
+      )}
+    >
       <CardHeader className="space-y-0">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-2">
@@ -234,7 +242,10 @@ function FloatingLeaderboard({
   onToggle: () => void;
 }) {
   return (
-    <div className="mb-4 lg:absolute lg:inset-x-4 lg:top-4 lg:z-20 lg:mb-0">
+    <div
+      data-floating-leaderboard
+      className="pointer-events-none mb-4 lg:absolute lg:inset-x-4 lg:top-4 lg:z-20 lg:mb-0"
+    >
       <LeaderboardCard
         leaderboard={leaderboard}
         isOpen={isOpen}
@@ -290,6 +301,13 @@ export function PictureRevealPlayClient({
     .slice(0, 6);
   const boardScale =
     BOARD_SIZE_OPTIONS.find((option) => option.value === boardSize)?.scale ?? 1;
+  const minimumBoardWidth =
+    currentRound !== null
+      ? Math.max(
+          currentRound.image.cols * MIN_BOARD_TILE_TARGET_PX,
+          MIN_BOARD_WIDTH_PX,
+        )
+      : MIN_BOARD_WIDTH_PX;
 
   function startRun() {
     const nextRounds = buildHostRounds(game);
@@ -547,20 +565,28 @@ export function PictureRevealPlayClient({
                     </div>
 
                     <div
-                      data-board-size={boardSize}
-                      className="mx-auto w-full transition-[max-width] duration-200 ease-out"
-                      style={{ maxWidth: `${boardScale * 100}%` }}
+                      data-board-scroll-region
+                      className="overflow-x-auto pb-2"
                     >
-                      <TileBoard
-                        gameTitle={game.title}
-                        round={currentRound}
-                        aspectWidth={game.imageWidth}
-                        aspectHeight={game.imageHeight}
-                        openingTileNumber={openingTileNumber}
-                        recentAutoReveal={recentAutoReveal}
-                        disabled={boardDisabled}
-                        onOpenTile={openTile}
-                      />
+                      <div
+                        data-board-size={boardSize}
+                        className="mx-auto w-full transition-[max-width] duration-200 ease-out"
+                        style={{
+                          maxWidth: `${boardScale * 100}%`,
+                          minWidth: `${minimumBoardWidth}px`,
+                        }}
+                      >
+                        <TileBoard
+                          gameTitle={game.title}
+                          round={currentRound}
+                          aspectWidth={game.imageWidth}
+                          aspectHeight={game.imageHeight}
+                          openingTileNumber={openingTileNumber}
+                          recentAutoReveal={recentAutoReveal}
+                          disabled={boardDisabled}
+                          onOpenTile={openTile}
+                        />
+                      </div>
                     </div>
                   </div>
 

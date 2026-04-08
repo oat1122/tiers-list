@@ -4,18 +4,13 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowRight,
-  Images,
   LayoutDashboard,
-  Sparkles,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -74,20 +69,13 @@ export default async function DashboardPage() {
             </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
-              <Card className="border-border/70 bg-background/88 shadow-sm">
-                <CardHeader className="space-y-3">
-                  <Badge variant="secondary" className="w-fit">
-                    <Sparkles className="mr-1 size-3.5" />
-                    Tier Lists
-                  </Badge>
-                  <div className="space-y-2">
-                    <CardTitle>Manage every list and template</CardTitle>
-                    <CardDescription>
-                      Open the Tier Lists workspace to search, edit, publish,
-                      and manage template content from one place.
-                    </CardDescription>
-                  </div>
-                </CardHeader>
+              <Card className="flex flex-col overflow-hidden border-border/70 bg-background/88 shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/home-tierlist-light.svg"
+                  alt="Manage every tier list and template"
+                  className="aspect-[2/1] w-full border-b object-cover"
+                />
                 <CardContent className="flex items-center justify-between gap-3">
                   <p className="text-sm text-muted-foreground">
                     Includes active lists, public lists, templates, and trash.
@@ -102,20 +90,13 @@ export default async function DashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-border/70 bg-background/88 shadow-sm">
-                <CardHeader className="space-y-3">
-                  <Badge variant="secondary" className="w-fit">
-                    <Images className="mr-1 size-3.5" />
-                    Picture Reveal
-                  </Badge>
-                  <div className="space-y-2">
-                    <CardTitle>Build and manage reveal games</CardTitle>
-                    <CardDescription>
-                      Configure game settings, image content, hidden answers,
-                      and host-run gameplay assets for Picture Reveal.
-                    </CardDescription>
-                  </div>
-                </CardHeader>
+              <Card className="flex flex-col overflow-hidden border-border/70 bg-background/88 shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/home-picture-reveal-light.svg"
+                  alt="Build and manage reveal games"
+                  className="aspect-[2/1] w-full border-b object-cover"
+                />
                 <CardContent className="flex items-center justify-between gap-3">
                   <p className="text-sm text-muted-foreground">
                     Covers draft games, publishing, image grids, and scoring

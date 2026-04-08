@@ -3,10 +3,8 @@ import Link from "next/link";
 import { connection } from "next/server";
 import {
   ArrowRight,
-  Gamepad2,
   Home as HomeIcon,
   LayoutDashboard,
-  LayoutTemplate,
   LogIn,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -14,9 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { getPublicPictureRevealGames } from "@/services/picture-reveal-games.service";
@@ -87,20 +82,13 @@ export default async function HomePage() {
             </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
-              <Card className="border-border/70 bg-background/88 shadow-sm">
-                <CardHeader className="space-y-3">
-                  <Badge variant="secondary" className="w-fit">
-                    <LayoutTemplate className="mr-1 size-3.5" />
-                    Tier Lists
-                  </Badge>
-                  <div className="space-y-2">
-                    <CardTitle>เปิด gallery ของ public tier lists</CardTitle>
-                    <CardDescription>
-                      เลือก template จาก community แล้วต่อยอดใน local editor ได้ทันที
-                      เหมาะกับคนที่อยากเริ่มจัดอันดับหรือหยิบรายการสำเร็จรูปไปเล่นต่อ
-                    </CardDescription>
-                  </div>
-                </CardHeader>
+              <Card className="flex flex-col overflow-hidden border-border/70 bg-background/88 shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/home-tierlist-light.svg"
+                  alt="Public Tier Lists Gallery"
+                  className="aspect-[2/1] w-full border-b object-cover"
+                />
                 <CardContent className="space-y-4">
                   <div className="rounded-2xl border border-border bg-muted/25 px-4 py-3 text-sm text-muted-foreground">
                     มีรายการ public พร้อมใช้งาน {publicLists.length} รายการ
@@ -121,20 +109,13 @@ export default async function HomePage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-border/70 bg-background/88 shadow-sm">
-                <CardHeader className="space-y-3">
-                  <Badge variant="secondary" className="w-fit">
-                    <Gamepad2 className="mr-1 size-3.5" />
-                    Picture Reveal
-                  </Badge>
-                  <div className="space-y-2">
-                    <CardTitle>เล่นเกมเดาภาพแบบเปิดป้าย</CardTitle>
-                    <CardDescription>
-                      เลือกเกมสาธารณะแล้วเปิด tile ทีละช่องเพื่อเก็บคะแนน
-                      รองรับทั้งโหมด single และ marathon พร้อมแชร์ลิงก์เข้าเล่นตรงเกม
-                    </CardDescription>
-                  </div>
-                </CardHeader>
+              <Card className="flex flex-col overflow-hidden border-border/70 bg-background/88 shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/home-picture-reveal-light.svg"
+                  alt="Public Picture Reveal Games"
+                  className="aspect-[2/1] w-full border-b object-cover"
+                />
                 <CardContent className="space-y-4">
                   <div className="rounded-2xl border border-border bg-muted/25 px-4 py-3 text-sm text-muted-foreground">
                     มีเกม public ให้เล่น {publicGames.length} เกม

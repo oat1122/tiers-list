@@ -5,8 +5,8 @@ import { PictureRevealEditorClient } from "./_components/picture-reveal-editor-c
 import { auth } from "@/lib/auth";
 
 export const metadata: Metadata = {
-  title: "Edit Picture Reveal Game | Admin",
-  description: "แก้ไข settings, content และ history ของ Picture Reveal Game",
+  title: "แก้ไขเกมทายภาพ | แผงควบคุมผู้ดูแลระบบ",
+  description: "แก้ไขการตั้งค่า ข้อมูลรูปภาพ และเนื้อหาของเกมทายภาพ",
 };
 
 export default async function PictureRevealEditorPage(

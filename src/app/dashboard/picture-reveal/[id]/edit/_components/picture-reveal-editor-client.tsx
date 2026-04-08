@@ -163,11 +163,11 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
       });
 
       if (showToast) {
-        toast.success("Editor refreshed.");
+        toast.success("รีเฟรชข้อมูลสำเร็จ");
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Could not load the editor";
+        error instanceof Error ? error.message : "ไม่สามารถโหลดข้อมูลเกมได้";
       setPageError(message);
 
       if (showToast) {
@@ -180,6 +180,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
 
   useEffect(() => {
     void loadEditorData(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId]);
 
   const handleLeavePage = async (
@@ -192,11 +193,11 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
     event.preventDefault();
 
     const shouldLeave = await confirm({
-      title: "Leave without saving?",
+      title: "ออกโดยไม่บันทึกหรือไม่?",
       description:
-        "There are unsaved changes in settings or content for this game.",
-      confirmLabel: "Leave page",
-      cancelLabel: "Stay here",
+        "มีการแก้ไขการตั้งค่าหรือเนื้อหาในเกมนี้ที่ยังไม่ได้บันทึก",
+      confirmLabel: "ออกจากหน้านี้",
+      cancelLabel: "อยู่หน้าเดิม",
       variant: "destructive",
     });
 
@@ -219,7 +220,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
 
       if (!response.ok) {
         throw new Error(
-          extractPictureRevealApiError(payload) ?? "Could not save settings",
+          extractPictureRevealApiError(payload) ?? "บันทึกการตั้งค่าไม่สำเร็จ",
         );
       }
 
@@ -234,10 +235,10 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
         openTilePenalty: updated.openTilePenalty,
         specialTilePenalty: updated.specialTilePenalty,
       });
-      toast.success("Settings saved.");
+      toast.success("บันทึกการตั้งค่าแล้ว");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Could not save settings";
+        error instanceof Error ? error.message : "บันทึกการตั้งค่าไม่สำเร็จ";
       setSettingsError(message);
       toast.error(message);
     } finally {
@@ -259,17 +260,17 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
 
       if (!response.ok) {
         throw new Error(
-          extractPictureRevealApiError(payload) ?? "Could not save content",
+          extractPictureRevealApiError(payload) ?? "บันทึกข้อมูลไม่สำเร็จ",
         );
       }
 
       const saved = payload as PictureRevealGameContentDto;
       setContent(saved);
       setContentDirty(false);
-      toast.success("Content saved.");
+      toast.success("บันทึกข้อมูลสำเร็จ");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Could not save content";
+        error instanceof Error ? error.message : "บันทึกข้อมูลไม่สำเร็จ";
       setContentError(message);
       toast.error(message);
     } finally {
@@ -289,7 +290,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                 className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
               >
                 <ArrowLeft className="size-4" />
-                Back to Games
+                กลับหน้ารวมเกม
               </Link>
               <Button variant="outline" onClick={() => void loadEditorData(true)}>
                 {loading ? (
@@ -297,7 +298,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                 ) : (
                   <RefreshCw className="size-4" />
                 )}
-                Refresh
+                รีเฟรชข้อมูล
               </Button>
             </div>
 
@@ -309,16 +310,15 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                 <Badge variant="outline">{game?.mode ?? "-"}</Badge>
                 <Badge variant="secondary">{content?.images.length ?? 0} images</Badge>
                 {isEditorDirty ? (
-                  <Badge variant="warning">Unsaved changes</Badge>
+                  <Badge variant="warning">มีการแก้ไขที่ยังไม่ได้บันทึก</Badge>
                 ) : null}
               </div>
               <div>
                 <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                  {game?.title ?? "Loading picture reveal game..."}
+                  {game?.title ?? "กำลังโหลดเกมทายภาพ..."}
                 </h1>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground md:text-base">
-                  Manage the game settings and image content for the new
-                  host-controlled hidden-answer flow.
+                  จัดการการตั้งค่าเกมและรูปภาพคำตอบ เพื่อนำไปใช้สำหรับกิจกรรมที่มีผู้จัดรายการควบคุม
                 </p>
               </div>
             </div>
@@ -328,13 +328,13 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                 active={activeTab === "settings"}
                 onClick={() => setActiveTab("settings")}
               >
-                Settings
+                การตั้งค่าเกม
               </TabButton>
               <TabButton
                 active={activeTab === "content"}
                 onClick={() => setActiveTab("content")}
               >
-                Content
+                เนื้อหา/รูปภาพ
               </TabButton>
             </div>
           </CardContent>
@@ -348,39 +348,38 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
 
         {loading && !game ? (
           <div className="rounded-2xl border border-border bg-background/85 px-4 py-10 text-center text-sm text-muted-foreground">
-            Loading editor...
+            กำลังโหลดข้อมูล...
           </div>
         ) : null}
 
         {!loading && game && activeTab === "settings" ? (
           <Card className="border-border/70 bg-background/90 shadow-sm">
             <CardHeader>
-              <CardTitle>Settings</CardTitle>
+              <CardTitle>การตั้งค่าเกม</CardTitle>
               <CardDescription>
-                Configure scoring, game mode, and publish status for this host-run
-                picture reveal game.
+                ตั้งค่าคะแนน โหมดการเล่น และสถานะการเผยแพร่ สำหรับเกมทายภาพนี้
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form className="space-y-5" onSubmit={handleSettingsSave}>
                 <div className="grid gap-5 lg:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="settings-title">Game Title</Label>
+                    <Label htmlFor="settings-title">ชื่อเกม</Label>
                     <Input id="settings-title" {...settingsForm.register("title")} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="settings-mode">Mode</Label>
+                    <Label htmlFor="settings-mode">โหมดการเล่น</Label>
                     <Controller
                       control={settingsForm.control}
                       name="mode"
                       render={({ field }) => (
                         <Select value={field.value} onValueChange={field.onChange}>
                           <SelectTrigger id="settings-mode">
-                            <SelectValue placeholder="Select a mode" />
+                            <SelectValue placeholder="เลือกโหมด" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="single">Single</SelectItem>
-                            <SelectItem value="marathon">Marathon</SelectItem>
+                            <SelectItem value="single">แบบข้อเดียว (Single)</SelectItem>
+                            <SelectItem value="marathon">แบบต่อเนื่อง (Marathon)</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
@@ -389,7 +388,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="settings-description">Description</Label>
+                  <Label htmlFor="settings-description">คำอธิบาย</Label>
                   <Textarea
                     id="settings-description"
                     {...settingsForm.register("description")}
@@ -398,25 +397,25 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
 
                 <div className="grid gap-4 md:grid-cols-4">
                   <div className="space-y-2">
-                    <Label htmlFor="settings-status">Status</Label>
+                    <Label htmlFor="settings-status">สถานะ</Label>
                     <Controller
                       control={settingsForm.control}
                       name="status"
                       render={({ field }) => (
                         <Select value={field.value} onValueChange={field.onChange}>
                           <SelectTrigger id="settings-status">
-                            <SelectValue placeholder="Select a status" />
+                            <SelectValue placeholder="เลือกสถานะ" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="published">Published</SelectItem>
+                            <SelectItem value="draft">แบบร่าง (Draft)</SelectItem>
+                            <SelectItem value="published">เผยแพร่แล้ว (Published)</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="settings-start-score">Start Score</Label>
+                    <Label htmlFor="settings-start-score">คะแนนเริ่มต้น (เต็ม)</Label>
                     <Input
                       id="settings-start-score"
                       type="number"
@@ -426,7 +425,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="settings-open-penalty">Open Tile Penalty</Label>
+                    <Label htmlFor="settings-open-penalty">หักคะแนนต่อการเปิด 1 แผ่นป้าย</Label>
                     <Input
                       id="settings-open-penalty"
                       type="number"
@@ -437,7 +436,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="settings-special-penalty">
-                      Special Tile Penalty
+                      หักคะแนนสำหรับแผ่นป้ายพิเศษ
                     </Label>
                     <Input
                       id="settings-special-penalty"
@@ -460,7 +459,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                     {settingsSaving ? (
                       <Loader2 className="size-4 animate-spin" />
                     ) : null}
-                    Save Settings
+                    บันทึกการตั้งค่า
                   </Button>
                 </div>
               </form>

@@ -30,7 +30,9 @@ function formatUpdatedAt(updatedAt: string) {
 }
 
 function modeLabel(mode: PublicPictureRevealGameSummary["mode"]) {
-  return mode === "single" ? "Single" : "Marathon";
+  return mode === "single"
+    ? "แบบข้อเดียว (Single)"
+    : "แบบต่อเนื่อง (Marathon)";
 }
 
 export function PictureRevealGalleryClient({
@@ -63,29 +65,30 @@ export function PictureRevealGalleryClient({
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
             <h2 className="text-2xl font-semibold tracking-tight">
-              Public games พร้อมเล่น
+              เกมสาธารณะที่พร้อมเล่น
             </h2>
             <p className="text-sm text-muted-foreground md:text-base">
-              ค้นหาเกมจากชื่อหรือคำอธิบาย แล้วเข้าเล่นต่อได้ทันทีโดยไม่ต้องผ่านหน้าแอดมิน
+              ค้นหาเกมจากชื่อหรือคำอธิบาย แล้วเข้าเล่นต่อได้ทันที
+              หรือสร้างเกมของตัวเองแบบ local ได้จากหน้านี้
             </p>
           </div>
 
           <div className="flex w-full flex-col gap-3 md:max-w-sm">
             <label className="relative block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="ค้นหา Picture Reveal..."
-              aria-label="Search picture reveal games"
-              className="h-10 rounded-xl bg-background pl-9"
-            />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="ค้นหา Picture Reveal..."
+                aria-label="Search picture reveal games"
+                className="h-10 rounded-xl bg-background pl-9"
+              />
             </label>
             <Link
               href="/picture-reveal/create"
               className={cn(buttonVariants({ variant: "outline" }), "w-full")}
             >
-              Create your own game
+              สร้างเกมของคุณเอง
             </Link>
           </div>
         </div>
@@ -94,11 +97,19 @@ export function PictureRevealGalleryClient({
       {games.length === 0 ? (
         <div className="rounded-[2rem] border border-dashed border-border bg-background/80 px-6 py-16 text-center shadow-sm">
           <p className="text-lg font-semibold text-foreground">
-            ยังไม่มี public Picture Reveal ให้เล่นในตอนนี้
+            ยังไม่มีเกมทายภาพ (Picture Reveal) แบบสาธารณะให้เล่นในตอนนี้
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
             เมื่อมีเกมที่ publish แล้ว รายการจะปรากฏที่หน้านี้ทันที
+            หรือจะสร้างเกม local ของตัวเองก่อนก็ได้
           </p>
+          <Link
+            href="/picture-reveal/create"
+            className={cn(buttonVariants({ size: "sm" }), "mt-5")}
+          >
+            สร้างเกมของคุณเอง
+            <ArrowRight className="size-4" />
+          </Link>
         </div>
       ) : filteredGames.length === 0 ? (
         <div className="rounded-[2rem] border border-dashed border-border bg-background/80 px-6 py-14 text-center shadow-sm">
@@ -120,7 +131,7 @@ export function PictureRevealGalleryClient({
               <CardHeader className="gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="warning">{modeLabel(game.mode)}</Badge>
-                  <Badge variant="secondary">{game.imageCount} images</Badge>
+                  <Badge variant="secondary">{game.imageCount} ภาพ</Badge>
                 </div>
                 <div className="space-y-2">
                   <CardTitle className="text-lg">{game.title}</CardTitle>
@@ -144,11 +155,11 @@ export function PictureRevealGalleryClient({
                   ) : (
                     <div className="flex h-full flex-col justify-end bg-[radial-gradient(circle_at_top_left,_rgba(15,23,42,0.15),_transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.82),rgba(241,245,249,0.92))] p-4 dark:bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.08),_transparent_42%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(30,41,59,0.94))]">
                       <p className="text-sm font-semibold text-foreground">
-                        No cover image yet
+                        ยังไม่มีรูปหน้าปก
                       </p>
                       <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                        This game can still be played normally. Add a cover in the
-                        editor to improve the public preview.
+                        เกมนี้ยังเล่นได้ตามปกติ สามารถเพิ่มรูปหน้าปกในโหมดแก้ไข
+                        เพื่อให้ดูน่าสนใจขึ้นเมื่อเปิดเป็นสาธารณะ
                       </p>
                     </div>
                   )}

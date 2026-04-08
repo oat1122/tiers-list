@@ -83,7 +83,7 @@ export function PictureRevealLocalPlayClient() {
       <div className="rounded-[2rem] border border-border/70 bg-background/90 px-6 py-16 text-center shadow-sm">
         <Loader2 className="mx-auto size-6 animate-spin text-muted-foreground" />
         <p className="mt-3 text-sm text-muted-foreground">
-          Preparing your local picture reveal game...
+          กำลังเตรียมเกมทายภาพของคุณ...
         </p>
       </div>
     );
@@ -93,9 +93,9 @@ export function PictureRevealLocalPlayClient() {
     return (
       <Card className="border-border/70 bg-background/92 shadow-sm">
         <CardHeader>
-          <CardTitle>Local play is not ready</CardTitle>
+          <CardTitle>ยังไม่พร้อมเล่น</CardTitle>
           <CardDescription>
-            {error ?? "The local picture reveal draft is missing or incomplete."}
+            {error ?? "ไม่พบแบบร่างเกมทายภาพในเบราว์เซอร์ หรือข้อมูลไม่สมบูรณ์"}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
@@ -104,7 +104,7 @@ export function PictureRevealLocalPlayClient() {
             className={cn(buttonVariants({ variant: "outline" }))}
           >
             <ArrowLeft className="size-4" />
-            Back to creator
+            กลับไปหน้าสร้างเกม
           </Link>
         </CardContent>
       </Card>
@@ -117,9 +117,9 @@ export function PictureRevealLocalPlayClient() {
         <div className="flex flex-col gap-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="warning">Picture Reveal</Badge>
-              <Badge variant="secondary">Local draft</Badge>
-              <Badge variant="outline">{game.imageCount} images</Badge>
+              <Badge variant="warning">ทายภาพ (Picture Reveal)</Badge>
+              <Badge variant="secondary">แบบร่าง (Local)</Badge>
+              <Badge variant="outline">{game.imageCount} ภาพ</Badge>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -128,14 +128,14 @@ export function PictureRevealLocalPlayClient() {
                 className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <HomeIcon className="size-4" />
-                Back to home
+                กลับหน้าหลัก
               </a>
               <Link
                 href="/picture-reveal/create"
                 className={cn(buttonVariants({ variant: "outline" }))}
               >
                 <ArrowLeft className="size-4" />
-                Back to creator
+                กลับไปหน้าสร้างเกม
               </Link>
               <ThemeToggle />
             </div>
@@ -143,11 +143,11 @@ export function PictureRevealLocalPlayClient() {
 
           <div className="space-y-3">
             <h1 className="max-w-4xl text-4xl font-bold tracking-tight text-foreground md:text-5xl">
-              {game.title || "Local Picture Reveal"}
+              {game.title || "เกมทายภาพ (Picture Reveal)"}
             </h1>
             <p className="max-w-3xl text-base leading-7 text-muted-foreground md:text-lg">
               {game.description?.trim() ||
-                "Host-run hidden-answer mode from your local browser draft."}
+                "เกมทายภาพสำหรับผู้จัดกิจกรรม สร้างและเล่นจากข้อมูลที่บันทึกไว้ในเบราว์เซอร์"}
             </p>
           </div>
         </div>
