@@ -13,7 +13,7 @@ import {
   Scissors,
   Trash2,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Controller,
   useFieldArray,
@@ -853,11 +853,20 @@ export function PictureRevealContentForm({
   uploadAdapter,
   submitLabel = "บันทึกข้อมูล",
 }: PictureRevealContentFormProps) {
+  const normalizedInitialValues = useMemo(
+    () => buildPictureRevealContentFormSnapshot(initialValues),
+    [initialValues],
+  );
+  const initialValuesSignature = useMemo(
+    () => JSON.stringify(normalizedInitialValues),
+    [normalizedInitialValues],
+  );
+  const latestInitialValuesRef = useRef(normalizedInitialValues);
   const form = useForm<PictureRevealContentFormState>({
     resolver: zodResolver(
       SavePictureRevealGameContentSchema,
     ) as Resolver<PictureRevealContentFormState>,
-    defaultValues: initialValues,
+    defaultValues: normalizedInitialValues,
   });
   const imagesFieldArray = useFieldArray({
     control: form.control,
@@ -867,7 +876,7 @@ export function PictureRevealContentForm({
   const watchedValues =
     useWatch({
       control: form.control,
-    }) ?? initialValues;
+    }) ?? normalizedInitialValues;
   const watchedImages = useWatch({
     control: form.control,
     name: "images",
@@ -883,8 +892,12 @@ export function PictureRevealContentForm({
   const [ratioEditingEnabled, setRatioEditingEnabled] = useState(false);
 
   useEffect(() => {
-    form.reset(initialValues);
-  }, [form, initialValues]);
+    latestInitialValuesRef.current = normalizedInitialValues;
+  }, [normalizedInitialValues]);
+
+  useEffect(() => {
+    form.reset(latestInitialValuesRef.current);
+  }, [form, initialValuesSignature]);
 
   useEffect(() => {
     onDirtyChange?.(form.formState.isDirty);
@@ -1047,7 +1060,6 @@ export function PictureRevealContentForm({
                     type="button"
                     size="sm"
                     variant={activeRatio === preset.key ? "default" : "outline"}
-                    disabled={!ratioEditingEnabled}
                     onClick={() => applyRatioPreset(preset)}
                   >
                     {preset.label}

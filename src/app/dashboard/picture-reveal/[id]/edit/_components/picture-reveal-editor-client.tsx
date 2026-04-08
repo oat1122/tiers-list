@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
@@ -109,6 +109,10 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [contentSaving, setContentSaving] = useState(false);
   const [contentDirty, setContentDirty] = useState(false);
+  const contentInitialValues = useMemo(
+    () => buildPictureRevealRemoteContentInitialValues(content),
+    [content],
+  );
 
   const settingsForm = useForm<SettingsFormInput, unknown, SettingsFormValues>({
     resolver: zodResolver(UpdatePictureRevealGameSchema),
@@ -470,7 +474,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
         {!loading && game && activeTab === "content" ? (
           <PictureRevealContentForm
             gameId={gameId}
-            initialValues={buildPictureRevealRemoteContentInitialValues(content)}
+            initialValues={contentInitialValues}
             saving={contentSaving}
             error={contentError}
             onSave={handleContentSave}
