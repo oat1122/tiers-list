@@ -51,6 +51,7 @@ describe("dashboard pages", () => {
     expect(markup).toContain("/dashboard/tier-lists");
     expect(markup).toContain("/dashboard/picture-reveal");
     expect(markup).toContain("Admin Portal");
+    expect(markup).not.toContain("/api/auth/sign-out");
   });
 
   it("redirects unauthenticated users away from the portal", async () => {

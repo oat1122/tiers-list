@@ -23,30 +23,27 @@ describe("CreatePictureRevealGameSchema", () => {
 });
 
 describe("SavePictureRevealGameContentSchema", () => {
-  it("accepts a valid image config with exactly one correct choice", () => {
+  it("accepts a valid image config with a single answer", () => {
     const result = SavePictureRevealGameContentSchema.safeParse({
       imageWidth: 1600,
       imageHeight: 1600,
       images: [
         {
           tempImagePath: "/uploads/picture-reveal/temp/cat.webp",
+          answer: "Cat",
           rows: 4,
           cols: 4,
           specialTileCount: 2,
           specialPattern: "plus",
-          choices: [
-            { label: "Cat", isCorrect: 1 },
-            { label: "Dog", isCorrect: 0 },
-          ],
         },
       ],
     });
 
     expect(result.success).toBe(true);
-    expect(result.data?.images[0].choices).toHaveLength(2);
+    expect(result.data?.images[0]?.answer).toBe("Cat");
   });
 
-  it("rejects content without a single correct answer", () => {
+  it("rejects content without an answer", () => {
     const result = SavePictureRevealGameContentSchema.safeParse({
       imageWidth: 1600,
       imageHeight: 900,
@@ -57,16 +54,12 @@ describe("SavePictureRevealGameContentSchema", () => {
           cols: 4,
           specialTileCount: 2,
           specialPattern: "plus",
-          choices: [
-            { label: "Cat", isCorrect: 1 },
-            { label: "Dog", isCorrect: 1 },
-          ],
         },
       ],
     });
 
     expect(result.success).toBe(false);
-    expect(result.error?.issues[0]?.message).toContain("คำตอบ");
+    expect(result.error?.issues[0]?.message).toContain("string");
   });
 
   it("rejects special tile counts that fill the whole board", () => {
@@ -76,14 +69,11 @@ describe("SavePictureRevealGameContentSchema", () => {
       images: [
         {
           imagePath: "/uploads/picture-reveal/cat.webp",
+          answer: "Cat",
           rows: 2,
           cols: 2,
           specialTileCount: 4,
           specialPattern: "ring",
-          choices: [
-            { label: "Cat", isCorrect: 1 },
-            { label: "Dog", isCorrect: 0 },
-          ],
         },
       ],
     });

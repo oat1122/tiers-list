@@ -19,6 +19,7 @@ export const pictureRevealImages = mysqlTable(
 
     imagePath: varchar("image_path", { length: 500 }).notNull(),
     originalImagePath: varchar("original_image_path", { length: 500 }),
+    answer: varchar("answer", { length: 255 }).notNull(),
     rows: int("rows").notNull().default(4),
     cols: int("cols").notNull().default(4),
     specialTileCount: int("special_tile_count").notNull().default(0),

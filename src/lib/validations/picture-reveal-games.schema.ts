@@ -37,17 +37,6 @@ export type UpdatePictureRevealGameInput = z.infer<
   typeof UpdatePictureRevealGameSchema
 >;
 
-export const PictureRevealChoiceDraftSchema = z.object({
-  id: z.string().min(1).optional(),
-  label: z.string().min(1, "กรุณากรอกชื่อปุ่มคำตอบ"),
-  isCorrect: z.coerce.number().int().min(0).max(1),
-  sortOrder: z.coerce.number().int().min(0).default(0),
-});
-
-export type PictureRevealChoiceDraftInput = z.infer<
-  typeof PictureRevealChoiceDraftSchema
->;
-
 export const PictureRevealImageDraftSchema = z
   .object({
     id: z.string().min(1).optional(),
@@ -55,6 +44,7 @@ export const PictureRevealImageDraftSchema = z
     originalImagePath: z.string().min(1).optional(),
     tempImagePath: z.string().min(1).optional(),
     tempOriginalImagePath: z.string().min(1).optional(),
+    answer: z.string().trim().min(1, "กรุณากรอกคำตอบ"),
     rows: z.coerce
       .number()
       .int()
@@ -68,7 +58,6 @@ export const PictureRevealImageDraftSchema = z
     specialTileCount: z.coerce.number().int().min(0),
     specialPattern: SpecialPatternSchema,
     sortOrder: z.coerce.number().int().min(0).default(0),
-    choices: z.array(PictureRevealChoiceDraftSchema).min(2).max(6),
   })
   .superRefine((value, ctx) => {
     if (!value.imagePath && !value.tempImagePath) {
@@ -76,17 +65,6 @@ export const PictureRevealImageDraftSchema = z
         code: z.ZodIssueCode.custom,
         path: ["imagePath"],
         message: "กรุณาอัปโหลดรูปภาพ",
-      });
-    }
-
-    const correctCount = value.choices.filter((choice) => choice.isCorrect === 1)
-      .length;
-
-    if (correctCount !== 1) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["choices"],
-        message: "แต่ละภาพต้องมีคำตอบที่ถูกต้องเพียง 1 ตัวเลือก",
       });
     }
 

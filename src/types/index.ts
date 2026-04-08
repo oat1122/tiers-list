@@ -70,3 +70,4 @@ export interface TemplateEditorPageData {
 
 export * from "./picture-reveal";
 export * from "./picture-reveal-admin";
+export * from "./picture-reveal-public";

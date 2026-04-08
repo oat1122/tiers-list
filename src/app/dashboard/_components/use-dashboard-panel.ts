@@ -17,6 +17,7 @@ import type {
   DashboardPanelActions,
   DashboardPanelState,
 } from "./dashboard-panel.types";
+import { requestSignOut } from "@/lib/request-sign-out";
 import {
   buildFormState,
   emptyFormState,
@@ -259,10 +260,6 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
         });
 
         const result = await readJsonOrNull(response);
-
-        if (!response.ok) {
-          throw new Error(extractApiError(result) ?? "อัปเดตสถานะไม่สำเร็จ");
-        }
       },
       successMessage,
     );
@@ -283,10 +280,6 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
         });
 
         const result = await readJsonOrNull(response);
-
-        if (!response.ok) {
-          throw new Error(extractApiError(result) ?? "อัปเดตสถานะไม่สำเร็จ");
-        }
       },
       "เปลี่ยนเป็นรายการส่วนตัวและบันทึกเป็นเทมเพลตแล้ว",
     );
@@ -327,10 +320,6 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
 
         const result = await readJsonOrNull(response);
 
-        if (!response.ok) {
-          throw new Error(extractApiError(result) ?? "ลบรายการไม่สำเร็จ");
-        }
-
         setDeleteTarget(null);
       },
       "ย้ายรายการไปถังขยะเรียบร้อยแล้ว",
@@ -346,10 +335,6 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
         });
 
         const result = await readJsonOrNull(response);
-
-        if (!response.ok) {
-          throw new Error(extractApiError(result) ?? "กู้คืนรายการไม่สำเร็จ");
-        }
       },
       "กู้คืนรายการเรียบร้อยแล้ว",
     );
@@ -364,10 +349,6 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
         });
 
         const result = await readJsonOrNull(response);
-
-        if (!response.ok) {
-          throw new Error(extractApiError(result) ?? "โคลนเทมเพลตไม่สำเร็จ");
-        }
       },
       "สร้างสำเนาจากเทมเพลตเรียบร้อยแล้ว",
     );
@@ -377,15 +358,7 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
     setIsLoggingOut(true);
 
     try {
-      const response = await fetch("/api/auth/sign-out", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-
-      if (!response.ok) {
-        throw new Error("ออกจากระบบไม่สำเร็จ");
-      }
+      await requestSignOut();
 
       router.push("/sign-in");
       router.refresh();
@@ -453,3 +426,4 @@ export function useDashboardPanel(initialData: AdminDashboardResponseDto) {
 
   return { state, actions };
 }
+

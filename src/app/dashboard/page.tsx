@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -20,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { SignOutButton } from "./_components/sign-out-button";
 
 const portalLinkClassName =
   "inline-flex h-7 items-center justify-center gap-1 rounded-[min(var(--radius-md),12px)] border border-transparent bg-primary px-2.5 text-[0.8rem] font-medium whitespace-nowrap text-primary-foreground transition-all outline-none hover:bg-primary/80 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
@@ -29,7 +29,8 @@ const portalGhostLinkClassName =
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
-  description: "เลือก workspace ฝั่งแอดมินสำหรับจัดการ Tier Lists และ Picture Reveal Game",
+  description:
+    "Choose an admin workspace for Tier Lists and Picture Reveal.",
 };
 
 export default async function DashboardPage() {
@@ -61,11 +62,11 @@ export default async function DashboardPage() {
                 </div>
                 <div className="space-y-2">
                   <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
-                    เลือก workspace ที่ต้องการจัดการ
+                    Choose the workspace you want to manage
                   </h1>
                   <p className="max-w-3xl text-sm leading-6 text-muted-foreground md:text-base">
-                    แยกงานดูแล tier lists กับ Picture Reveal Game ออกจากกันให้ชัดเจน
-                    เพื่อให้ flow ของแต่ละระบบอ่านง่ายและขยายต่อได้สะดวก
+                    Keep Tier Lists and Picture Reveal separated so each admin
+                    flow stays easier to operate, review, and extend.
                   </p>
                 </div>
               </div>
@@ -80,22 +81,22 @@ export default async function DashboardPage() {
                     Tier Lists
                   </Badge>
                   <div className="space-y-2">
-                    <CardTitle>จัดการรายการและเทมเพลตทั้งหมด</CardTitle>
+                    <CardTitle>Manage every list and template</CardTitle>
                     <CardDescription>
-                      เข้า dashboard เดิมสำหรับค้นหา แก้ไข เปิดสาธารณะ
-                      และจัดการ template ของ tier list
+                      Open the Tier Lists workspace to search, edit, publish,
+                      and manage template content from one place.
                     </CardDescription>
                   </div>
                 </CardHeader>
                 <CardContent className="flex items-center justify-between gap-3">
                   <p className="text-sm text-muted-foreground">
-                    รวม active lists, public lists, templates และ trash
+                    Includes active lists, public lists, templates, and trash.
                   </p>
                   <Link
                     href="/dashboard/tier-lists"
                     className={portalLinkClassName}
                   >
-                    เปิด workspace
+                    Open workspace
                     <ArrowRight className="size-4" />
                   </Link>
                 </CardContent>
@@ -108,22 +109,23 @@ export default async function DashboardPage() {
                     Picture Reveal
                   </Badge>
                   <div className="space-y-2">
-                    <CardTitle>สร้างและดูแลเกมเดาภาพแบบเปิดป้าย</CardTitle>
+                    <CardTitle>Build and manage reveal games</CardTitle>
                     <CardDescription>
-                      จัดการ draft/published games, ภาพ, ตัวเลือกคำตอบ,
-                      special tiles และประวัติการเล่นของแต่ละเกม
+                      Configure game settings, image content, hidden answers,
+                      and host-run gameplay assets for Picture Reveal.
                     </CardDescription>
                   </div>
                 </CardHeader>
                 <CardContent className="flex items-center justify-between gap-3">
                   <p className="text-sm text-muted-foreground">
-                    รองรับ flow สร้าง draft, แก้ settings, bulk save content และดู session history
+                    Covers draft games, publishing, image grids, and scoring
+                    settings.
                   </p>
                   <Link
                     href="/dashboard/picture-reveal"
                     className={portalLinkClassName}
                   >
-                    เปิด workspace
+                    Open workspace
                     <ArrowRight className="size-4" />
                   </Link>
                 </CardContent>
@@ -132,23 +134,16 @@ export default async function DashboardPage() {
 
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/25 px-4 py-3 text-sm text-muted-foreground">
               <p>
-                ทำงานในนาม{" "}
+                Signed in as{" "}
                 <span className="font-medium text-foreground">
                   {session.user.name}
                 </span>
               </p>
               <div className="flex items-center gap-2">
-                <Link
-                  href="/"
-                  className={cn(portalGhostLinkClassName)}
-                >
-                  กลับหน้าหลัก
+                <Link href="/" className={cn(portalGhostLinkClassName)}>
+                  Back to home
                 </Link>
-                <form action="/api/auth/sign-out" method="post">
-                  <Button type="submit" variant="outline" size="sm">
-                    ออกจากระบบ
-                  </Button>
-                </form>
+                <SignOutButton />
               </div>
             </div>
           </CardContent>

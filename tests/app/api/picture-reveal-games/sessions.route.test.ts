@@ -2,8 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   authGetSession: vi.fn(),
-  createPictureRevealSession: vi.fn(),
-  getAdminPictureRevealSessionHistory: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -13,18 +11,6 @@ vi.mock("@/lib/auth", () => ({
     },
   },
 }));
-
-vi.mock("@/services/picture-reveal-play.service", async () => {
-  const actual = await vi.importActual<typeof import("@/services/picture-reveal-play.service")>(
-    "@/services/picture-reveal-play.service",
-  );
-
-  return {
-    ...actual,
-    createPictureRevealSession: mocks.createPictureRevealSession,
-    getAdminPictureRevealSessionHistory: mocks.getAdminPictureRevealSessionHistory,
-  };
-});
 
 import { GET, POST } from "@/app/api/picture-reveal-games/[id]/sessions/route";
 
@@ -63,13 +49,10 @@ describe("/api/picture-reveal-games/[id]/sessions route", () => {
     await expect(response.json()).resolves.toEqual({ error: "Forbidden" });
   });
 
-  it("returns admin session history when authorized", async () => {
+  it("returns 410 for the removed admin session history route", async () => {
     mocks.authGetSession.mockResolvedValue({
       user: { id: "admin-1", role: "admin" },
     });
-    mocks.getAdminPictureRevealSessionHistory.mockResolvedValue([
-      { id: "session-1" },
-    ]);
 
     const response = await GET(
       createRequest(
@@ -79,19 +62,14 @@ describe("/api/picture-reveal-games/[id]/sessions route", () => {
       params(),
     );
 
-    expect(response.status).toBe(200);
-    expect(mocks.getAdminPictureRevealSessionHistory).toHaveBeenCalledWith(
-      "game-1",
-      { limit: 10 },
-    );
+    expect(response.status).toBe(410);
+    await expect(response.json()).resolves.toEqual({
+      error:
+        "Picture reveal session routes have been removed. Use the host-run client flow instead.",
+    });
   });
 
-  it("sets the anonymous player token cookie when creating a session", async () => {
-    mocks.createPictureRevealSession.mockResolvedValue({
-      session: { id: "session-1" },
-      issuedPlayerToken: "token-1",
-    });
-
+  it("returns 410 when clients try to create a session", async () => {
     const response = await POST(
       createRequest(
         "http://localhost/api/picture-reveal-games/game-1/sessions",
@@ -100,10 +78,11 @@ describe("/api/picture-reveal-games/[id]/sessions route", () => {
       params(),
     );
 
-    expect(response.status).toBe(201);
-    expect(mocks.createPictureRevealSession).toHaveBeenCalledWith("game-1", null);
-    expect(response.headers.get("set-cookie")).toContain(
-      "picture_reveal_player_token=token-1",
-    );
+    expect(response.status).toBe(410);
+    expect(response.headers.get("set-cookie")).toBeNull();
+    await expect(response.json()).resolves.toEqual({
+      error:
+        "Picture reveal session routes have been removed. Use the host-run client flow instead.",
+    });
   });
 });

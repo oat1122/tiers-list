@@ -29,24 +29,22 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   UpdatePictureRevealGameSchema,
+  type UpdatePictureRevealGameInput,
   type SavePictureRevealGameContentInput,
 } from "@/lib/validations";
 import { cn } from "@/lib/utils";
-import type {
-  PictureRevealGameContentDto,
-  PictureRevealSessionHistoryDto,
-} from "@/types/picture-reveal-admin";
+import type { PictureRevealGameContentDto } from "@/types/picture-reveal-admin";
 import {
+  buildPictureRevealSettingsPayload,
   extractPictureRevealApiError,
-  formatDateTime,
   readJsonOrNull,
 } from "@/app/dashboard/picture-reveal/_components/picture-reveal-admin.utils";
 import { PictureRevealContentForm } from "./picture-reveal-content-form";
 
-type TabKey = "settings" | "content" | "history";
-type HistoryStatus = "all" | "active" | "completed";
+type TabKey = "settings" | "content";
 type PictureRevealGameDetails = Omit<PictureRevealGameContentDto, "images">;
-type SettingsFormValues = z.input<typeof UpdatePictureRevealGameSchema>;
+type SettingsFormInput = z.input<typeof UpdatePictureRevealGameSchema>;
+type SettingsFormValues = UpdatePictureRevealGameInput;
 
 async function fetchGame(gameId: string) {
   const response = await fetch(`/api/picture-reveal-games/${gameId}`, {
@@ -57,7 +55,7 @@ async function fetchGame(gameId: string) {
 
   if (!response.ok) {
     throw new Error(
-      extractPictureRevealApiError(payload) ?? "โหลดข้อมูลเกมไม่สำเร็จ",
+      extractPictureRevealApiError(payload) ?? "Could not load game details",
     );
   }
 
@@ -73,40 +71,11 @@ async function fetchContent(gameId: string) {
 
   if (!response.ok) {
     throw new Error(
-      extractPictureRevealApiError(payload) ?? "โหลด content ไม่สำเร็จ",
+      extractPictureRevealApiError(payload) ?? "Could not load game content",
     );
   }
 
   return payload as PictureRevealGameContentDto;
-}
-
-async function fetchHistory(
-  gameId: string,
-  status: HistoryStatus,
-  limit: number,
-) {
-  const query = new URLSearchParams({ limit: String(limit) });
-
-  if (status !== "all") {
-    query.set("status", status);
-  }
-
-  const response = await fetch(
-    `/api/picture-reveal-games/${gameId}/sessions?${query.toString()}`,
-    {
-      method: "GET",
-      cache: "no-store",
-    },
-  );
-  const payload = await readJsonOrNull(response);
-
-  if (!response.ok) {
-    throw new Error(
-      extractPictureRevealApiError(payload) ?? "โหลดประวัติการเล่นไม่สำเร็จ",
-    );
-  }
-
-  return payload as PictureRevealSessionHistoryDto[];
 }
 
 function TabButton({
@@ -130,18 +99,15 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
   const [activeTab, setActiveTab] = useState<TabKey>("settings");
   const [game, setGame] = useState<PictureRevealGameDetails | null>(null);
   const [content, setContent] = useState<PictureRevealGameContentDto | null>(null);
-  const [history, setHistory] = useState<PictureRevealSessionHistoryDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
-  const [historyStatus, setHistoryStatus] = useState<HistoryStatus>("all");
-  const [historyLimit, setHistoryLimit] = useState(20);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [contentError, setContentError] = useState<string | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [contentSaving, setContentSaving] = useState(false);
   const [contentDirty, setContentDirty] = useState(false);
 
-  const settingsForm = useForm<SettingsFormValues>({
+  const settingsForm = useForm<SettingsFormInput, unknown, SettingsFormValues>({
     resolver: zodResolver(UpdatePictureRevealGameSchema),
     defaultValues: {
       title: "",
@@ -175,15 +141,13 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
     setPageError(null);
 
     try {
-      const [nextGame, nextContent, nextHistory] = await Promise.all([
+      const [nextGame, nextContent] = await Promise.all([
         fetchGame(gameId),
         fetchContent(gameId),
-        fetchHistory(gameId, historyStatus, historyLimit),
       ]);
 
       setGame(nextGame);
       setContent(nextContent);
-      setHistory(nextHistory);
       setContentDirty(false);
       settingsForm.reset({
         title: nextGame.title,
@@ -196,12 +160,13 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
       });
 
       if (showToast) {
-        toast.success("รีเฟรชข้อมูลเกมล่าสุดแล้ว");
+        toast.success("Editor refreshed.");
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "โหลด editor ไม่สำเร็จ";
+        error instanceof Error ? error.message : "Could not load the editor";
       setPageError(message);
+
       if (showToast) {
         toast.error(message);
       }
@@ -212,7 +177,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
 
   useEffect(() => {
     void loadEditorData(false);
-  }, [gameId, historyLimit, historyStatus]);
+  }, [gameId]);
 
   const handleLeavePage = async (
     event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
@@ -224,11 +189,11 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
     event.preventDefault();
 
     const shouldLeave = await confirm({
-      title: "ออกจากหน้าแก้ไขโดยไม่บันทึก?",
+      title: "Leave without saving?",
       description:
-        "ยังมีการเปลี่ยนแปลงใน settings หรือ content ที่ยังไม่ได้บันทึก",
-      confirmLabel: "ออกจากหน้า",
-      cancelLabel: "อยู่ต่อ",
+        "There are unsaved changes in settings or content for this game.",
+      confirmLabel: "Leave page",
+      cancelLabel: "Stay here",
       variant: "destructive",
     });
 
@@ -245,17 +210,13 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
       const response = await fetch(`/api/picture-reveal-games/${gameId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...values,
-          title: values.title?.trim(),
-          description: values.description?.trim() ?? "",
-        }),
+        body: JSON.stringify(buildPictureRevealSettingsPayload(values)),
       });
       const payload = await readJsonOrNull(response);
 
       if (!response.ok) {
         throw new Error(
-          extractPictureRevealApiError(payload) ?? "บันทึก settings ไม่สำเร็จ",
+          extractPictureRevealApiError(payload) ?? "Could not save settings",
         );
       }
 
@@ -270,10 +231,10 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
         openTilePenalty: updated.openTilePenalty,
         specialTilePenalty: updated.specialTilePenalty,
       });
-      toast.success("บันทึก settings สำเร็จ");
+      toast.success("Settings saved.");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "บันทึก settings ไม่สำเร็จ";
+        error instanceof Error ? error.message : "Could not save settings";
       setSettingsError(message);
       toast.error(message);
     } finally {
@@ -295,17 +256,17 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
 
       if (!response.ok) {
         throw new Error(
-          extractPictureRevealApiError(payload) ?? "บันทึก content ไม่สำเร็จ",
+          extractPictureRevealApiError(payload) ?? "Could not save content",
         );
       }
 
       const saved = payload as PictureRevealGameContentDto;
       setContent(saved);
       setContentDirty(false);
-      toast.success("บันทึก content สำเร็จ");
+      toast.success("Content saved.");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "บันทึก content ไม่สำเร็จ";
+        error instanceof Error ? error.message : "Could not save content";
       setContentError(message);
       toast.error(message);
     } finally {
@@ -325,7 +286,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                 className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
               >
                 <ArrowLeft className="size-4" />
-                กลับไปหน้าเกมทั้งหมด
+                Back to Games
               </Link>
               <Button variant="outline" onClick={() => void loadEditorData(true)}>
                 {loading ? (
@@ -333,7 +294,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                 ) : (
                   <RefreshCw className="size-4" />
                 )}
-                รีเฟรชข้อมูล
+                Refresh
               </Button>
             </div>
 
@@ -343,17 +304,18 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                   {game?.status ?? "loading"}
                 </Badge>
                 <Badge variant="outline">{game?.mode ?? "-"}</Badge>
-                <Badge variant="secondary">{content?.images.length ?? 0} รูป</Badge>
+                <Badge variant="secondary">{content?.images.length ?? 0} images</Badge>
                 {isEditorDirty ? (
-                  <Badge variant="warning">มีการเปลี่ยนแปลงที่ยังไม่บันทึก</Badge>
+                  <Badge variant="warning">Unsaved changes</Badge>
                 ) : null}
               </div>
               <div>
                 <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                  {game?.title ?? "กำลังโหลดเกม..."}
+                  {game?.title ?? "Loading picture reveal game..."}
                 </h1>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground md:text-base">
-                  แก้ไข settings, content และ session history ของเกมนี้จากหน้าเดียว
+                  Manage the game settings and image content for the new
+                  host-controlled hidden-answer flow.
                 </p>
               </div>
             </div>
@@ -371,12 +333,6 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
               >
                 Content
               </TabButton>
-              <TabButton
-                active={activeTab === "history"}
-                onClick={() => setActiveTab("history")}
-              >
-                History
-              </TabButton>
             </div>
           </CardContent>
         </Card>
@@ -389,7 +345,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
 
         {loading && !game ? (
           <div className="rounded-2xl border border-border bg-background/85 px-4 py-10 text-center text-sm text-muted-foreground">
-            กำลังโหลด editor...
+            Loading editor...
           </div>
         ) : null}
 
@@ -398,25 +354,26 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
             <CardHeader>
               <CardTitle>Settings</CardTitle>
               <CardDescription>
-                ปรับรายละเอียดหลักของเกมและสถานะ draft/published
+                Configure scoring, game mode, and publish status for this host-run
+                picture reveal game.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form className="space-y-5" onSubmit={handleSettingsSave}>
                 <div className="grid gap-5 lg:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="settings-title">ชื่อเกม</Label>
+                    <Label htmlFor="settings-title">Game Title</Label>
                     <Input id="settings-title" {...settingsForm.register("title")} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="settings-mode">โหมดเกม</Label>
+                    <Label htmlFor="settings-mode">Mode</Label>
                     <Controller
                       control={settingsForm.control}
                       name="mode"
                       render={({ field }) => (
                         <Select value={field.value} onValueChange={field.onChange}>
                           <SelectTrigger id="settings-mode">
-                            <SelectValue placeholder="เลือกโหมดเกม" />
+                            <SelectValue placeholder="Select a mode" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="single">Single</SelectItem>
@@ -429,7 +386,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="settings-description">คำอธิบาย</Label>
+                  <Label htmlFor="settings-description">Description</Label>
                   <Textarea
                     id="settings-description"
                     {...settingsForm.register("description")}
@@ -438,14 +395,14 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
 
                 <div className="grid gap-4 md:grid-cols-4">
                   <div className="space-y-2">
-                    <Label htmlFor="settings-status">สถานะ</Label>
+                    <Label htmlFor="settings-status">Status</Label>
                     <Controller
                       control={settingsForm.control}
                       name="status"
                       render={({ field }) => (
                         <Select value={field.value} onValueChange={field.onChange}>
                           <SelectTrigger id="settings-status">
-                            <SelectValue placeholder="เลือกสถานะ" />
+                            <SelectValue placeholder="Select a status" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="draft">Draft</SelectItem>
@@ -456,7 +413,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="settings-start-score">คะแนนเริ่มต้น</Label>
+                    <Label htmlFor="settings-start-score">Start Score</Label>
                     <Input
                       id="settings-start-score"
                       type="number"
@@ -466,7 +423,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="settings-open-penalty">หักต่อการเปิด</Label>
+                    <Label htmlFor="settings-open-penalty">Open Tile Penalty</Label>
                     <Input
                       id="settings-open-penalty"
                       type="number"
@@ -476,7 +433,9 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="settings-special-penalty">หักเมื่อเจอพิเศษ</Label>
+                    <Label htmlFor="settings-special-penalty">
+                      Special Tile Penalty
+                    </Label>
                     <Input
                       id="settings-special-penalty"
                       type="number"
@@ -498,7 +457,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
                     {settingsSaving ? (
                       <Loader2 className="size-4 animate-spin" />
                     ) : null}
-                    บันทึก settings
+                    Save Settings
                   </Button>
                 </div>
               </form>
@@ -515,89 +474,6 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
             onSave={handleContentSave}
             onDirtyChange={setContentDirty}
           />
-        ) : null}
-
-        {!loading && game && activeTab === "history" ? (
-          <Card className="border-border/70 bg-background/90 shadow-sm">
-            <CardHeader className="gap-4">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <CardTitle>History</CardTitle>
-                  <CardDescription>
-                    ดู summary ของ session ที่ถูกเล่นในเกมนี้
-                  </CardDescription>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {(["all", "active", "completed"] as const).map((status) => (
-                    <Button
-                      key={status}
-                      size="sm"
-                      variant={historyStatus === status ? "default" : "outline"}
-                      onClick={() => setHistoryStatus(status)}
-                    >
-                      {status}
-                    </Button>
-                  ))}
-                  {[10, 20, 50].map((limit) => (
-                    <Button
-                      key={limit}
-                      size="sm"
-                      variant={historyLimit === limit ? "default" : "outline"}
-                      onClick={() => setHistoryLimit(limit)}
-                    >
-                      {limit}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {history.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-10 text-center">
-                  <p className="font-medium text-foreground">
-                    ยังไม่มี session ในเงื่อนไขนี้
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    เมื่อผู้เล่นเริ่มเกม ประวัติ summary จะมาแสดงที่นี่
-                  </p>
-                </div>
-              ) : (
-                history.map((session) => (
-                  <div
-                    key={session.id}
-                    className="rounded-2xl border border-border bg-background/85 p-4"
-                  >
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap gap-2">
-                          <Badge
-                            variant={
-                              session.status === "completed"
-                                ? "success"
-                                : "warning"
-                            }
-                          >
-                            {session.status}
-                          </Badge>
-                          <Badge variant="outline">{session.mode}</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          เริ่ม {formatDateTime(session.createdAt)} | จบ{" "}
-                          {formatDateTime(session.completedAt)}
-                        </p>
-                      </div>
-                      <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-4">
-                        <div>คะแนนล่าสุด: {session.currentScore}</div>
-                        <div>คะแนนสุดท้าย: {session.finalScore ?? "-"}</div>
-                        <div>รอบถูก: {session.correctRounds}</div>
-                        <div>รอบผิด: {session.wrongRounds}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
         ) : null}
       </div>
     </div>

@@ -26,26 +26,22 @@ export const pictureRevealSpecialPatternOptions = [
   {
     value: "plus",
     label: "plus",
-    description:
-      "เปิดช่องรอบจุดพิเศษเป็นรูปกากบาท ทำให้เห็นทั้งแนวตั้งและแนวนอนมากขึ้น",
+    description: "Open the orthogonal neighbor tiles around the special tile.",
   },
   {
     value: "diagonal",
     label: "diagonal",
-    description:
-      "เปิดช่องตามแนวทแยงจากจุดพิเศษ ช่วยให้เห็นมุมของภาพได้เร็วขึ้น",
+    description: "Open the diagonal neighbor tiles around the special tile.",
   },
   {
     value: "ring",
     label: "ring",
-    description:
-      "เปิดช่องเป็นวงล้อมรอบจุดพิเศษ ทำให้เห็นพื้นที่รอบ ๆ พร้อมกัน",
+    description: "Open every tile directly surrounding the special tile.",
   },
   {
     value: "wide-plus",
     label: "wide-plus",
-    description:
-      "เปิดช่องแบบกากบาทในระยะที่กว้างขึ้น เห็นพื้นที่มากขึ้น แต่จะเสียคะแนนมากกว่า",
+    description: "Open tiles two steps away in each cardinal direction.",
   },
 ] as const;
 
@@ -53,28 +49,28 @@ export const pictureRevealImageRatioPresets = [
   {
     key: "square",
     label: "1:1",
-    description: "เหมาะกับภาพเดี่ยว โฟกัสวัตถุหลัก",
+    description: "Balanced for centered subjects and posters.",
     width: 1080,
     height: 1080,
   },
   {
     key: "classic",
     label: "4:3",
-    description: "สมดุล ใช้งานง่ายกับภาพทั่วไป",
+    description: "A flexible default for general images.",
     width: 1440,
     height: 1080,
   },
   {
     key: "widescreen",
     label: "16:9",
-    description: "เหมาะกับภาพกว้าง ฉากหรือวิว",
+    description: "Best for landscapes and wide compositions.",
     width: 1920,
     height: 1080,
   },
   {
     key: "vertical",
     label: "9:16",
-    description: "เหมาะกับภาพแนวตั้งหรือคอนเทนต์มือถือ",
+    description: "Best for portrait and mobile-first artwork.",
     width: 1080,
     height: 1920,
   },
@@ -187,22 +183,14 @@ export function countPictureRevealGamesByStatus(
   );
 }
 
-export function createEmptyChoiceDraft(sortOrder: number) {
-  return {
-    label: "",
-    isCorrect: sortOrder === 0 ? 1 : 0,
-    sortOrder,
-  } satisfies SavePictureRevealGameContentInput["images"][number]["choices"][number];
-}
-
 export function createEmptyImageDraft(sortOrder: number) {
   return {
     rows: 4,
     cols: 6,
+    answer: "",
     specialTileCount: 1,
     specialPattern: "plus",
     sortOrder,
-    choices: [createEmptyChoiceDraft(0), createEmptyChoiceDraft(1)],
   } satisfies SavePictureRevealGameContentInput["images"][number];
 }
 
@@ -224,17 +212,12 @@ export function buildPictureRevealContentDefaults(
       id: image.id,
       imagePath: image.imagePath,
       originalImagePath: image.originalImagePath ?? undefined,
+      answer: image.answer,
       rows: image.rows,
       cols: image.cols,
       specialTileCount: image.specialTileCount,
       specialPattern: image.specialPattern,
       sortOrder: imageIndex,
-      choices: image.choices.map((choice, choiceIndex) => ({
-        id: choice.id,
-        label: choice.label,
-        isCorrect: choice.isCorrect,
-        sortOrder: choiceIndex,
-      })),
     })),
   };
 }
@@ -247,12 +230,8 @@ export function normalizePictureRevealContentInput(
     imageHeight: values.imageHeight,
     images: values.images.map((image, imageIndex) => ({
       ...image,
+      answer: image.answer.trim(),
       sortOrder: imageIndex,
-      choices: image.choices.map((choice, choiceIndex) => ({
-        ...choice,
-        label: choice.label.trim(),
-        sortOrder: choiceIndex,
-      })),
     })),
   });
 }

@@ -45,7 +45,6 @@ import type { SavePictureRevealGameContentInput } from "@/lib/validations";
 import type { PictureRevealGameContentDto } from "@/types/picture-reveal-admin";
 import {
   buildPictureRevealContentDefaults,
-  createEmptyChoiceDraft,
   createEmptyImageDraft,
   extractPictureRevealApiError,
   formatPictureRevealAspectRatio,
@@ -59,10 +58,16 @@ type ContentFormState = z.input<typeof SavePictureRevealGameContentSchema>;
 
 function getUnsupportedTypeMessage(file: File) {
   if (isGifImageType(file)) {
-    return "GIF ยังไม่รองรับใน crop flow นี้ กรุณาใช้ JPEG, PNG หรือ WEBP";
+    return "GIF is not supported in this crop flow. Please use JPEG, PNG, or WEBP.";
   }
 
-  return "รองรับเฉพาะไฟล์ JPEG, PNG และ WEBP สำหรับการครอปรูป";
+  return "Only JPEG, PNG, and WEBP files are supported.";
+}
+
+function getFieldError(error: unknown) {
+  return error && typeof error === "object" && "message" in error
+    ? String(error.message)
+    : null;
 }
 
 function PictureRevealImageCard({
@@ -97,10 +102,6 @@ function PictureRevealImageCard({
   const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
   const [sourceImageFile, setSourceImageFile] = useState<File | null>(null);
 
-  const choicesFieldArray = useFieldArray({
-    control,
-    name: `images.${index}.choices`,
-  });
   const image = useWatch({
     control,
     name: `images.${index}`,
@@ -108,38 +109,19 @@ function PictureRevealImageCard({
   const { errors } = useFormState({
     control,
     name: [
+      `images.${index}.answer`,
       `images.${index}.rows`,
       `images.${index}.cols`,
       `images.${index}.specialTileCount`,
     ],
   });
 
-  const previewPath = image?.tempImagePath || image?.imagePath || null;
   const imageErrors = errors.images?.[index];
-  const rowsError =
-    imageErrors?.rows && "message" in imageErrors.rows
-      ? String(imageErrors.rows.message)
-      : null;
-  const colsError =
-    imageErrors?.cols && "message" in imageErrors.cols
-      ? String(imageErrors.cols.message)
-      : null;
-  const specialTilesError =
-    imageErrors?.specialTileCount && "message" in imageErrors.specialTileCount
-      ? String(imageErrors.specialTileCount.message)
-      : null;
-
-  const markCorrectChoice = (choiceIndex: number) => {
-    const nextChoices = (image?.choices ?? []).map((choice, currentIndex) => ({
-      ...choice,
-      isCorrect: currentIndex === choiceIndex ? 1 : 0,
-    }));
-
-    setValue(`images.${index}.choices`, nextChoices, {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-  };
+  const previewPath = image?.tempImagePath || image?.imagePath || null;
+  const answerError = getFieldError(imageErrors?.answer);
+  const rowsError = getFieldError(imageErrors?.rows);
+  const colsError = getFieldError(imageErrors?.cols);
+  const specialTilesError = getFieldError(imageErrors?.specialTileCount);
 
   const handleUpload = async (file: File, originalFile?: File | null) => {
     setUploading(true);
@@ -148,6 +130,7 @@ function PictureRevealImageCard({
     try {
       const formData = new FormData();
       formData.append("image", file);
+
       if (originalFile) {
         formData.append("originalImage", originalFile);
       }
@@ -163,7 +146,7 @@ function PictureRevealImageCard({
 
       if (!response.ok) {
         throw new Error(
-          extractPictureRevealApiError(payload) ?? "อัปโหลดรูปไม่สำเร็จ",
+          extractPictureRevealApiError(payload) ?? "Image upload failed",
         );
       }
 
@@ -171,6 +154,7 @@ function PictureRevealImageCard({
         tempImagePath: string;
         tempOriginalImagePath?: string | null;
       };
+
       setValue(`images.${index}.tempImagePath`, result.tempImagePath, {
         shouldDirty: true,
       });
@@ -181,10 +165,10 @@ function PictureRevealImageCard({
           shouldDirty: true,
         },
       );
-      toast.success(`อัปโหลดรูปภาพที่ ${index + 1} สำเร็จ`);
+      toast.success(`Uploaded image ${index + 1}.`);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "อัปโหลดรูปไม่สำเร็จ";
+        error instanceof Error ? error.message : "Image upload failed";
       setUploadError(message);
       toast.error(message);
     } finally {
@@ -205,7 +189,7 @@ function PictureRevealImageCard({
     }
 
     if (targetWidth < 100 || targetHeight < 100) {
-      const message = "กรุณาตั้งค่าขนาดรูปของเกมให้ถูกต้องก่อนอัปโหลด";
+      const message = "Set a valid image size before uploading.";
       setUploadError(message);
       toast.error(message);
       return;
@@ -239,7 +223,7 @@ function PictureRevealImageCard({
       const response = await fetch(recropSourcePath!, { cache: "no-store" });
 
       if (!response.ok) {
-        throw new Error("โหลดรูปปัจจุบันเพื่อครอปซ้ำไม่สำเร็จ");
+        throw new Error("Could not load the current image for recropping.");
       }
 
       const blob = await response.blob();
@@ -254,7 +238,7 @@ function PictureRevealImageCard({
       const message =
         error instanceof Error
           ? error.message
-          : "โหลดรูปปัจจุบันเพื่อครอปซ้ำไม่สำเร็จ";
+          : "Could not load the current image for recropping.";
       setUploadError(message);
       toast.error(message);
     } finally {
@@ -284,13 +268,13 @@ function PictureRevealImageCard({
                   />
                   <div className="absolute inset-x-3 bottom-3 rounded-lg bg-background/80 px-2.5 py-1 text-xs text-muted-foreground backdrop-blur-sm">
                     {canRecropFromPreview
-                      ? "กดที่รูปเพื่อครอปใหม่"
-                      : "ต้องบันทึกก่อน จึงจะครอปจากรูปที่เซฟแล้วได้"}
+                      ? "Click the image to crop again."
+                      : "Save first to crop from the stored original image."}
                   </div>
                 </>
               ) : (
                 <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                  ยังไม่มีรูปภาพ
+                  No image uploaded yet
                 </div>
               )}
             </button>
@@ -305,7 +289,7 @@ function PictureRevealImageCard({
                 ) : (
                   <Scissors className="size-4" />
                 )}
-                {previewPath ? "เปลี่ยนและครอปรูป" : "อัปโหลดและครอปรูป"}
+                {previewPath ? "Replace Image" : "Upload Image"}
               </Label>
               <input
                 id={`image-upload-${index}`}
@@ -325,7 +309,7 @@ function PictureRevealImageCard({
                 disabled={index === 0}
               >
                 <MoveUp className="size-4" />
-                ขึ้น
+                Up
               </Button>
               <Button
                 type="button"
@@ -335,7 +319,7 @@ function PictureRevealImageCard({
                 disabled={index === total - 1}
               >
                 <MoveDown className="size-4" />
-                ลง
+                Down
               </Button>
               <Button
                 type="button"
@@ -344,18 +328,13 @@ function PictureRevealImageCard({
                 onClick={removeImage}
               >
                 <Trash2 className="size-4" />
-                ลบรูป
+                Remove
               </Button>
             </div>
 
             <p className="mt-2 text-xs text-muted-foreground">
-              รูปในเกมนี้จะถูกครอปเป็น {targetWidth}x{targetHeight} px ทุกภาพ
+              Every image will be cropped to {targetWidth}x{targetHeight}px.
             </p>
-            {image?.tempImagePath && !image?.originalImagePath && !sourceImageFile ? (
-              <p className="mt-2 text-xs text-muted-foreground">
-                รูปที่ยังเป็น temp upload จะครอปใหม่จากภาพเดิมไม่ได้จนกว่าจะกดบันทึก
-              </p>
-            ) : null}
             {uploadError ? (
               <p className="mt-2 text-sm text-destructive">{uploadError}</p>
             ) : null}
@@ -363,10 +342,22 @@ function PictureRevealImageCard({
 
           <div className="flex-1 space-y-4">
             <div>
-              <h3 className="text-lg font-semibold">ภาพที่ {index + 1}</h3>
+              <h3 className="text-lg font-semibold">Image {index + 1}</h3>
               <p className="text-sm text-muted-foreground">
-                ตั้งค่า grid, special tiles และปุ่มคำตอบของภาพนี้
+                Configure the board and store the single hidden answer for this
+                image.
               </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Answer</Label>
+              <Input
+                {...register(`images.${index}.answer`)}
+                placeholder="Type the correct answer"
+              />
+              {answerError ? (
+                <p className="text-sm text-destructive">{answerError}</p>
+              ) : null}
             </div>
 
             <div className="grid gap-4 md:grid-cols-4">
@@ -399,10 +390,10 @@ function PictureRevealImageCard({
               <div className="space-y-2">
                 <Label>
                   Special Tiles
-                  <InfoHint label="อธิบาย special tiles">
+                  <InfoHint label="Special tile count">
                     <span>
-                      จำนวนป้ายพิเศษในภาพนี้ เมื่อผู้เล่นเปิดเจอ ระบบจะเปิดป้ายรอบข้างเพิ่มตาม
-                      pattern ที่เลือก และหักคะแนนเพิ่ม
+                      When a host opens a special tile, nearby tiles are opened
+                      automatically based on the selected pattern.
                     </span>
                   </InfoHint>
                 </Label>
@@ -414,16 +405,18 @@ function PictureRevealImageCard({
                   })}
                 />
                 {specialTilesError ? (
-                  <p className="text-sm text-destructive">{specialTilesError}</p>
+                  <p className="text-sm text-destructive">
+                    {specialTilesError}
+                  </p>
                 ) : null}
               </div>
               <div className="space-y-2">
                 <Label>
                   Pattern
-                  <InfoHint label="อธิบาย pattern">
+                  <InfoHint label="Special tile pattern">
                     <span>
-                      กำหนดว่าป้ายรอบจุดพิเศษจะเปิดเป็นรูปแบบไหนเมื่อผู้เล่นเปิดเจอ
-                      special tile
+                      This controls which neighboring tiles are revealed when a
+                      special tile is opened.
                     </span>
                   </InfoHint>
                 </Label>
@@ -433,7 +426,7 @@ function PictureRevealImageCard({
                   render={({ field }) => (
                     <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger>
-                        <SelectValue placeholder="เลือก pattern" />
+                        <SelectValue placeholder="Select a pattern" />
                       </SelectTrigger>
                       <SelectContent>
                         {pictureRevealSpecialPatternOptions.map((option) => (
@@ -452,72 +445,6 @@ function PictureRevealImageCard({
                 />
               </div>
             </div>
-
-            <div className="space-y-3 rounded-2xl border border-border bg-muted/20 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h4 className="font-medium">ตัวเลือกคำตอบ</h4>
-                  <p className="text-sm text-muted-foreground">
-                    ต้องมี 2-6 ปุ่ม และถูกต้องได้เพียง 1 ปุ่ม
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    choicesFieldArray.append(
-                      createEmptyChoiceDraft(choicesFieldArray.fields.length),
-                    )
-                  }
-                  disabled={choicesFieldArray.fields.length >= 6}
-                >
-                  <Plus className="size-4" />
-                  เพิ่มปุ่ม
-                </Button>
-              </div>
-
-              <div className="space-y-3">
-                {choicesFieldArray.fields.map((field, choiceIndex) => {
-                  const choice = image?.choices?.[choiceIndex];
-
-                  return (
-                    <div
-                      key={field.id}
-                      className="grid gap-3 rounded-2xl border border-border bg-background/85 p-3 md:grid-cols-[minmax(0,1fr)_auto_auto]"
-                    >
-                      <div className="space-y-2">
-                        <Label>ชื่อปุ่ม</Label>
-                        <Input
-                          {...register(`images.${index}.choices.${choiceIndex}.label`)}
-                          placeholder={`ตัวเลือก ${choiceIndex + 1}`}
-                        />
-                      </div>
-                      <div className="flex items-end">
-                        <Button
-                          type="button"
-                          variant={choice?.isCorrect === 1 ? "default" : "outline"}
-                          onClick={() => markCorrectChoice(choiceIndex)}
-                        >
-                          ตั้งเป็นคำตอบถูก
-                        </Button>
-                      </div>
-                      <div className="flex items-end">
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          onClick={() => choicesFieldArray.remove(choiceIndex)}
-                          disabled={choicesFieldArray.fields.length <= 2}
-                        >
-                          <Trash2 className="size-4" />
-                          ลบ
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         </div>
 
@@ -525,7 +452,7 @@ function PictureRevealImageCard({
           <div className="mt-4 flex justify-end opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
             <Button type="button" variant="outline" onClick={appendNextImage}>
               <Plus className="size-4" />
-              เพิ่มภาพถัดไป
+              Add Next Image
             </Button>
           </div>
         ) : null}
@@ -631,21 +558,19 @@ export function PictureRevealContentForm({
       shouldValidate: true,
     });
     toast.warning(
-      "เปลี่ยนขนาดรูปแล้ว กรุณาอัปโหลดและครอปรูปใหม่ให้ตรงขนาดล่าสุด",
+      "Image size changed. Re-upload images so they match the new crop size.",
     );
   };
 
-  const applyRatioPreset = ({
-    label,
-    width,
-    height,
-  }: {
+  const applyRatioPreset = (preset: {
     label: string;
     width: number;
     height: number;
   }) => {
-    updateImageSize(width, height);
-    toast.success(`ตั้งค่าขนาดเป็น ${label} แล้ว (${width}x${height})`);
+    updateImageSize(preset.width, preset.height);
+    toast.success(
+      `Applied ${preset.label} (${preset.width}x${preset.height}).`,
+    );
   };
 
   const aspectRatioLabel = formatPictureRevealAspectRatio(
@@ -670,7 +595,8 @@ export function PictureRevealContentForm({
           <div>
             <h2 className="text-lg font-semibold">Content</h2>
             <p className="text-sm text-muted-foreground">
-              กำหนดขนาดและสัดส่วนรูปของเกมได้ที่นี่ ใช้ ratio presets หรือกำหนดเองผ่าน inline cards แล้วระบบจะใช้ขนาดเดียวกันกับทุกภาพ
+              Configure image size, upload images, and store one hidden answer
+              for each board.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -684,11 +610,11 @@ export function PictureRevealContentForm({
               }
             >
               <Plus className="size-4" />
-              เพิ่มภาพ
+              Add Image
             </Button>
             <Button type="submit" disabled={saving}>
               {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-              บันทึก content
+              Save Content
             </Button>
           </div>
         </div>
@@ -698,9 +624,10 @@ export function PictureRevealContentForm({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Label>Ratio Presets</Label>
-                <InfoHint label="อธิบาย ratio presets">
+                <InfoHint label="Ratio presets">
                   <span>
-                    เลือกรูปแบบสัดส่วนยอดนิยมได้อย่างรวดเร็ว หรือปลดล็อกเพื่อปรับค่าความกว้างและความสูงเอง หากมีภาพอยู่แล้วระบบจะล้างรูปเพื่อให้ครอปใหม่ตามขนาดล่าสุด
+                    Pick a preset crop ratio or unlock manual editing for custom
+                    dimensions.
                   </span>
                 </InfoHint>
               </div>
@@ -711,7 +638,7 @@ export function PictureRevealContentForm({
                   <Lock className="size-4 text-muted-foreground" />
                 )}
                 <Label htmlFor="toggle-ratio-editing" className="text-xs">
-                  ปลดล็อกแก้ขนาดเอง
+                  Unlock custom size
                 </Label>
                 <Switch
                   id="toggle-ratio-editing"
@@ -734,30 +661,11 @@ export function PictureRevealContentForm({
                 </Button>
               ))}
             </div>
-            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-              {pictureRevealImageRatioPresets.map((preset) => (
-                <button
-                  key={`${preset.key}-card`}
-                  type="button"
-                  disabled={!ratioEditingEnabled}
-                  onClick={() => applyRatioPreset(preset)}
-                  className="rounded-xl border border-border bg-background/70 p-3 text-left transition hover:border-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <div className="font-medium text-foreground">{preset.label}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    {preset.description}
-                  </div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    ขนาด {preset.width}x{preset.height}
-                  </div>
-                </button>
-              ))}
-            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
             <div className="space-y-2">
-              <Label htmlFor="content-image-width">ความกว้างรูปทั้งเกม (px)</Label>
+              <Label htmlFor="content-image-width">Image Width (px)</Label>
               <Input
                 id="content-image-width"
                 type="number"
@@ -767,7 +675,7 @@ export function PictureRevealContentForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="content-image-height">ความสูงรูปทั้งเกม (px)</Label>
+              <Label htmlFor="content-image-height">Image Height (px)</Label>
               <Input
                 id="content-image-height"
                 type="number"
@@ -778,7 +686,7 @@ export function PictureRevealContentForm({
             </div>
             <div className="flex items-end">
               <div className="rounded-xl border border-border bg-background/70 px-3 py-2 text-sm text-muted-foreground">
-                ใช้ขนาด {parsedImageWidth}x{parsedImageHeight} px กับทุกภาพในเกม
+                Current size: {parsedImageWidth}x{parsedImageHeight}px
               </div>
             </div>
           </div>
@@ -786,12 +694,6 @@ export function PictureRevealContentForm({
           {imageWidthError || imageHeightError ? (
             <p className="text-sm text-destructive">
               {imageWidthError ?? imageHeightError}
-            </p>
-          ) : null}
-
-          {!ratioEditingEnabled ? (
-            <p className="text-sm text-muted-foreground">
-              เมื่อปลดล็อกแล้ว คุณสามารถสลับ preset หรือแก้ความกว้างและความสูงได้เอง แต่ถ้ามีภาพที่อัปโหลดอยู่ ระบบจะล้างภาพเดิมเพื่อให้ครอปใหม่ทั้งหมดตามขนาดล่าสุด
             </p>
           ) : null}
         </div>
@@ -811,9 +713,9 @@ export function PictureRevealContentForm({
 
       {imagesFieldArray.fields.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-10 text-center">
-          <p className="font-medium text-foreground">ยังไม่มีภาพในเกมนี้</p>
+          <p className="font-medium text-foreground">No images yet</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            เพิ่มภาพอย่างน้อย 1 รูปก่อน publish เกม
+            Add at least one image before publishing the game.
           </p>
         </div>
       ) : null}

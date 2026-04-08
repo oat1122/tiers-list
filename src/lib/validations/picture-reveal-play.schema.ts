@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { pictureRevealSessionStatuses } from "@/types/picture-reveal";
 
 export const StartPictureRevealSessionSchema = z.object({});
 
@@ -16,7 +15,7 @@ export type OpenPictureRevealTileInput = z.infer<
 >;
 
 export const GuessPictureRevealChoiceSchema = z.object({
-  choiceId: z.string().min(1, "กรุณาเลือกคำตอบ"),
+  choiceId: z.string().min(1, "choiceId is required"),
 });
 
 export type GuessPictureRevealChoiceInput = z.infer<
@@ -33,10 +32,13 @@ export type PictureRevealSessionRouteParamsInput = z.infer<
 >;
 
 export const PictureRevealSessionListQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(100).default(20),
+  limit: z.preprocess(
+    (value) => (value === null ? undefined : value),
+    z.coerce.number().int().min(1).max(100).default(20),
+  ),
   status: z.preprocess(
     (value) => (value === null ? undefined : value),
-    z.enum(pictureRevealSessionStatuses).optional(),
+    z.enum(["active", "completed"]).optional(),
   ),
 });
 

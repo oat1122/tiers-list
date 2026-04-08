@@ -1,17 +1,6 @@
-import {
-  and,
-  desc,
-  eq,
-  inArray,
-  isNull,
-  sql,
-} from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
-import {
-  pictureRevealGames,
-  pictureRevealImages,
-  pictureRevealImageChoices,
-} from "@/db/schema";
+import { pictureRevealGames, pictureRevealImages } from "@/db/schema";
 import { finalizePictureRevealTempImageFile } from "@/lib/picture-reveal-upload";
 import type {
   CreatePictureRevealGameInput,
@@ -51,6 +40,19 @@ async function assertPublishableGame(gameId: string) {
       "Published games require at least one image",
     );
   }
+}
+
+async function getActiveImagesForGame(gameId: string) {
+  return db
+    .select()
+    .from(pictureRevealImages)
+    .where(
+      and(
+        eq(pictureRevealImages.gameId, gameId),
+        isNull(pictureRevealImages.deletedAt),
+      ),
+    )
+    .orderBy(pictureRevealImages.sortOrder, pictureRevealImages.createdAt);
 }
 
 export async function getPictureRevealGameById(id: string) {
@@ -167,7 +169,7 @@ export async function getPublicPictureRevealGameById(id: string) {
     .mapWith(Number)
     .as("imageCount");
 
-  const rows = await db
+  const gameRows = await db
     .select({
       id: pictureRevealGames.id,
       title: pictureRevealGames.title,
@@ -210,7 +212,18 @@ export async function getPublicPictureRevealGameById(id: string) {
     )
     .limit(1);
 
-  return rows[0] ?? null;
+  const game = gameRows[0] ?? null;
+
+  if (!game) {
+    return null;
+  }
+
+  const images = await getActiveImagesForGame(id);
+
+  return {
+    ...game,
+    images,
+  };
 }
 
 export async function createPictureRevealGame(
@@ -270,52 +283,11 @@ export async function getPictureRevealGameContent(id: string) {
     return null;
   }
 
-  const images = await db
-    .select()
-    .from(pictureRevealImages)
-    .where(
-      and(eq(pictureRevealImages.gameId, id), isNull(pictureRevealImages.deletedAt)),
-    )
-    .orderBy(pictureRevealImages.sortOrder, pictureRevealImages.createdAt);
-
-  const choices =
-    images.length === 0
-      ? []
-      : await db
-          .select()
-          .from(pictureRevealImageChoices)
-          .where(
-            and(
-              inArray(
-                pictureRevealImageChoices.imageId,
-                images.map((image) => image.id),
-              ),
-              isNull(pictureRevealImageChoices.deletedAt),
-            ),
-          )
-          .orderBy(
-            pictureRevealImageChoices.imageId,
-            pictureRevealImageChoices.sortOrder,
-            pictureRevealImageChoices.createdAt,
-          );
-
-  const choicesByImageId = new Map<
-    string,
-    Array<typeof pictureRevealImageChoices.$inferSelect>
-  >();
-
-  for (const choice of choices) {
-    const group = choicesByImageId.get(choice.imageId) ?? [];
-    group.push(choice);
-    choicesByImageId.set(choice.imageId, group);
-  }
+  const images = await getActiveImagesForGame(id);
 
   return {
     ...game,
-    images: images.map((image) => ({
-      ...image,
-      choices: sortBySortOrder(choicesByImageId.get(image.id) ?? []),
-    })),
+    images,
   };
 }
 
@@ -349,37 +321,13 @@ export async function savePictureRevealGameContent(
       .select()
       .from(pictureRevealImages)
       .where(
-        and(eq(pictureRevealImages.gameId, id), isNull(pictureRevealImages.deletedAt)),
+        and(
+          eq(pictureRevealImages.gameId, id),
+          isNull(pictureRevealImages.deletedAt),
+        ),
       );
 
-    const existingChoices =
-      existingImages.length === 0
-        ? []
-        : await tx
-            .select()
-            .from(pictureRevealImageChoices)
-            .where(
-              and(
-                inArray(
-                  pictureRevealImageChoices.imageId,
-                  existingImages.map((image) => image.id),
-                ),
-                isNull(pictureRevealImageChoices.deletedAt),
-              ),
-            );
-
     const imageMap = new Map(existingImages.map((image) => [image.id, image]));
-    const choicesByImageId = new Map<
-      string,
-      Array<typeof pictureRevealImageChoices.$inferSelect>
-    >();
-
-    for (const choice of existingChoices) {
-      const group = choicesByImageId.get(choice.imageId) ?? [];
-      group.push(choice);
-      choicesByImageId.set(choice.imageId, group);
-    }
-
     const keptImageIds: string[] = [];
 
     for (const imageDraft of sortBySortOrder(data.images)) {
@@ -410,6 +358,7 @@ export async function savePictureRevealGameContent(
           .set({
             imagePath: resolvedImagePath,
             originalImagePath: resolvedOriginalImagePath,
+            answer: imageDraft.answer,
             rows: imageDraft.rows,
             cols: imageDraft.cols,
             specialTileCount: imageDraft.specialTileCount,
@@ -424,6 +373,7 @@ export async function savePictureRevealGameContent(
           gameId: id,
           imagePath: resolvedImagePath,
           originalImagePath: resolvedOriginalImagePath,
+          answer: imageDraft.answer,
           rows: imageDraft.rows,
           cols: imageDraft.cols,
           specialTileCount: imageDraft.specialTileCount,
@@ -433,51 +383,6 @@ export async function savePictureRevealGameContent(
       }
 
       keptImageIds.push(imageId);
-
-      const currentChoices = choicesByImageId.get(imageId) ?? [];
-      const choiceMap = new Map(currentChoices.map((choice) => [choice.id, choice]));
-      const keptChoiceIds: string[] = [];
-
-      for (const choiceDraft of sortBySortOrder(imageDraft.choices)) {
-        const existingChoice =
-          choiceDraft.id && choiceMap.has(choiceDraft.id)
-            ? choiceMap.get(choiceDraft.id)
-            : null;
-        const choiceId = existingChoice?.id ?? crypto.randomUUID();
-
-        if (existingChoice) {
-          await tx
-            .update(pictureRevealImageChoices)
-            .set({
-              label: choiceDraft.label,
-              isCorrect: choiceDraft.isCorrect,
-              sortOrder: choiceDraft.sortOrder,
-              deletedAt: null,
-            })
-            .where(eq(pictureRevealImageChoices.id, choiceId));
-        } else {
-          await tx.insert(pictureRevealImageChoices).values({
-            id: choiceId,
-            imageId,
-            label: choiceDraft.label,
-            isCorrect: choiceDraft.isCorrect,
-            sortOrder: choiceDraft.sortOrder,
-          });
-        }
-
-        keptChoiceIds.push(choiceId);
-      }
-
-      const removedChoiceIds = currentChoices
-        .filter((choice) => !keptChoiceIds.includes(choice.id))
-        .map((choice) => choice.id);
-
-      if (removedChoiceIds.length > 0) {
-        await tx
-          .update(pictureRevealImageChoices)
-          .set({ deletedAt: new Date() })
-          .where(inArray(pictureRevealImageChoices.id, removedChoiceIds));
-      }
     }
 
     const removedImageIds = existingImages
@@ -489,16 +394,6 @@ export async function savePictureRevealGameContent(
         .update(pictureRevealImages)
         .set({ deletedAt: new Date() })
         .where(inArray(pictureRevealImages.id, removedImageIds));
-
-      await tx
-        .update(pictureRevealImageChoices)
-        .set({ deletedAt: new Date() })
-        .where(
-          and(
-            inArray(pictureRevealImageChoices.imageId, removedImageIds),
-            isNull(pictureRevealImageChoices.deletedAt),
-          ),
-        );
     }
   });
 

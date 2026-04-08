@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { PICTURE_REVEAL_PLAYER_TOKEN_COOKIE } from "@/lib/picture-reveal-constants";
 import { PictureRevealServiceError } from "@/services/picture-reveal-errors";
 
 if (!("nextUrl" in Request.prototype)) {
@@ -36,7 +35,7 @@ export function getPictureRevealPlayerToken(request: NextRequest) {
     }),
   );
 
-  return cookies.get(PICTURE_REVEAL_PLAYER_TOKEN_COOKIE) ?? null;
+  return cookies.get("picture_reveal_player_token") ?? null;
 }
 
 export function handlePictureRevealRouteError(error: unknown) {
