@@ -60,6 +60,7 @@ function createGame(
     id: "game-1",
     title: "Guess the Animal",
     description: "Host-run picture reveal",
+    coverImagePath: null,
     mode: "single",
     startScore: 1000,
     openTilePenalty: 50,
@@ -402,3 +403,6 @@ describe("PictureRevealPlayClient", () => {
     expect(container.textContent).not.toContain("Run Summary");
   });
 });
+
+
+

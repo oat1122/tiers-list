@@ -6,6 +6,7 @@ import {
   IMAGE_UPLOAD_LIMIT_BYTES,
   LEGACY_UPLOAD_ALLOWED_MIME,
 } from "@/lib/image-upload-config";
+import { UploadValidationError } from "@/lib/upload";
 
 export const PICTURE_REVEAL_UPLOAD_DIR = "public/uploads/picture-reveal";
 export const PICTURE_REVEAL_TEMP_UPLOAD_DIR =
@@ -32,16 +33,26 @@ function validateImageFile(
   allowedMimeTypes: readonly string[] = LEGACY_UPLOAD_ALLOWED_MIME,
 ) {
   if (file.size > IMAGE_UPLOAD_LIMIT_BYTES) {
-    throw new Error(
+    throw new UploadValidationError(
+      "file_too_large",
       `File size must be at most ${IMAGE_RECOMMENDED_SIZE_LABEL} under 5MB`,
+      {
+        limitBytes: IMAGE_UPLOAD_LIMIT_BYTES,
+        recommendedSize: IMAGE_RECOMMENDED_SIZE_LABEL,
+      },
     );
   }
 
   if (!allowedMimeTypes.includes(file.type)) {
-    throw new Error(
+    throw new UploadValidationError(
+      "unsupported_type",
       `Unsupported image type. Allowed: ${allowedMimeTypes
         .map((mime) => mime.replace("image/", ""))
         .join(", ")}`,
+      {
+        recommendedMimeTypes: allowedMimeTypes,
+        recommendedSize: IMAGE_RECOMMENDED_SIZE_LABEL,
+      },
     );
   }
 }

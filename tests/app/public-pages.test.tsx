@@ -54,6 +54,20 @@ vi.mock(
   }),
 );
 
+vi.mock(
+  "@/app/picture-reveal/create/_components/picture-reveal-local-creator-client",
+  () => ({
+    PictureRevealLocalCreatorClient: () => <div data-picture-reveal-local-creator />,
+  }),
+);
+
+vi.mock(
+  "@/app/picture-reveal/create/_components/picture-reveal-local-play-client",
+  () => ({
+    PictureRevealLocalPlayClient: () => <div data-picture-reveal-local-play />,
+  }),
+);
+
 vi.mock("@/services/tier-lists.service", () => ({
   getPublicTierListGallery: mocks.getPublicTierListGallery,
 }));
@@ -78,6 +92,7 @@ describe("public pages", () => {
 
     expect(markup).toContain("/tier-lists");
     expect(markup).toContain("/picture-reveal");
+    expect(markup).toContain("/picture-reveal/create");
     expect(markup).toContain("Public Portal");
   });
 
@@ -108,6 +123,7 @@ describe("public pages", () => {
       id: "game-1",
       title: "Guess the Animal",
       description: "Public game",
+      coverImagePath: null,
       mode: "single",
       startScore: 1000,
       openTilePenalty: 50,
@@ -156,4 +172,25 @@ describe("public pages", () => {
       } as PageProps<"/picture-reveal/[id]">),
     ).rejects.toThrow("NOT_FOUND");
   });
+
+  it("renders the local picture reveal creator route without auth", async () => {
+    const { default: PictureRevealCreatePage } = await import(
+      "@/app/picture-reveal/create/page"
+    );
+    const markup = renderToStaticMarkup(<PictureRevealCreatePage />);
+
+    expect(markup).toContain("data-picture-reveal-local-creator");
+  });
+
+  it("renders the local picture reveal play route without auth", async () => {
+    const { default: PictureRevealCreatePlayPage } = await import(
+      "@/app/picture-reveal/create/play/page"
+    );
+    const markup = renderToStaticMarkup(<PictureRevealCreatePlayPage />);
+
+    expect(markup).toContain("data-picture-reveal-local-play");
+  });
 });
+
+
+

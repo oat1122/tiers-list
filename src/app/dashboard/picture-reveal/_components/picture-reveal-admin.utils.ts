@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { PictureRevealContentFormState } from "@/lib/picture-reveal-content-form";
 import {
   CreatePictureRevealGameSchema,
   SavePictureRevealGameContentSchema,
@@ -185,6 +186,7 @@ export function countPictureRevealGamesByStatus(
 
 export function createEmptyImageDraft(sortOrder: number) {
   return {
+    id: crypto.randomUUID(),
     rows: 4,
     cols: 6,
     answer: "",
@@ -196,9 +198,12 @@ export function createEmptyImageDraft(sortOrder: number) {
 
 export function buildPictureRevealContentDefaults(
   content?: PictureRevealGameContentDto | null,
-): SavePictureRevealGameContentInput {
+): PictureRevealContentFormState {
   if (!content) {
     return {
+      coverImagePath: null,
+      coverTempUploadPath: null,
+      coverAssetId: null,
       imageWidth: 1080,
       imageHeight: 1080,
       images: [createEmptyImageDraft(0)],
@@ -206,12 +211,17 @@ export function buildPictureRevealContentDefaults(
   }
 
   return {
+    coverImagePath: content.coverImagePath ?? null,
+    coverTempUploadPath: null,
+    coverAssetId: null,
     imageWidth: content.imageWidth ?? 1080,
     imageHeight: content.imageHeight ?? 1080,
     images: content.images.map((image, imageIndex) => ({
       id: image.id,
       imagePath: image.imagePath,
       originalImagePath: image.originalImagePath ?? undefined,
+      imageAssetId: null,
+      originalImageAssetId: null,
       answer: image.answer,
       rows: image.rows,
       cols: image.cols,
@@ -226,6 +236,8 @@ export function normalizePictureRevealContentInput(
   values: z.input<typeof SavePictureRevealGameContentSchema>,
 ): SavePictureRevealGameContentInput {
   return SavePictureRevealGameContentSchema.parse({
+    coverImagePath: values.coverImagePath ?? null,
+    coverTempUploadPath: values.coverTempUploadPath ?? null,
     imageWidth: values.imageWidth,
     imageHeight: values.imageHeight,
     images: values.images.map((image, imageIndex) => ({

@@ -10,4 +10,5 @@ export * from "./tier-lists.schema";
 export * from "./tier-items.schema";
 export * from "./tier-editor.schema";
 export * from "./picture-reveal-games.schema";
+export * from "./picture-reveal-local.schema";
 export * from "./picture-reveal-play.schema";

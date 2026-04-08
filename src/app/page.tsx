@@ -112,6 +112,12 @@ export default async function HomePage() {
                     เปิด workspace
                     <ArrowRight className="size-4" />
                   </Link>
+                  <Link
+                    href="/picture-reveal/create"
+                    className={cn(portalOutlineLinkClassName)}
+                  >
+                    Create your own game
+                  </Link>
                 </CardContent>
               </Card>
 

@@ -78,6 +78,20 @@
       "when": 1775659540635,
       "tag": "0010_mushy_namor",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1775690000000,
+      "tag": "0011_picture_reveal_cover",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1775664093985,
+      "tag": "0012_flimsy_otto_octavius",
+      "breakpoints": true
     }
   ]
 }

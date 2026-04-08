@@ -7,6 +7,7 @@ export interface PublicPictureRevealGameSummary {
   id: string;
   title: string;
   description: string | null;
+  coverImagePath: string | null;
   mode: PictureRevealSessionMode;
   startScore: number;
   openTilePenalty: number;

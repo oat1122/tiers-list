@@ -22,6 +22,7 @@ export function serializePublicPictureRevealGameSummary(
     id: game.id,
     title: game.title,
     description: game.description,
+    coverImagePath: game.coverImagePath ?? null,
     mode: game.mode as PublicPictureRevealGameSummary["mode"],
     startScore: game.startScore,
     openTilePenalty: game.openTilePenalty,

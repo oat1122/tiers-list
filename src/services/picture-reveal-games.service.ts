@@ -76,6 +76,7 @@ export async function getAdminPictureRevealGames() {
       userId: pictureRevealGames.userId,
       title: pictureRevealGames.title,
       description: pictureRevealGames.description,
+      coverImagePath: pictureRevealGames.coverImagePath,
       status: pictureRevealGames.status,
       mode: pictureRevealGames.mode,
       startScore: pictureRevealGames.startScore,
@@ -102,6 +103,7 @@ export async function getAdminPictureRevealGames() {
       pictureRevealGames.userId,
       pictureRevealGames.title,
       pictureRevealGames.description,
+      pictureRevealGames.coverImagePath,
       pictureRevealGames.status,
       pictureRevealGames.mode,
       pictureRevealGames.startScore,
@@ -126,6 +128,7 @@ export async function getPublicPictureRevealGames() {
       id: pictureRevealGames.id,
       title: pictureRevealGames.title,
       description: pictureRevealGames.description,
+      coverImagePath: pictureRevealGames.coverImagePath,
       mode: pictureRevealGames.mode,
       startScore: pictureRevealGames.startScore,
       openTilePenalty: pictureRevealGames.openTilePenalty,
@@ -153,6 +156,7 @@ export async function getPublicPictureRevealGames() {
       pictureRevealGames.id,
       pictureRevealGames.title,
       pictureRevealGames.description,
+      pictureRevealGames.coverImagePath,
       pictureRevealGames.mode,
       pictureRevealGames.startScore,
       pictureRevealGames.openTilePenalty,
@@ -174,6 +178,7 @@ export async function getPublicPictureRevealGameById(id: string) {
       id: pictureRevealGames.id,
       title: pictureRevealGames.title,
       description: pictureRevealGames.description,
+      coverImagePath: pictureRevealGames.coverImagePath,
       mode: pictureRevealGames.mode,
       startScore: pictureRevealGames.startScore,
       openTilePenalty: pictureRevealGames.openTilePenalty,
@@ -202,6 +207,7 @@ export async function getPublicPictureRevealGameById(id: string) {
       pictureRevealGames.id,
       pictureRevealGames.title,
       pictureRevealGames.description,
+      pictureRevealGames.coverImagePath,
       pictureRevealGames.mode,
       pictureRevealGames.startScore,
       pictureRevealGames.openTilePenalty,
@@ -244,6 +250,7 @@ export async function createPictureRevealGame(
     userId,
     title: data.title,
     description: data.description,
+    coverImagePath: null,
     status: data.status,
     mode: data.mode,
     startScore: data.startScore,
@@ -309,9 +316,14 @@ export async function savePictureRevealGameContent(
   }
 
   await db.transaction(async (tx) => {
+    const resolvedCoverImagePath = data.coverTempUploadPath
+      ? await finalizePictureRevealTempImageFile(data.coverTempUploadPath)
+      : data.coverImagePath ?? null;
+
     await tx
       .update(pictureRevealGames)
       .set({
+        coverImagePath: resolvedCoverImagePath,
         imageWidth: data.imageWidth,
         imageHeight: data.imageHeight,
       })

@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="100%" height="100%">
+  <defs>
+    <style>
+      /* กำหนด Keyframes สำหรับ Animation */
+      @keyframes cursorAnim {
+        0%, 10% { transform: translate(150px, 380px); }
+        20%, 30% { transform: translate(215px, 160px); } /* เลื่อนไปคลิก Template ใน Gallery */
+        35% { transform: translate(215px, 160px) scale(0.85); } /* จังหวะคลิก */
+        40% { transform: translate(215px, 160px) scale(1); }
+        50%, 55% { transform: translate(400px, 320px); } /* เลื่อนมาจับ Item 1 ใน Editor */
+        60% { transform: translate(400px, 320px) scale(0.85); }
+        70% { transform: translate(430px, 145px); } /* ลาก Item 1 ไปที่ Tier S ให้พอดีแถว */
+        75% { transform: translate(430px, 145px) scale(1); } /* ปล่อย Item 1 */
+        80%, 85% { transform: translate(460px, 320px); } /* เลื่อนมาจับ Item 2 */
+        90% { transform: translate(460px, 320px) scale(0.85); }
+        95% { transform: translate(480px, 200px); } /* ลาก Item 2 ไปที่ Tier A ให้พอดีแถว */
+        100% { transform: translate(480px, 200px) scale(1); } /* ปล่อย Item 2 */
+      }
+      
+      @keyframes cardGlow {
+        0%, 25% { stroke: #e2e8f0; stroke-width: 2; }
+        30%, 100% { stroke: #3b82f6; stroke-width: 3; }
+      }
+      
+      @keyframes item1Anim {
+        0%, 35% { opacity: 0; transform: translate(380px, 300px); } /* ซ่อนไว้จนกว่าจะโหลดเทมเพลต */
+        40%, 60% { opacity: 1; transform: translate(380px, 300px); } /* ปรากฏใน Local Editor */
+        70%, 100% { opacity: 1; transform: translate(410px, 125px); } /* ถูกลากไปจัดอันดับ (ปรับพิกัด Y ให้ตรงกึ่งกลาง Tier S) */
+      }
+      
+      @keyframes item2Anim {
+        0%, 35% { opacity: 0; transform: translate(440px, 300px); }
+        40%, 90% { opacity: 1; transform: translate(440px, 300px); }
+        95%, 100% { opacity: 1; transform: translate(460px, 180px); } /* ถูกลากไปจัดอันดับ (ปรับพิกัด Y ให้ตรงกึ่งกลาง Tier A) */
+      }
+      
+      @keyframes item3Anim {
+        0%, 35% { opacity: 0; }
+        40%, 100% { opacity: 1; }
+      }
+      
+      @keyframes editorFadeIn {
+        0%, 35% { opacity: 0.4; filter: grayscale(80%); }
+        40%, 100% { opacity: 1; filter: grayscale(0%); }
+      }
+
+      @keyframes syncFly {
+        0%, 30% { opacity: 0; transform: translate(215px, 160px) scale(0.5); }
+        35% { opacity: 1; transform: translate(215px, 160px) scale(1); }
+        40% { opacity: 0; transform: translate(540px, 200px) scale(2); }
+        41%, 100% { opacity: 0; }
+      }
+
+      .cursor { animation: cursorAnim 8s infinite cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; }
+      .card-target { animation: cardGlow 8s infinite; }
+      .item-1 { animation: item1Anim 8s infinite cubic-bezier(0.4, 0, 0.2, 1); }
+      .item-2 { animation: item2Anim 8s infinite cubic-bezier(0.4, 0, 0.2, 1); }
+      .item-3 { animation: item3Anim 8s infinite; }
+      .editor-panel { animation: editorFadeIn 8s infinite; }
+      .sync-icon { animation: syncFly 8s infinite cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+    
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0f172a" flood-opacity="0.08" />
+    </filter>
+  </defs>
+
+  <rect width="800" height="400" fill="#f8fafc" />
+
+  <g transform="translate(40, 40)">
+    <rect width="250" height="320" fill="#ffffff" rx="16" filter="url(#shadow)" />
+    
+    <path d="M20 30 Q20 20 30 20 L50 20 Q60 20 60 30 L60 40 Q60 50 50 50 L30 50 Q20 50 20 40 Z" fill="#eff6ff" />
+    <path d="M33 28 L47 28 M33 35 L47 35 M33 42 L41 42" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+    
+    <text x="75" y="36" font-family="sans-serif" font-weight="700" font-size="16" fill="#0f172a">Public Gallery</text>
+    <text x="75" y="52" font-family="sans-serif" font-size="11" fill="#64748b">Community Tier Lists</text>
+
+    <rect x="25" y="80" width="90" height="95" rx="8" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="33" y="90" width="74" height="10" rx="3" fill="#ff7f7f" opacity="0.4" />
+    <rect x="33" y="104" width="74" height="10" rx="3" fill="#ffbf7f" opacity="0.4" />
+    <rect x="33" y="118" width="74" height="10" rx="3" fill="#ffff7f" opacity="0.4" />
+
+    <rect class="card-target" x="135" y="80" width="90" height="95" rx="8" fill="#f1f5f9" />
+    <rect x="143" y="90" width="74" height="10" rx="3" fill="#ff7f7f" />
+    <rect x="143" y="104" width="74" height="10" rx="3" fill="#ffbf7f" />
+    <rect x="143" y="118" width="74" height="10" rx="3" fill="#ffff7f" />
+    <circle cx="155" cy="145" r="7" fill="#3b82f6" />
+    <circle cx="175" cy="145" r="7" fill="#8b5cf6" />
+    <circle cx="195" cy="145" r="7" fill="#ec4899" />
+
+    <rect x="25" y="195" width="90" height="95" rx="8" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="33" y="205" width="74" height="10" rx="3" fill="#93c5fd" opacity="0.4" />
+    <rect x="33" y="219" width="74" height="10" rx="3" fill="#86efac" opacity="0.4" />
+
+    <rect x="135" y="195" width="90" height="95" rx="8" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="143" y="205" width="74" height="10" rx="3" fill="#fca5a5" opacity="0.4" />
+    <rect x="143" y="219" width="74" height="10" rx="3" fill="#fcd34d" opacity="0.4" />
+  </g>
+
+  <g class="sync-icon">
+    <circle cx="0" cy="0" r="16" fill="#3b82f6" opacity="0.2" />
+    <path d="M-6-2 L2-10 L10-2 M2-10 L2 10" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="rotate(90)" />
+  </g>
+
+  <g class="editor-panel" transform="translate(320, 40)">
+    <rect width="440" height="320" fill="#ffffff" rx="16" filter="url(#shadow)" />
+    
+    <path d="M20 30 Q20 20 30 20 L50 20 Q60 20 60 30 L60 40 Q60 50 50 50 L30 50 Q20 50 20 40 Z" fill="#f5f3ff" />
+    <path d="M32 30 L48 30 M32 36 L44 36 M32 42 L40 42" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round"/>
+
+    <text x="75" y="36" font-family="sans-serif" font-weight="700" font-size="16" fill="#0f172a">Local Editor</text>
+    <text x="75" y="52" font-family="sans-serif" font-size="11" fill="#64748b">Tweak &amp; Extend immediately</text>
+
+    <rect x="20" y="80" width="400" height="50" fill="#f8fafc" rx="4" stroke="#e2e8f0" stroke-width="1"/>
+    <rect x="20" y="80" width="60" height="50" fill="#ff7f7f" rx="4" />
+    <text x="50" y="112" font-family="sans-serif" font-weight="bold" font-size="22" fill="#1e293b" text-anchor="middle">S</text>
+
+    <rect x="20" y="135" width="400" height="50" fill="#f8fafc" rx="4" stroke="#e2e8f0" stroke-width="1"/>
+    <rect x="20" y="135" width="60" height="50" fill="#ffbf7f" rx="4" />
+    <text x="50" y="167" font-family="sans-serif" font-weight="bold" font-size="22" fill="#1e293b" text-anchor="middle">A</text>
+
+    <rect x="20" y="190" width="400" height="50" fill="#f8fafc" rx="4" stroke="#e2e8f0" stroke-width="1"/>
+    <rect x="20" y="190" width="60" height="50" fill="#ffff7f" rx="4" />
+    <text x="50" y="222" font-family="sans-serif" font-weight="bold" font-size="22" fill="#1e293b" text-anchor="middle">B</text>
+
+    <rect x="20" y="255" width="400" height="50" fill="#f1f5f9" rx="8" stroke="#cbd5e1" stroke-dasharray="4" stroke-width="1.5" />
+  </g>
+
+  <g class="item-3" transform="translate(500, 300)">
+    <rect width="40" height="40" rx="8" fill="#ec4899" filter="url(#shadow)" />
+    <circle cx="20" cy="20" r="10" fill="#ffffff" opacity="0.4" />
+  </g>
+
+  <g class="item-1">
+    <rect width="40" height="40" rx="8" fill="#3b82f6" filter="url(#shadow)" />
+    <rect x="10" y="10" width="20" height="20" fill="#ffffff" opacity="0.4" rx="4" />
+  </g>
+
+  <g class="item-2">
+    <rect width="40" height="40" rx="8" fill="#8b5cf6" filter="url(#shadow)" />
+    <polygon points="20,10 30,30 10,30" fill="#ffffff" opacity="0.4" />
+  </g>
+
+  <g class="cursor">
+    <path d="M0,0 L16,16 L9,16 L5,24 L0,24 Z" fill="#ffffff" stroke="#0f172a" stroke-width="1.5" filter="url(#shadow)"/>
+  </g>
+
+</svg>

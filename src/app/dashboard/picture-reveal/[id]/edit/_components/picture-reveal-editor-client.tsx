@@ -39,7 +39,10 @@ import {
   extractPictureRevealApiError,
   readJsonOrNull,
 } from "@/app/dashboard/picture-reveal/_components/picture-reveal-admin.utils";
-import { PictureRevealContentForm } from "./picture-reveal-content-form";
+import {
+  PictureRevealContentForm,
+  buildPictureRevealRemoteContentInitialValues,
+} from "./picture-reveal-content-form";
 
 type TabKey = "settings" | "content";
 type PictureRevealGameDetails = Omit<PictureRevealGameContentDto, "images">;
@@ -468,7 +471,7 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
         {!loading && game && activeTab === "content" ? (
           <PictureRevealContentForm
             gameId={gameId}
-            initialContent={content}
+            initialValues={buildPictureRevealRemoteContentInitialValues(content)}
             saving={contentSaving}
             error={contentError}
             onSave={handleContentSave}

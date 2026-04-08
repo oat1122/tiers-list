@@ -37,6 +37,7 @@ describe("Drizzle schema contracts", () => {
     expect(source).toContain("crypto.randomUUID()");
     expect(source).toContain('imageWidth: int("image_width").notNull().default(1080)');
     expect(source).toContain('imageHeight: int("image_height").notNull().default(1080)');
+    expect(source).toContain('coverImagePath: varchar("cover_image_path", { length: 500 })');
     expect(source).toContain(
       'createdAt: timestamp("created_at").notNull().defaultNow()',
     );
@@ -59,3 +60,6 @@ describe("Client-only store contracts", () => {
     expect(source.split(/\r?\n/, 2)[0]).toBe('"use client";');
   });
 });
+
+
+

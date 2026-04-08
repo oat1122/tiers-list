@@ -5,6 +5,7 @@ import {
   requirePictureRevealAdmin,
 } from "@/lib/picture-reveal-route";
 import { UploadValidationError } from "@/lib/upload";
+import { PictureRevealGameIdParamSchema } from "@/lib/validations";
 import { getPictureRevealGameById } from "@/services/picture-reveal-games.service";
 
 export async function POST(
@@ -15,8 +16,16 @@ export async function POST(
 
   try {
     await requirePictureRevealAdmin(request);
+    const result = PictureRevealGameIdParamSchema.safeParse(params);
 
-    const game = await getPictureRevealGameById(params.id);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error.flatten() },
+        { status: 400 },
+      );
+    }
+
+    const game = await getPictureRevealGameById(result.data.id);
 
     if (!game || game.deletedAt) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -24,7 +33,6 @@ export async function POST(
 
     const formData = await request.formData();
     const image = formData.get("image");
-    const originalImage = formData.get("originalImage");
 
     if (!image || typeof image === "string") {
       return NextResponse.json(
@@ -33,16 +41,8 @@ export async function POST(
       );
     }
 
-    const tempImagePath = await savePictureRevealTempImageFile(image);
-    const tempOriginalImagePath =
-      originalImage && typeof originalImage !== "string"
-        ? await savePictureRevealTempImageFile(originalImage)
-        : null;
-
-    return NextResponse.json(
-      { tempImagePath, tempOriginalImagePath },
-      { status: 201 },
-    );
+    const tempUploadPath = await savePictureRevealTempImageFile(image);
+    return NextResponse.json({ tempUploadPath }, { status: 201 });
   } catch (error) {
     if (error instanceof UploadValidationError) {
       return NextResponse.json(

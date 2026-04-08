@@ -14,6 +14,7 @@ function createGame(
     id: "game-1",
     title: "Guess the Animal",
     description: "Host-run picture reveal",
+    coverImagePath: null,
     mode: "marathon",
     startScore: 1000,
     openTilePenalty: 50,
@@ -104,3 +105,6 @@ describe("picture reveal play client utils", () => {
     ]);
   });
 });
+
+
+

@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useDeferredValue, useMemo, useState } from "react";
-import { ArrowRight, Search, Sparkles } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -30,12 +31,6 @@ function formatUpdatedAt(updatedAt: string) {
 
 function modeLabel(mode: PublicPictureRevealGameSummary["mode"]) {
   return mode === "single" ? "Single" : "Marathon";
-}
-
-function modeDescription(mode: PublicPictureRevealGameSummary["mode"]) {
-  return mode === "single"
-    ? "เล่นหนึ่งภาพต่อหนึ่ง session เหมาะกับการแชร์โจทย์เร็ว ๆ"
-    : "เล่นต่อเนื่องหลายภาพใน session เดียวแล้วเก็บคะแนนรวมจนจบ";
 }
 
 export function PictureRevealGalleryClient({
@@ -75,16 +70,24 @@ export function PictureRevealGalleryClient({
             </p>
           </div>
 
-          <label className="relative block w-full md:max-w-sm">
+          <div className="flex w-full flex-col gap-3 md:max-w-sm">
+            <label className="relative block">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="ค้นหาเกม Picture Reveal..."
+              placeholder="ค้นหา Picture Reveal..."
               aria-label="Search picture reveal games"
               className="h-10 rounded-xl bg-background pl-9"
             />
-          </label>
+            </label>
+            <Link
+              href="/picture-reveal/create"
+              className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+            >
+              Create your own game
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -128,39 +131,27 @@ export function PictureRevealGalleryClient({
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-4">
-                <div className="rounded-2xl border border-border/70 bg-muted/25 px-4 py-3">
-                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <Sparkles className="size-4 text-primary" />
-                    {modeDescription(game.mode)}
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Start
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-foreground">
-                      {game.startScore}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Open Tile
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-foreground">
-                      -{game.openTilePenalty}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Special
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-foreground">
-                      -{game.specialTilePenalty}
-                    </p>
-                  </div>
+              <CardContent>
+                <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border border-border/70 bg-muted/25">
+                  {game.coverImagePath ? (
+                    <Image
+                      src={game.coverImagePath}
+                      alt={`Cover for ${game.title}`}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="flex h-full flex-col justify-end bg-[radial-gradient(circle_at_top_left,_rgba(15,23,42,0.15),_transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.82),rgba(241,245,249,0.92))] p-4 dark:bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.08),_transparent_42%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(30,41,59,0.94))]">
+                      <p className="text-sm font-semibold text-foreground">
+                        No cover image yet
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                        This game can still be played normally. Add a cover in the
+                        editor to improve the public preview.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
 

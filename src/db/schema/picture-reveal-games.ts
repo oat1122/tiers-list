@@ -20,6 +20,7 @@ export const pictureRevealGames = mysqlTable(
 
     title: varchar("title", { length: 255 }).notNull(),
     description: text("description"),
+    coverImagePath: varchar("cover_image_path", { length: 500 }),
     status: varchar("status", { length: 20 }).notNull().default("draft"),
     mode: varchar("mode", { length: 20 }).notNull().default("single"),
     startScore: int("start_score").notNull().default(1000),

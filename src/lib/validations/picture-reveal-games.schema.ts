@@ -82,6 +82,8 @@ export type PictureRevealImageDraftInput = z.infer<
 >;
 
 export const SavePictureRevealGameContentSchema = z.object({
+  coverImagePath: z.string().min(1).nullable().optional(),
+  coverTempUploadPath: z.string().min(1).nullable().optional(),
   imageWidth: z.coerce
     .number()
     .int()

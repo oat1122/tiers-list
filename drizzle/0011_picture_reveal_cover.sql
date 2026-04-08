@@ -1,0 +1,1 @@
+ALTER TABLE `picture_reveal_games` ADD `cover_image_path` varchar(500);

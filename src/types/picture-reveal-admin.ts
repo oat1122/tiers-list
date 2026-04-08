@@ -9,6 +9,7 @@ export interface PictureRevealGameSummaryDto {
   userId: string;
   title: string;
   description: string | null;
+  coverImagePath: string | null;
   status: PictureRevealGameStatus;
   mode: PictureRevealSessionMode;
   startScore: number;
@@ -43,6 +44,7 @@ export interface PictureRevealGameContentDto {
   userId: string;
   title: string;
   description: string | null;
+  coverImagePath: string | null;
   status: PictureRevealGameStatus;
   mode: PictureRevealSessionMode;
   startScore: number;

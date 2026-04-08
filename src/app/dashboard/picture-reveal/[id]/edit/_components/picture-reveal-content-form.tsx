@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  ImagePlus,
   Loader2,
   Lock,
   LockOpen,
@@ -13,7 +14,6 @@ import {
   Trash2,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { z } from "zod";
 import {
   Controller,
   useFieldArray,
@@ -21,6 +21,7 @@ import {
   useFormState,
   useWatch,
   type Control,
+  type Resolver,
   type UseFormRegister,
   type UseFormSetValue,
 } from "react-hook-form";
@@ -38,8 +39,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { CROPPABLE_IMAGE_MIME } from "@/lib/image-upload-config";
+import {
+  CROPPABLE_IMAGE_MIME,
+  IMAGE_UPLOAD_LIMIT_BYTES,
+} from "@/lib/image-upload-config";
 import { isCroppableImageType, isGifImageType } from "@/lib/image-processing";
+import {
+  buildPictureRevealContentFormSnapshot,
+  type PictureRevealContentFormImageState,
+  type PictureRevealContentFormState,
+} from "@/lib/picture-reveal-content-form";
 import { SavePictureRevealGameContentSchema } from "@/lib/validations";
 import type { SavePictureRevealGameContentInput } from "@/lib/validations";
 import type { PictureRevealGameContentDto } from "@/types/picture-reveal-admin";
@@ -54,7 +63,19 @@ import {
   readJsonOrNull,
 } from "@/app/dashboard/picture-reveal/_components/picture-reveal-admin.utils";
 
-type ContentFormState = z.input<typeof SavePictureRevealGameContentSchema>;
+const PICTURE_REVEAL_COVER_WIDTH = 1600;
+const PICTURE_REVEAL_COVER_HEIGHT = 900;
+const COVER_ACCEPTED_FORMATS_LABEL = "JPEG, PNG, WEBP";
+
+function formatBytes(bytes: number) {
+  return `${Math.round(bytes / (1024 * 1024))}MB`;
+}
+
+function createPictureRevealCoverHelperText() {
+  return `Cropped to ${PICTURE_REVEAL_COVER_WIDTH}x${PICTURE_REVEAL_COVER_HEIGHT}px (16:9), max ${formatBytes(
+    IMAGE_UPLOAD_LIMIT_BYTES,
+  )}, supports ${COVER_ACCEPTED_FORMATS_LABEL}.`;
+}
 
 function getUnsupportedTypeMessage(file: File) {
   if (isGifImageType(file)) {
@@ -70,6 +91,307 @@ function getFieldError(error: unknown) {
     : null;
 }
 
+async function uploadRemoteCover(gameId: string, file: File) {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const response = await fetch(
+    `/api/picture-reveal-games/${gameId}/cover/upload-temp`,
+    {
+      method: "POST",
+      body: formData,
+    },
+  );
+  const payload = await readJsonOrNull(response);
+
+  if (!response.ok) {
+    throw new Error(extractPictureRevealApiError(payload) ?? "Cover upload failed");
+  }
+
+  const result = payload as { tempUploadPath: string };
+
+  return {
+    previewPath: result.tempUploadPath,
+    coverAssetId: null,
+  };
+}
+
+async function uploadRemoteImage(
+  gameId: string,
+  file: File,
+  originalFile?: File | null,
+) {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  if (originalFile) {
+    formData.append("originalImage", originalFile);
+  }
+
+  const response = await fetch(
+    `/api/picture-reveal-games/${gameId}/images/upload-temp`,
+    {
+      method: "POST",
+      body: formData,
+    },
+  );
+  const payload = await readJsonOrNull(response);
+
+  if (!response.ok) {
+    throw new Error(extractPictureRevealApiError(payload) ?? "Image upload failed");
+  }
+
+  const result = payload as {
+    tempImagePath: string;
+    tempOriginalImagePath?: string | null;
+  };
+
+  return {
+    previewPath: result.tempImagePath,
+    originalPreviewPath: result.tempOriginalImagePath ?? null,
+    imageAssetId: null,
+    originalImageAssetId: null,
+  };
+}
+
+async function loadRemoteRecropFile(
+  image: PictureRevealContentFormImageState,
+  index: number,
+) {
+  const recropSourcePath = image.originalImagePath ?? image.imagePath;
+
+  if (!recropSourcePath) {
+    return null;
+  }
+
+  const response = await fetch(recropSourcePath, { cache: "no-store" });
+
+  if (!response.ok) {
+    throw new Error("Could not load the current image for recropping.");
+  }
+
+  const blob = await response.blob();
+  const extension = blob.type === "image/png" ? "png" : "webp";
+
+  return new File([blob], `picture-reveal-${index + 1}.${extension}`, {
+    type: blob.type || "image/webp",
+  });
+}
+
+export interface PictureRevealContentUploadAdapter {
+  uploadCover: (file: File) => Promise<{
+    previewPath: string;
+    coverAssetId?: string | null;
+  }>;
+  uploadImage: (params: {
+    index: number;
+    file: File;
+    originalFile?: File | null;
+  }) => Promise<{
+    previewPath: string;
+    originalPreviewPath?: string | null;
+    imageAssetId?: string | null;
+    originalImageAssetId?: string | null;
+  }>;
+  loadImageSourceFile?: (params: {
+    index: number;
+    image: PictureRevealContentFormImageState;
+  }) => Promise<File | null>;
+}
+
+function PictureRevealCoverCard({
+  gameId,
+  control,
+  setValue,
+  uploadAdapter,
+}: {
+  gameId?: string;
+  control: Control<PictureRevealContentFormState>;
+  setValue: UseFormSetValue<PictureRevealContentFormState>;
+  uploadAdapter?: PictureRevealContentUploadAdapter;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
+
+  const coverImagePath = useWatch({
+    control,
+    name: "coverImagePath",
+  });
+  const coverTempUploadPath = useWatch({
+    control,
+    name: "coverTempUploadPath",
+  });
+  const previewPath = coverTempUploadPath || coverImagePath || null;
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    setUploadError(null);
+
+    try {
+      const result = uploadAdapter
+        ? await uploadAdapter.uploadCover(file)
+        : await uploadRemoteCover(gameId!, file);
+      const previousPreviewPath = previewPath;
+
+      setValue("coverAssetId", result.coverAssetId ?? null, {
+        shouldDirty: true,
+      });
+      setValue(
+        "coverTempUploadPath",
+        result.coverAssetId ? null : result.previewPath,
+        {
+          shouldDirty: true,
+          shouldValidate: true,
+        },
+      );
+      setValue("coverImagePath", result.previewPath, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+
+      if (
+        previousPreviewPath?.startsWith("blob:") &&
+        previousPreviewPath !== result.previewPath
+      ) {
+        URL.revokeObjectURL(previousPreviewPath);
+      }
+
+      toast.success("Uploaded game cover.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Cover upload failed";
+      setUploadError(message);
+      toast.error(message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileSelection = (file: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    if (!isCroppableImageType(file)) {
+      const message = getUnsupportedTypeMessage(file);
+      setUploadError(message);
+      toast.error(message);
+      return;
+    }
+
+    setUploadError(null);
+    setPendingCropFile(file);
+  };
+
+  const handleRemoveCover = () => {
+    if (previewPath?.startsWith("blob:")) {
+      URL.revokeObjectURL(previewPath);
+    }
+
+    setValue("coverImagePath", null, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("coverTempUploadPath", null, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("coverAssetId", null, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setUploadError(null);
+    toast.success("Removed game cover from the draft.");
+  };
+
+  return (
+    <>
+      <div className="rounded-2xl border border-border bg-muted/20 p-4">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold">Game Cover</h3>
+            <p className="text-sm text-muted-foreground">
+              Upload the cover image used on the public game gallery.
+            </p>
+          </div>
+
+          <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border border-border bg-background/70">
+            {previewPath ? (
+              <Image
+                src={previewPath}
+                alt="Picture reveal game cover"
+                fill
+                className="object-cover"
+                unoptimized
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                No cover uploaded yet
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Label
+              htmlFor="picture-reveal-cover-upload"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-input px-3 py-2 text-sm font-medium"
+            >
+              {uploading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <ImagePlus className="size-4" />
+              )}
+              {previewPath ? "Replace Cover" : "Upload Cover"}
+            </Label>
+            <input
+              id="picture-reveal-cover-upload"
+              type="file"
+              accept={CROPPABLE_IMAGE_MIME.join(",")}
+              className="hidden"
+              onChange={(event) => {
+                handleFileSelection(event.target.files?.[0] ?? null);
+                event.target.value = "";
+              }}
+            />
+            {previewPath ? (
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={handleRemoveCover}
+                disabled={uploading}
+              >
+                <Trash2 className="size-4" />
+                Remove Cover
+              </Button>
+            ) : null}
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            {createPictureRevealCoverHelperText()}
+          </p>
+          {uploadError ? (
+            <p className="text-sm text-destructive">{uploadError}</p>
+          ) : null}
+        </div>
+      </div>
+
+      <ImageCropDialog
+        open={!!pendingCropFile}
+        file={pendingCropFile}
+        targetWidth={PICTURE_REVEAL_COVER_WIDTH}
+        targetHeight={PICTURE_REVEAL_COVER_HEIGHT}
+        onCancel={() => setPendingCropFile(null)}
+        onConfirm={async (processedFile) => {
+          await handleUpload(processedFile);
+          setPendingCropFile(null);
+        }}
+      />
+    </>
+  );
+}
+
 function PictureRevealImageCard({
   gameId,
   index,
@@ -83,19 +405,21 @@ function PictureRevealImageCard({
   appendNextImage,
   targetWidth,
   targetHeight,
+  uploadAdapter,
 }: {
-  gameId: string;
+  gameId?: string;
   index: number;
   total: number;
-  control: Control<ContentFormState>;
-  register: UseFormRegister<ContentFormState>;
-  setValue: UseFormSetValue<ContentFormState>;
+  control: Control<PictureRevealContentFormState>;
+  register: UseFormRegister<PictureRevealContentFormState>;
+  setValue: UseFormSetValue<PictureRevealContentFormState>;
   removeImage: () => void;
   moveUp: () => void;
   moveDown: () => void;
   appendNextImage: () => void;
   targetWidth: number;
   targetHeight: number;
+  uploadAdapter?: PictureRevealContentUploadAdapter;
 }) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -128,43 +452,78 @@ function PictureRevealImageCard({
     setUploadError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("image", file);
+      const result = uploadAdapter
+        ? await uploadAdapter.uploadImage({
+            index,
+            file,
+            originalFile,
+          })
+        : await uploadRemoteImage(gameId!, file, originalFile);
+      const previousPreviewPath = previewPath;
+      const previousOriginalPath = image?.originalImagePath ?? null;
 
-      if (originalFile) {
-        formData.append("originalImage", originalFile);
-      }
-
-      const response = await fetch(
-        `/api/picture-reveal-games/${gameId}/images/upload-temp`,
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
-      const payload = await readJsonOrNull(response);
-
-      if (!response.ok) {
-        throw new Error(
-          extractPictureRevealApiError(payload) ?? "Image upload failed",
+      if (uploadAdapter) {
+        setValue(`images.${index}.imageAssetId`, result.imageAssetId ?? null, {
+          shouldDirty: true,
+        });
+        setValue(
+          `images.${index}.originalImageAssetId`,
+          result.originalImageAssetId ?? result.imageAssetId ?? null,
+          {
+            shouldDirty: true,
+          },
+        );
+        setValue(`images.${index}.tempImagePath`, undefined, {
+          shouldDirty: true,
+        });
+        setValue(`images.${index}.tempOriginalImagePath`, undefined, {
+          shouldDirty: true,
+        });
+        setValue(`images.${index}.imagePath`, result.previewPath, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+        setValue(
+          `images.${index}.originalImagePath`,
+          result.originalPreviewPath ?? result.previewPath,
+          {
+            shouldDirty: true,
+          },
+        );
+      } else {
+        setValue(`images.${index}.imageAssetId`, null, {
+          shouldDirty: true,
+        });
+        setValue(`images.${index}.originalImageAssetId`, null, {
+          shouldDirty: true,
+        });
+        setValue(`images.${index}.tempImagePath`, result.previewPath, {
+          shouldDirty: true,
+        });
+        setValue(
+          `images.${index}.tempOriginalImagePath`,
+          result.originalPreviewPath ?? undefined,
+          {
+            shouldDirty: true,
+          },
         );
       }
 
-      const result = payload as {
-        tempImagePath: string;
-        tempOriginalImagePath?: string | null;
-      };
+      if (
+        previousPreviewPath?.startsWith("blob:") &&
+        previousPreviewPath !== result.previewPath
+      ) {
+        URL.revokeObjectURL(previousPreviewPath);
+      }
 
-      setValue(`images.${index}.tempImagePath`, result.tempImagePath, {
-        shouldDirty: true,
-      });
-      setValue(
-        `images.${index}.tempOriginalImagePath`,
-        result.tempOriginalImagePath ?? undefined,
-        {
-          shouldDirty: true,
-        },
-      );
+      if (
+        previousOriginalPath?.startsWith("blob:") &&
+        previousOriginalPath !== result.originalPreviewPath &&
+        previousOriginalPath !== result.previewPath
+      ) {
+        URL.revokeObjectURL(previousOriginalPath);
+      }
+
       toast.success(`Uploaded image ${index + 1}.`);
     } catch (error) {
       const message =
@@ -205,9 +564,11 @@ function PictureRevealImageCard({
   );
 
   const handleRecropPreview = async () => {
-    const recropSourcePath = image?.originalImagePath ?? image?.imagePath;
+    if (!image) {
+      return;
+    }
 
-    if (!sourceImageFile && !recropSourcePath) {
+    if (!sourceImageFile && !image?.originalImagePath && !image?.imagePath) {
       return;
     }
 
@@ -220,17 +581,16 @@ function PictureRevealImageCard({
     setUploadError(null);
 
     try {
-      const response = await fetch(recropSourcePath!, { cache: "no-store" });
+      const file = uploadAdapter?.loadImageSourceFile
+        ? await uploadAdapter.loadImageSourceFile({
+            index,
+            image,
+          })
+        : await loadRemoteRecropFile(image, index);
 
-      if (!response.ok) {
+      if (!file) {
         throw new Error("Could not load the current image for recropping.");
       }
-
-      const blob = await response.blob();
-      const extension = blob.type === "image/png" ? "png" : "webp";
-      const file = new File([blob], `picture-reveal-${index + 1}.${extension}`, {
-        type: blob.type || "image/webp",
-      });
 
       setSourceImageFile(file);
       setPendingCropFile(file);
@@ -473,30 +833,44 @@ function PictureRevealImageCard({
   );
 }
 
+export interface PictureRevealContentFormProps {
+  gameId?: string;
+  initialValues: PictureRevealContentFormState;
+  saving?: boolean;
+  error?: string | null;
+  onSave?: (values: SavePictureRevealGameContentInput) => Promise<void>;
+  onDirtyChange?: (isDirty: boolean) => void;
+  onSnapshotChange?: (values: PictureRevealContentFormState) => void;
+  uploadAdapter?: PictureRevealContentUploadAdapter;
+  submitLabel?: string;
+}
+
 export function PictureRevealContentForm({
   gameId,
-  initialContent,
-  saving,
-  error,
+  initialValues,
+  saving = false,
+  error = null,
   onSave,
   onDirtyChange,
-}: {
-  gameId: string;
-  initialContent: PictureRevealGameContentDto | null;
-  saving: boolean;
-  error: string | null;
-  onSave: (values: SavePictureRevealGameContentInput) => Promise<void>;
-  onDirtyChange?: (isDirty: boolean) => void;
-}) {
-  const form = useForm<ContentFormState>({
-    resolver: zodResolver(SavePictureRevealGameContentSchema),
-    defaultValues: buildPictureRevealContentDefaults(initialContent),
+  onSnapshotChange,
+  uploadAdapter,
+  submitLabel = "Save Content",
+}: PictureRevealContentFormProps) {
+  const form = useForm<PictureRevealContentFormState>({
+    resolver: zodResolver(
+      SavePictureRevealGameContentSchema,
+    ) as Resolver<PictureRevealContentFormState>,
+    defaultValues: initialValues,
   });
   const imagesFieldArray = useFieldArray({
     control: form.control,
     name: "images",
   });
 
+  const watchedValues =
+    useWatch({
+      control: form.control,
+    }) ?? initialValues;
   const watchedImages = useWatch({
     control: form.control,
     name: "images",
@@ -512,12 +886,20 @@ export function PictureRevealContentForm({
   const [ratioEditingEnabled, setRatioEditingEnabled] = useState(false);
 
   useEffect(() => {
-    form.reset(buildPictureRevealContentDefaults(initialContent));
-  }, [form, initialContent]);
+    form.reset(initialValues);
+  }, [form, initialValues]);
 
   useEffect(() => {
     onDirtyChange?.(form.formState.isDirty);
   }, [form.formState.isDirty, onDirtyChange]);
+
+  useEffect(() => {
+    onSnapshotChange?.(
+      buildPictureRevealContentFormSnapshot(
+        watchedValues as PictureRevealContentFormState,
+      ),
+    );
+  }, [onSnapshotChange, watchedValues]);
 
   const imageWidthError = form.formState.errors.imageWidth?.message;
   const imageHeightError = form.formState.errors.imageHeight?.message;
@@ -551,6 +933,8 @@ export function PictureRevealContentForm({
       originalImagePath: undefined,
       tempImagePath: undefined,
       tempOriginalImagePath: undefined,
+      imageAssetId: null,
+      originalImageAssetId: null,
     }));
 
     form.setValue("images", clearedImages, {
@@ -587,6 +971,10 @@ export function PictureRevealContentForm({
     <form
       className="space-y-4"
       onSubmit={form.handleSubmit(async (values) => {
+        if (!onSave) {
+          return;
+        }
+
         await onSave(normalizePictureRevealContentInput(values));
       })}
     >
@@ -595,8 +983,8 @@ export function PictureRevealContentForm({
           <div>
             <h2 className="text-lg font-semibold">Content</h2>
             <p className="text-sm text-muted-foreground">
-              Configure image size, upload images, and store one hidden answer
-              for each board.
+              Configure the cover, image size, upload images, and store one
+              hidden answer for each board.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -612,90 +1000,101 @@ export function PictureRevealContentForm({
               <Plus className="size-4" />
               Add Image
             </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-              Save Content
-            </Button>
+            {onSave ? (
+              <Button type="submit" disabled={saving}>
+                {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+                {submitLabel}
+              </Button>
+            ) : null}
           </div>
         </div>
 
-        <div className="space-y-4 rounded-2xl border border-border bg-muted/20 p-4">
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Label>Ratio Presets</Label>
-                <InfoHint label="Ratio presets">
-                  <span>
-                    Pick a preset crop ratio or unlock manual editing for custom
-                    dimensions.
-                  </span>
-                </InfoHint>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+          <PictureRevealCoverCard
+            gameId={gameId}
+            control={form.control}
+            setValue={form.setValue}
+            uploadAdapter={uploadAdapter}
+          />
+
+          <div className="space-y-4 rounded-2xl border border-border bg-muted/20 p-4">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Label>Ratio Presets</Label>
+                  <InfoHint label="Ratio presets">
+                    <span>
+                      Pick a preset crop ratio or unlock manual editing for custom
+                      dimensions.
+                    </span>
+                  </InfoHint>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl border border-border bg-background/70 px-3 py-2">
+                  {ratioEditingEnabled ? (
+                    <LockOpen className="size-4 text-muted-foreground" />
+                  ) : (
+                    <Lock className="size-4 text-muted-foreground" />
+                  )}
+                  <Label htmlFor="toggle-ratio-editing" className="text-xs">
+                    Unlock custom size
+                  </Label>
+                  <Switch
+                    id="toggle-ratio-editing"
+                    checked={ratioEditingEnabled}
+                    onCheckedChange={setRatioEditingEnabled}
+                  />
+                </div>
               </div>
-              <div className="flex items-center gap-2 rounded-xl border border-border bg-background/70 px-3 py-2">
-                {ratioEditingEnabled ? (
-                  <LockOpen className="size-4 text-muted-foreground" />
-                ) : (
-                  <Lock className="size-4 text-muted-foreground" />
-                )}
-                <Label htmlFor="toggle-ratio-editing" className="text-xs">
-                  Unlock custom size
-                </Label>
-                <Switch
-                  id="toggle-ratio-editing"
-                  checked={ratioEditingEnabled}
-                  onCheckedChange={setRatioEditingEnabled}
+              <div className="flex flex-wrap gap-2">
+                {pictureRevealImageRatioPresets.map((preset) => (
+                  <Button
+                    key={preset.key}
+                    type="button"
+                    size="sm"
+                    variant={activeRatio === preset.key ? "default" : "outline"}
+                    disabled={!ratioEditingEnabled}
+                    onClick={() => applyRatioPreset(preset)}
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+              <div className="space-y-2">
+                <Label htmlFor="content-image-width">Image Width (px)</Label>
+                <Input
+                  id="content-image-width"
+                  type="number"
+                  aria-invalid={imageWidthError ? "true" : "false"}
+                  disabled={!ratioEditingEnabled}
+                  {...form.register("imageWidth", { valueAsNumber: true })}
                 />
               </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {pictureRevealImageRatioPresets.map((preset) => (
-                <Button
-                  key={preset.key}
-                  type="button"
-                  size="sm"
-                  variant={activeRatio === preset.key ? "default" : "outline"}
+              <div className="space-y-2">
+                <Label htmlFor="content-image-height">Image Height (px)</Label>
+                <Input
+                  id="content-image-height"
+                  type="number"
+                  aria-invalid={imageHeightError ? "true" : "false"}
                   disabled={!ratioEditingEnabled}
-                  onClick={() => applyRatioPreset(preset)}
-                >
-                  {preset.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-            <div className="space-y-2">
-              <Label htmlFor="content-image-width">Image Width (px)</Label>
-              <Input
-                id="content-image-width"
-                type="number"
-                aria-invalid={imageWidthError ? "true" : "false"}
-                disabled={!ratioEditingEnabled}
-                {...form.register("imageWidth", { valueAsNumber: true })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="content-image-height">Image Height (px)</Label>
-              <Input
-                id="content-image-height"
-                type="number"
-                aria-invalid={imageHeightError ? "true" : "false"}
-                disabled={!ratioEditingEnabled}
-                {...form.register("imageHeight", { valueAsNumber: true })}
-              />
-            </div>
-            <div className="flex items-end">
-              <div className="rounded-xl border border-border bg-background/70 px-3 py-2 text-sm text-muted-foreground">
-                Current size: {parsedImageWidth}x{parsedImageHeight}px
+                  {...form.register("imageHeight", { valueAsNumber: true })}
+                />
+              </div>
+              <div className="flex items-end">
+                <div className="rounded-xl border border-border bg-background/70 px-3 py-2 text-sm text-muted-foreground">
+                  Current size: {parsedImageWidth}x{parsedImageHeight}px
+                </div>
               </div>
             </div>
-          </div>
 
-          {imageWidthError || imageHeightError ? (
-            <p className="text-sm text-destructive">
-              {imageWidthError ?? imageHeightError}
-            </p>
-          ) : null}
+            {imageWidthError || imageHeightError ? (
+              <p className="text-sm text-destructive">
+                {imageWidthError ?? imageHeightError}
+              </p>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -715,7 +1114,7 @@ export function PictureRevealContentForm({
         <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-10 text-center">
           <p className="font-medium text-foreground">No images yet</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Add at least one image before publishing the game.
+            Add at least one image before playing or publishing the game.
           </p>
         </div>
       ) : null}
@@ -730,7 +1129,19 @@ export function PictureRevealContentForm({
             control={form.control}
             register={form.register}
             setValue={form.setValue}
-            removeImage={() => imagesFieldArray.remove(index)}
+            removeImage={() => {
+              const currentImage = watchedImages?.[index];
+
+              if (currentImage?.imagePath?.startsWith("blob:")) {
+                URL.revokeObjectURL(currentImage.imagePath);
+              }
+
+              if (currentImage?.originalImagePath?.startsWith("blob:")) {
+                URL.revokeObjectURL(currentImage.originalImagePath);
+              }
+
+              imagesFieldArray.remove(index);
+            }}
             moveUp={() => index > 0 && imagesFieldArray.move(index, index - 1)}
             moveDown={() =>
               index < imagesFieldArray.fields.length - 1 &&
@@ -743,9 +1154,16 @@ export function PictureRevealContentForm({
             }
             targetWidth={parsedImageWidth}
             targetHeight={parsedImageHeight}
+            uploadAdapter={uploadAdapter}
           />
         ))}
       </div>
     </form>
   );
+}
+
+export function buildPictureRevealRemoteContentInitialValues(
+  initialContent?: PictureRevealGameContentDto | null,
+) {
+  return buildPictureRevealContentDefaults(initialContent);
 }
