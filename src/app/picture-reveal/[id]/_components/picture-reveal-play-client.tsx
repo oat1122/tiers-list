@@ -111,7 +111,7 @@ function TileBoard({
                 "relative flex items-center justify-center border border-white/10 text-xs font-semibold text-white transition md:text-sm",
                 tile.isOpened
                   ? "pointer-events-none bg-transparent text-transparent"
-                  : "bg-black hover:bg-black/90",
+                  : "bg-black",
                 isAutoOpened && !tile.isOpened ? "bg-emerald-500/35" : null,
                 isPending ? "bg-primary/70" : null,
               )}
