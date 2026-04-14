@@ -3,6 +3,8 @@ import { accounts } from "./accounts";
 import { pictureRevealGames } from "./picture-reveal-games";
 import { pictureRevealImages } from "./picture-reveal-images";
 import { sessions } from "./sessions";
+import { soundGuessGames } from "./sound-guess-games";
+import { soundGuessSounds } from "./sound-guess-sounds";
 import { tierItems } from "./tier-items";
 import { tierLists } from "./tier-lists";
 import { users } from "./users";
@@ -15,12 +17,15 @@ export * from "./tier-lists";
 export * from "./tier-items";
 export * from "./picture-reveal-games";
 export * from "./picture-reveal-images";
+export * from "./sound-guess-games";
+export * from "./sound-guess-sounds";
 
 export const usersRelations = relations(users, ({ many }) => ({
   sessions: many(sessions),
   accounts: many(accounts),
   tierLists: many(tierLists),
   pictureRevealGames: many(pictureRevealGames),
+  soundGuessGames: many(soundGuessGames),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -69,6 +74,27 @@ export const pictureRevealImagesRelations = relations(
     game: one(pictureRevealGames, {
       fields: [pictureRevealImages.gameId],
       references: [pictureRevealGames.id],
+    }),
+  }),
+);
+
+export const soundGuessGamesRelations = relations(
+  soundGuessGames,
+  ({ one, many }) => ({
+    user: one(users, {
+      fields: [soundGuessGames.userId],
+      references: [users.id],
+    }),
+    sounds: many(soundGuessSounds),
+  }),
+);
+
+export const soundGuessSoundsRelations = relations(
+  soundGuessSounds,
+  ({ one }) => ({
+    game: one(soundGuessGames, {
+      fields: [soundGuessSounds.gameId],
+      references: [soundGuessGames.id],
     }),
   }),
 );

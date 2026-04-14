@@ -200,18 +200,6 @@ export function TierListEditor({
     [baselineDraft, draft],
   );
 
-  useEffect(() => {
-    if (mode !== "template" || !isDirty) return;
-
-    const beforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-
-    window.addEventListener("beforeunload", beforeUnload);
-    return () => window.removeEventListener("beforeunload", beforeUnload);
-  }, [isDirty, mode]);
-
   const onDragEnd = (result: DropResult) => {
     const { source, destination, type, draggableId } = result;
     if (!destination) return;

@@ -135,6 +135,17 @@ async function clickButton(container: HTMLElement, text: string) {
   await flush();
 }
 
+async function clickRatioEditingSwitch(container: HTMLElement) {
+  const switchControl = container.querySelector('[role="switch"]');
+
+  expect(switchControl).toBeTruthy();
+
+  await act(async () => {
+    switchControl?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+  await flush();
+}
+
 async function changeFileInput(input: HTMLInputElement, file: File) {
   Object.defineProperty(input, "files", {
     configurable: true,
@@ -174,6 +185,12 @@ describe("PictureRevealContentForm", () => {
     await flush();
 
     expect(container.textContent).toContain("ขนาดปัจจุบัน: 1080x1080");
+    expect(findButtonByText(container, "16:9")?.hasAttribute("disabled")).toBe(
+      true,
+    );
+
+    await clickRatioEditingSwitch(container);
+
     expect(findButtonByText(container, "16:9")?.hasAttribute("disabled")).toBe(
       false,
     );

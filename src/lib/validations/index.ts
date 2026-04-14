@@ -12,3 +12,4 @@ export * from "./tier-editor.schema";
 export * from "./picture-reveal-games.schema";
 export * from "./picture-reveal-local.schema";
 export * from "./picture-reveal-play.schema";
+export * from "./sound-guess-games.schema";

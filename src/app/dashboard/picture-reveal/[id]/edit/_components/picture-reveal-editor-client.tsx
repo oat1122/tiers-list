@@ -131,20 +131,6 @@ export function PictureRevealEditorClient({ gameId }: { gameId: string }) {
 
   const isEditorDirty = settingsForm.formState.isDirty || contentDirty;
 
-  useEffect(() => {
-    if (!isEditorDirty) {
-      return;
-    }
-
-    const beforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-
-    window.addEventListener("beforeunload", beforeUnload);
-    return () => window.removeEventListener("beforeunload", beforeUnload);
-  }, [isEditorDirty]);
-
   const loadEditorData = async (showToast = false) => {
     setLoading(true);
     setPageError(null);

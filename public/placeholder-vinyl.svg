@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <style>
+      :root {
+        --bg: #f8fafc;
+        --vinyl-base: #0f172a;
+        --vinyl-track: #1e293b;
+        --vinyl-label: #f43f5e;
+        --vinyl-hole: #f8fafc;
+        --music-note: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f172a;
+          --vinyl-base: #020617;
+          --vinyl-track: #0f172a;
+          --vinyl-label: #e11d48;
+          --vinyl-hole: #1e293b;
+          --music-note: #f8fafc;
+        }
+      }
+
+      @keyframes spinAnim {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Subtle rotation for the placeholder to feel lively */
+      .vinyl-spin { 
+        animation: spinAnim 20s linear infinite; 
+        transform-origin: 200px 200px; 
+      }
+    </style>
+
+    <filter id="vinyl-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000000" flood-opacity="0.15" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="400" fill="var(--bg)" />
+
+  <!-- Vinyl Record -->
+  <g filter="url(#vinyl-shadow)">
+    <g class="vinyl-spin">
+      <!-- Base Vinyl -->
+      <circle cx="200" cy="200" r="160" fill="var(--vinyl-base)" />
+      
+      <!-- Tracks (Grooves) -->
+      <circle cx="200" cy="200" r="135" fill="none" stroke="var(--vinyl-track)" stroke-width="3" />
+      <circle cx="200" cy="200" r="115" fill="none" stroke="var(--vinyl-track)" stroke-width="2" />
+      <circle cx="200" cy="200" r="95" fill="none" stroke="var(--vinyl-track)" stroke-width="4" />
+      <circle cx="200" cy="200" r="75" fill="none" stroke="var(--vinyl-track)" stroke-width="1.5" />
+      
+      <!-- Center Label -->
+      <circle cx="200" cy="200" r="55" fill="var(--vinyl-label)" />
+      
+      <!-- Label Highlight / Design -->
+      <path d="M200 200 L200 145 A 55 55 0 0 1 255 200 Z" fill="#ffffff" opacity="0.15" />
+      <circle cx="200" cy="200" r="20" fill="#ffffff" opacity="0.2" />
+    </g>
+  </g>
+  
+  <!-- Outer glowing music note / icon (Stationary) -->
+  <text x="200" y="210" font-family="sans-serif" font-weight="bold" font-size="32" fill="var(--music-note)" text-anchor="middle" opacity="0.9">♫</text>
+
+</svg>

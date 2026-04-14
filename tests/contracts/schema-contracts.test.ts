@@ -51,6 +51,44 @@ describe("Drizzle schema contracts", () => {
       'updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow()',
     );
   });
+
+  it("defines automatic id and timestamp behavior for sound guess games", () => {
+    const source = readProjectFile("src/db/schema/sound-guess-games.ts");
+
+    expect(source).toContain("crypto.randomUUID()");
+    expect(source).toContain(
+      'coverImagePath: varchar("cover_image_path", { length: 500 })',
+    );
+    expect(source).toContain(
+      'createdAt: timestamp("created_at").notNull().defaultNow()',
+    );
+    expect(source).toContain(
+      'updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow()',
+    );
+    expect(source).toContain('deletedAt: datetime("deleted_at")');
+  });
+
+  it("defines sound guess sound content fields", () => {
+    const source = readProjectFile("src/db/schema/sound-guess-sounds.ts");
+
+    expect(source).toContain("crypto.randomUUID()");
+    expect(source).toContain(
+      'audioPath: varchar("audio_path", { length: 500 }).notNull()',
+    );
+    expect(source).toContain(
+      'answer: varchar("answer", { length: 255 }).notNull()',
+    );
+    expect(source).toContain(
+      'sortOrder: int("sort_order").notNull().default(0)',
+    );
+    expect(source).toContain(
+      'createdAt: timestamp("created_at").notNull().defaultNow()',
+    );
+    expect(source).toContain(
+      'updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow()',
+    );
+    expect(source).toContain('deletedAt: datetime("deleted_at")');
+  });
 });
 
 describe("Client-only store contracts", () => {

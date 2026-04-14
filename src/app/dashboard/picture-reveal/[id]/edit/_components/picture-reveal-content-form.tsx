@@ -995,16 +995,12 @@ export function PictureRevealContentForm({
     [watchedImages],
   );
 
-  const updateImageSize = (nextWidth: number, nextHeight: number) => {
-    form.setValue("imageWidth", nextWidth, {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-    form.setValue("imageHeight", nextHeight, {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-
+  /**
+   * Clears uploaded image paths when dimension changes invalidate existing crops.
+   *
+   * @returns Nothing when no uploaded images exist or after upload fields are cleared.
+   */
+  const clearUploadedImagesAfterSizeChange = () => {
     if (!hasUploadedImages) {
       return;
     }
@@ -1028,11 +1024,35 @@ export function PictureRevealContentForm({
     );
   };
 
+  /**
+   * Updates both image dimensions from a preset and applies crop invalidation rules.
+   *
+   * @param nextWidth - Next image width in pixels.
+   * @param nextHeight - Next image height in pixels.
+   * @returns Nothing after form dimensions are updated.
+   */
+  const updateImageSize = (nextWidth: number, nextHeight: number) => {
+    form.setValue("imageWidth", nextWidth, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    form.setValue("imageHeight", nextHeight, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+
+    clearUploadedImagesAfterSizeChange();
+  };
+
   const applyRatioPreset = (preset: {
     label: string;
     width: number;
     height: number;
   }) => {
+    if (!ratioEditingEnabled) {
+      return;
+    }
+
     updateImageSize(preset.width, preset.height);
     toast.success(
       `Applied ${preset.label} (${preset.width}x${preset.height}).`,
@@ -1048,6 +1068,14 @@ export function PictureRevealContentForm({
       formatPictureRevealAspectRatio(preset.width, preset.height) ===
       aspectRatioLabel,
   )?.key;
+  const imageWidthField = form.register("imageWidth", {
+    valueAsNumber: true,
+    onChange: clearUploadedImagesAfterSizeChange,
+  });
+  const imageHeightField = form.register("imageHeight", {
+    valueAsNumber: true,
+    onChange: clearUploadedImagesAfterSizeChange,
+  });
 
   return (
     <form
@@ -1134,6 +1162,7 @@ export function PictureRevealContentForm({
                     type="button"
                     size="sm"
                     variant={activeRatio === preset.key ? "default" : "outline"}
+                    disabled={!ratioEditingEnabled}
                     onClick={() => applyRatioPreset(preset)}
                   >
                     {preset.label}
@@ -1150,7 +1179,7 @@ export function PictureRevealContentForm({
                   type="number"
                   aria-invalid={imageWidthError ? "true" : "false"}
                   disabled={!ratioEditingEnabled}
-                  {...form.register("imageWidth", { valueAsNumber: true })}
+                  {...imageWidthField}
                 />
               </div>
               <div className="space-y-2">
@@ -1160,7 +1189,7 @@ export function PictureRevealContentForm({
                   type="number"
                   aria-invalid={imageHeightError ? "true" : "false"}
                   disabled={!ratioEditingEnabled}
-                  {...form.register("imageHeight", { valueAsNumber: true })}
+                  {...imageHeightField}
                 />
               </div>
               <div className="flex items-end">
