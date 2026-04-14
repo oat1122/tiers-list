@@ -4,6 +4,7 @@ import { soundGuessGames, soundGuessSounds } from "@/db/schema";
 import {
   finalizeSoundGuessTempAudioFile,
   finalizeSoundGuessTempCoverImageFile,
+  finalizeSoundGuessTempSoundImageFile,
 } from "@/lib/sound-guess-upload";
 import type {
   CreateSoundGuessGameInput,
@@ -101,6 +102,28 @@ async function resolveAudioPath(
 }
 
 /**
+ * Resolves the stored per-sound image path for a submitted sound draft.
+ *
+ * @param soundDraft - Submitted sound draft from the content editor.
+ * @param existingImagePath - Current stored image path for existing sounds.
+ * @returns Final image path to persist, or null when the sound uses fallback art.
+ */
+async function resolveSoundImagePath(
+  soundDraft: SoundGuessSoundDraftInput,
+  existingImagePath: string | null | undefined,
+) {
+  if (soundDraft.tempImagePath) {
+    return finalizeSoundGuessTempSoundImageFile(soundDraft.tempImagePath);
+  }
+
+  if ("imagePath" in soundDraft) {
+    return soundDraft.imagePath ?? null;
+  }
+
+  return existingImagePath ?? null;
+}
+
+/**
  * Finds sound ids removed from the submitted content.
  *
  * @param existingSounds - Active sound rows currently persisted for the game.
@@ -152,6 +175,8 @@ export async function getAdminSoundGuessGames() {
       description: soundGuessGames.description,
       coverImagePath: soundGuessGames.coverImagePath,
       status: soundGuessGames.status,
+      imageWidth: soundGuessGames.imageWidth,
+      imageHeight: soundGuessGames.imageHeight,
       createdAt: soundGuessGames.createdAt,
       updatedAt: soundGuessGames.updatedAt,
       deletedAt: soundGuessGames.deletedAt,
@@ -173,6 +198,8 @@ export async function getAdminSoundGuessGames() {
       soundGuessGames.description,
       soundGuessGames.coverImagePath,
       soundGuessGames.status,
+      soundGuessGames.imageWidth,
+      soundGuessGames.imageHeight,
       soundGuessGames.createdAt,
       soundGuessGames.updatedAt,
       soundGuessGames.deletedAt,
@@ -196,6 +223,8 @@ export async function getPublicSoundGuessGames() {
       title: soundGuessGames.title,
       description: soundGuessGames.description,
       coverImagePath: soundGuessGames.coverImagePath,
+      imageWidth: soundGuessGames.imageWidth,
+      imageHeight: soundGuessGames.imageHeight,
       updatedAt: soundGuessGames.updatedAt,
       soundCount,
     })
@@ -218,6 +247,8 @@ export async function getPublicSoundGuessGames() {
       soundGuessGames.title,
       soundGuessGames.description,
       soundGuessGames.coverImagePath,
+      soundGuessGames.imageWidth,
+      soundGuessGames.imageHeight,
       soundGuessGames.updatedAt,
     )
     .orderBy(desc(soundGuessGames.updatedAt), desc(soundGuessGames.createdAt));
@@ -240,6 +271,8 @@ export async function getPublicSoundGuessGameById(id: string) {
       title: soundGuessGames.title,
       description: soundGuessGames.description,
       coverImagePath: soundGuessGames.coverImagePath,
+      imageWidth: soundGuessGames.imageWidth,
+      imageHeight: soundGuessGames.imageHeight,
       updatedAt: soundGuessGames.updatedAt,
       soundCount,
     })
@@ -263,6 +296,8 @@ export async function getPublicSoundGuessGameById(id: string) {
       soundGuessGames.title,
       soundGuessGames.description,
       soundGuessGames.coverImagePath,
+      soundGuessGames.imageWidth,
+      soundGuessGames.imageHeight,
       soundGuessGames.updatedAt,
     )
     .limit(1);
@@ -309,6 +344,8 @@ export async function createSoundGuessGame(
     description: data.description,
     coverImagePath: null,
     status: data.status,
+    imageWidth: 1600,
+    imageHeight: 900,
   });
 
   return getSoundGuessGameById(id);
@@ -424,7 +461,11 @@ export async function saveSoundGuessGameContent(
 
     await tx
       .update(soundGuessGames)
-      .set({ coverImagePath: resolvedCoverImagePath })
+      .set({
+        coverImagePath: resolvedCoverImagePath,
+        imageWidth: data.imageWidth,
+        imageHeight: data.imageHeight,
+      })
       .where(eq(soundGuessGames.id, id));
 
     const existingSounds = await tx
@@ -451,6 +492,10 @@ export async function saveSoundGuessGameContent(
         soundDraft,
         existingSound?.audioPath,
       );
+      const resolvedImagePath = await resolveSoundImagePath(
+        soundDraft,
+        existingSound?.imagePath,
+      );
 
       if (!resolvedAudioPath) {
         throw new SoundGuessServiceError(400, "Audio path is required");
@@ -461,7 +506,10 @@ export async function saveSoundGuessGameContent(
           .update(soundGuessSounds)
           .set({
             audioPath: resolvedAudioPath,
+            imagePath: resolvedImagePath,
             answer: soundDraft.answer,
+            audioStartMs: soundDraft.audioStartMs,
+            audioEndMs: soundDraft.audioEndMs ?? null,
             sortOrder: soundDraft.sortOrder,
             deletedAt: null,
           })
@@ -471,7 +519,10 @@ export async function saveSoundGuessGameContent(
           id: soundId,
           gameId: id,
           audioPath: resolvedAudioPath,
+          imagePath: resolvedImagePath,
           answer: soundDraft.answer,
+          audioStartMs: soundDraft.audioStartMs,
+          audioEndMs: soundDraft.audioEndMs ?? null,
           sortOrder: soundDraft.sortOrder,
         });
       }
@@ -491,4 +542,3 @@ export async function saveSoundGuessGameContent(
 
   return getSoundGuessGameContent(id);
 }
-

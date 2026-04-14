@@ -1,6 +1,7 @@
 import {
   datetime,
   foreignKey,
+  int,
   mysqlTable,
   text,
   timestamp,
@@ -21,6 +22,8 @@ export const soundGuessGames = mysqlTable(
     description: text("description"),
     coverImagePath: varchar("cover_image_path", { length: 500 }),
     status: varchar("status", { length: 20 }).notNull().default("draft"),
+    imageWidth: int("image_width").notNull().default(1600),
+    imageHeight: int("image_height").notNull().default(900),
 
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
@@ -37,4 +40,3 @@ export const soundGuessGames = mysqlTable(
 
 export type SoundGuessGame = typeof soundGuessGames.$inferSelect;
 export type NewSoundGuessGame = typeof soundGuessGames.$inferInsert;
-

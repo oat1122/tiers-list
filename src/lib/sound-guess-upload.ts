@@ -24,6 +24,10 @@ export const SOUND_GUESS_AUDIO_TEMP_UPLOAD_DIR =
 export const SOUND_GUESS_COVER_UPLOAD_DIR = "public/uploads/sound-guess/covers";
 export const SOUND_GUESS_COVER_TEMP_UPLOAD_DIR =
   "public/uploads/sound-guess/covers/temp";
+export const SOUND_GUESS_SOUND_IMAGE_UPLOAD_DIR =
+  "public/uploads/sound-guess/sound-images";
+export const SOUND_GUESS_SOUND_IMAGE_TEMP_UPLOAD_DIR =
+  "public/uploads/sound-guess/sound-images/temp";
 
 /**
  * Builds the public path for a stored sound guess upload.
@@ -193,6 +197,24 @@ export async function saveSoundGuessTempCoverImageFile(file: File) {
 }
 
 /**
+ * Saves a sound guess per-sound image to the temporary upload directory.
+ *
+ * @param file - Cropped sound image selected in the editor.
+ * @returns Temporary public path that can later be finalized on save.
+ * @throws UploadValidationError when the file cannot be accepted.
+ */
+export async function saveSoundGuessTempSoundImageFile(file: File) {
+  return saveFileToDirectory(
+    file,
+    SOUND_GUESS_SOUND_IMAGE_TEMP_UPLOAD_DIR,
+    "/uploads/sound-guess/sound-images/temp",
+    CROPPABLE_IMAGE_MIME,
+    IMAGE_UPLOAD_LIMIT_BYTES,
+    IMAGE_RECOMMENDED_SIZE_LABEL,
+  );
+}
+
+/**
  * Moves a temporary sound guess audio upload into the permanent public directory.
  *
  * @param tempPath - Temporary audio path returned by the upload endpoint.
@@ -226,3 +248,19 @@ export async function finalizeSoundGuessTempCoverImageFile(tempPath: string) {
   );
 }
 
+/**
+ * Moves a temporary per-sound image upload into the permanent public directory.
+ *
+ * @param tempPath - Temporary sound image path returned by the upload endpoint.
+ * @returns Permanent public path for the finalized sound image.
+ * @throws Error when the provided path is not a sound guess temp image upload.
+ */
+export async function finalizeSoundGuessTempSoundImageFile(tempPath: string) {
+  return finalizeTempFile(
+    tempPath,
+    "/uploads/sound-guess/sound-images/temp/",
+    SOUND_GUESS_SOUND_IMAGE_TEMP_UPLOAD_DIR,
+    SOUND_GUESS_SOUND_IMAGE_UPLOAD_DIR,
+    "/uploads/sound-guess/sound-images",
+  );
+}

@@ -18,6 +18,8 @@ vi.mock("@/services/sound-guess-games.service", () => ({
 }));
 
 import { POST } from "@/app/api/sound-guess-games/[id]/sounds/upload-temp/route";
+import { POST as POST_SOUND_IMAGE } from "@/app/api/sound-guess-games/[id]/sounds/images/upload-temp/route";
+import { IMAGE_UPLOAD_LIMIT_BYTES } from "@/lib/image-upload-config";
 import { SOUND_GUESS_AUDIO_UPLOAD_LIMIT_BYTES } from "@/lib/sound-guess-upload";
 
 function params(id = "game-1") {
@@ -89,3 +91,66 @@ describe("/api/sound-guess-games/[id]/sounds/upload-temp route", () => {
   });
 });
 
+describe("/api/sound-guess-games/[id]/sounds/images/upload-temp route", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.authGetSession.mockResolvedValue({
+      user: { id: "admin-1", role: "admin" },
+    });
+    mocks.getSoundGuessGameById.mockResolvedValue({
+      id: "game-1",
+      deletedAt: null,
+    });
+  });
+
+  it("rejects missing sound image files", async () => {
+    const response = await POST_SOUND_IMAGE(
+      createFormRequest(new FormData()) as never,
+      params(),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "No image file provided",
+    });
+  });
+
+  it("rejects unsupported sound image MIME types", async () => {
+    const formData = new FormData();
+    formData.set(
+      "image",
+      new File(["not image"], "clip.txt", { type: "text/plain" }),
+    );
+
+    const response = await POST_SOUND_IMAGE(
+      createFormRequest(formData) as never,
+      params(),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.code).toBe("unsupported_type");
+  });
+
+  it("rejects sound image files over 5MB", async () => {
+    const formData = new FormData();
+    formData.set(
+      "image",
+      new File(
+        [new Uint8Array(IMAGE_UPLOAD_LIMIT_BYTES + 1)],
+        "vinyl.webp",
+        { type: "image/webp" },
+      ),
+    );
+
+    const response = await POST_SOUND_IMAGE(
+      createFormRequest(formData) as never,
+      params(),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.code).toBe("file_too_large");
+    expect(body.limitBytes).toBe(IMAGE_UPLOAD_LIMIT_BYTES);
+  });
+});

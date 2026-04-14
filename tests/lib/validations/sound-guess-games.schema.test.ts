@@ -27,6 +27,8 @@ describe("CreateSoundGuessGameSchema", () => {
 describe("SaveSoundGuessGameContentSchema", () => {
   it("accepts a valid sound with a temporary audio path and answer", () => {
     const result = SaveSoundGuessGameContentSchema.safeParse({
+      imageWidth: 1600,
+      imageHeight: 900,
       sounds: [
         {
           tempAudioPath: "/uploads/sound-guess/audio/temp/chime.mp3",
@@ -38,6 +40,8 @@ describe("SaveSoundGuessGameContentSchema", () => {
 
     expect(result.success).toBe(true);
     expect(result.data?.sounds[0]?.answer).toBe("Chime");
+    expect(result.data?.imageWidth).toBe(1600);
+    expect(result.data?.imageHeight).toBe(900);
   });
 
   it("accepts an existing audio path with an optional cover", () => {
@@ -53,6 +57,62 @@ describe("SaveSoundGuessGameContentSchema", () => {
 
     expect(result.success).toBe(true);
     expect(result.data?.sounds[0]?.sortOrder).toBe(0);
+  });
+
+  it("accepts optional sound images and audio crop metadata", () => {
+    const result = SaveSoundGuessGameContentSchema.safeParse({
+      sounds: [
+        {
+          audioPath: "/uploads/sound-guess/audio/bell.mp3",
+          imagePath: "/uploads/sound-guess/sound-images/bell.webp",
+          answer: "Bell",
+          audioStartMs: 500,
+          audioEndMs: 2500,
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.sounds[0]).toEqual(
+      expect.objectContaining({
+        imagePath: "/uploads/sound-guess/sound-images/bell.webp",
+        audioStartMs: 500,
+        audioEndMs: 2500,
+      }),
+    );
+  });
+
+  it("rejects invalid cover dimensions", () => {
+    const result = SaveSoundGuessGameContentSchema.safeParse({
+      imageWidth: 99,
+      imageHeight: 900,
+      sounds: [
+        {
+          audioPath: "/uploads/sound-guess/audio/bell.mp3",
+          answer: "Bell",
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects audio crops whose end is not after the start", () => {
+    const result = SaveSoundGuessGameContentSchema.safeParse({
+      sounds: [
+        {
+          audioPath: "/uploads/sound-guess/audio/bell.mp3",
+          answer: "Bell",
+          audioStartMs: 3000,
+          audioEndMs: 3000,
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe(
+      "Audio end time must be after start time",
+    );
   });
 
   it("rejects content without an audio path", () => {
@@ -81,4 +141,3 @@ describe("SaveSoundGuessGameContentSchema", () => {
     expect(result.success).toBe(false);
   });
 });
-

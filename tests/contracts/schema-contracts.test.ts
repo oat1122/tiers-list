@@ -60,6 +60,12 @@ describe("Drizzle schema contracts", () => {
       'coverImagePath: varchar("cover_image_path", { length: 500 })',
     );
     expect(source).toContain(
+      'imageWidth: int("image_width").notNull().default(1600)',
+    );
+    expect(source).toContain(
+      'imageHeight: int("image_height").notNull().default(900)',
+    );
+    expect(source).toContain(
       'createdAt: timestamp("created_at").notNull().defaultNow()',
     );
     expect(source).toContain(
@@ -76,8 +82,15 @@ describe("Drizzle schema contracts", () => {
       'audioPath: varchar("audio_path", { length: 500 }).notNull()',
     );
     expect(source).toContain(
+      'imagePath: varchar("image_path", { length: 500 })',
+    );
+    expect(source).toContain(
       'answer: varchar("answer", { length: 255 }).notNull()',
     );
+    expect(source).toContain(
+      'audioStartMs: int("audio_start_ms").notNull().default(0)',
+    );
+    expect(source).toContain('audioEndMs: int("audio_end_ms")');
     expect(source).toContain(
       'sortOrder: int("sort_order").notNull().default(0)',
     );

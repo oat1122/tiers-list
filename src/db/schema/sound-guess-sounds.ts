@@ -18,7 +18,10 @@ export const soundGuessSounds = mysqlTable(
     gameId: varchar("game_id", { length: 255 }).notNull(),
 
     audioPath: varchar("audio_path", { length: 500 }).notNull(),
+    imagePath: varchar("image_path", { length: 500 }),
     answer: varchar("answer", { length: 255 }).notNull(),
+    audioStartMs: int("audio_start_ms").notNull().default(0),
+    audioEndMs: int("audio_end_ms"),
     sortOrder: int("sort_order").notNull().default(0),
 
     createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -36,4 +39,3 @@ export const soundGuessSounds = mysqlTable(
 
 export type SoundGuessSound = typeof soundGuessSounds.$inferSelect;
 export type NewSoundGuessSound = typeof soundGuessSounds.$inferInsert;
-

@@ -18,7 +18,8 @@ const portalGhostLinkClassName =
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
-  description: "Choose an admin workspace for Tier Lists and Picture Reveal.",
+  description:
+    "Choose an admin workspace for Tier Lists, Picture Reveal, and Sound Guess.",
 };
 
 export default async function DashboardPage() {
@@ -61,7 +62,7 @@ export default async function DashboardPage() {
               <ThemeToggle />
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-4 lg:grid-cols-3">
               <Card className="flex flex-col overflow-hidden border-border/70 bg-background/88 shadow-sm">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -97,6 +98,28 @@ export default async function DashboardPage() {
                   </p>
                   <Link
                     href="/dashboard/picture-reveal"
+                    className={portalLinkClassName}
+                  >
+                    Open workspace
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </CardContent>
+              </Card>
+
+              <Card className="flex flex-col overflow-hidden border-border/70 bg-background/88 shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/home-vinyl-quiz.svg"
+                  alt="Build and manage sound guess games"
+                  className="aspect-[2/1] w-full border-b object-cover"
+                />
+                <CardContent className="flex items-center justify-between gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    Covers draft games, publishing, vinyl covers, and audio
+                    answer content.
+                  </p>
+                  <Link
+                    href="/dashboard/sound-guess"
                     className={portalLinkClassName}
                   >
                     Open workspace

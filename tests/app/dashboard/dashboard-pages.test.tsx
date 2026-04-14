@@ -50,6 +50,7 @@ describe("dashboard pages", () => {
 
     expect(markup).toContain("/dashboard/tier-lists");
     expect(markup).toContain("/dashboard/picture-reveal");
+    expect(markup).toContain("/dashboard/sound-guess");
     expect(markup).toContain("Admin Portal");
     expect(markup).not.toContain("/api/auth/sign-out");
   });

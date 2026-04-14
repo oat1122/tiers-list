@@ -42,7 +42,10 @@ describe("/api/sound-guess-games/public routes", () => {
         {
           id: "sound-1",
           audioPath: "/uploads/sound-guess/audio/bell.mp3",
+          imagePath: "/uploads/sound-guess/sound-images/bell.webp",
           answer: "Bell",
+          audioStartMs: 1000,
+          audioEndMs: 4000,
         },
       ],
     });
@@ -59,7 +62,10 @@ describe("/api/sound-guess-games/public routes", () => {
         {
           id: "sound-1",
           audioPath: "/uploads/sound-guess/audio/bell.mp3",
+          imagePath: "/uploads/sound-guess/sound-images/bell.webp",
           answer: "Bell",
+          audioStartMs: 1000,
+          audioEndMs: 4000,
         },
       ],
     });
@@ -77,4 +83,3 @@ describe("/api/sound-guess-games/public routes", () => {
     await expect(response.json()).resolves.toEqual({ error: "Not found" });
   });
 });
-

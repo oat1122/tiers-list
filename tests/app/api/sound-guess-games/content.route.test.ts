@@ -93,14 +93,17 @@ describe("/api/sound-guess-games/[id]/content route", () => {
     expect(response.status).toBe(200);
     expect(mocks.saveSoundGuessGameContent).toHaveBeenCalledWith("game-1", {
       coverImagePath: null,
+      imageWidth: 1600,
+      imageHeight: 900,
       sounds: [
         {
           tempAudioPath: "/uploads/sound-guess/audio/temp/bell.mp3",
           answer: "Bell",
+          audioStartMs: 0,
+          audioEndMs: undefined,
           sortOrder: 0,
         },
       ],
     });
   });
 });
-

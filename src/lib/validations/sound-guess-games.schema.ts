@@ -28,7 +28,11 @@ export const SoundGuessSoundDraftSchema = z
     id: z.string().min(1).optional(),
     audioPath: z.string().min(1).optional(),
     tempAudioPath: z.string().min(1).optional(),
+    imagePath: z.string().min(1).nullable().optional(),
+    tempImagePath: z.string().min(1).nullable().optional(),
     answer: z.string().trim().min(1, "Answer is required"),
+    audioStartMs: z.coerce.number().int().min(0).default(0),
+    audioEndMs: z.coerce.number().int().min(0).nullable().optional(),
     sortOrder: z.coerce.number().int().min(0).default(0),
   })
   .superRefine((value, ctx) => {
@@ -37,6 +41,18 @@ export const SoundGuessSoundDraftSchema = z
         code: z.ZodIssueCode.custom,
         path: ["audioPath"],
         message: "Audio file is required",
+      });
+    }
+
+    if (
+      value.audioEndMs !== null &&
+      value.audioEndMs !== undefined &&
+      value.audioEndMs <= value.audioStartMs
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["audioEndMs"],
+        message: "Audio end time must be after start time",
       });
     }
   });
@@ -48,6 +64,18 @@ export type SoundGuessSoundDraftInput = z.infer<
 export const SaveSoundGuessGameContentSchema = z.object({
   coverImagePath: z.string().min(1).nullable().optional(),
   coverTempUploadPath: z.string().min(1).nullable().optional(),
+  imageWidth: z.coerce
+    .number()
+    .int()
+    .min(100, "Image width must be at least 100 px")
+    .max(4000, "Image width must be at most 4000 px")
+    .default(1600),
+  imageHeight: z.coerce
+    .number()
+    .int()
+    .min(100, "Image height must be at least 100 px")
+    .max(4000, "Image height must be at most 4000 px")
+    .default(900),
   sounds: z.array(SoundGuessSoundDraftSchema),
 });
 
@@ -62,4 +90,3 @@ export const SoundGuessGameIdParamSchema = z.object({
 export type SoundGuessGameIdParamInput = z.infer<
   typeof SoundGuessGameIdParamSchema
 >;
-

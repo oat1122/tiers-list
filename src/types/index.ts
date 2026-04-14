@@ -72,3 +72,5 @@ export * from "./picture-reveal";
 export * from "./picture-reveal-admin";
 export * from "./picture-reveal-local";
 export * from "./picture-reveal-public";
+export * from "./sound-guess";
+export * from "./sound-guess-admin";
