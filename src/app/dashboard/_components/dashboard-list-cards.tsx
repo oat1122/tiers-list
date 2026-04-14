@@ -362,7 +362,10 @@ export function CompactListCard({
                   className="overflow-hidden"
                 >
                   <div className="border-t border-border/70 p-2">
-                    <TemplatePreviewBoard list={list} caption={previewCaption} />
+                    <TemplatePreviewBoard
+                      list={list}
+                      caption={previewCaption}
+                    />
                   </div>
                 </motion.div>
               ) : null}

@@ -78,12 +78,15 @@ describe("AddItemDialog", () => {
     document.body.appendChild(container);
     root = createRoot(container);
 
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        tempUploadPath: "/uploads/tier-items/temp/temp-image.webp",
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          tempUploadPath: "/uploads/tier-items/temp/temp-image.webp",
+        }),
       }),
-    }));
+    );
     vi.stubGlobal(
       "URL",
       Object.assign(globalThis.URL ?? {}, {
@@ -139,11 +142,15 @@ describe("AddItemDialog", () => {
 
     expect(fetch).not.toHaveBeenCalled();
     expect(mocks.addItemToPool).not.toHaveBeenCalled();
-    expect(document.querySelector('[data-testid="crop-dialog"]')).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="crop-dialog"]'),
+    ).not.toBeNull();
 
     await act(async () => {
       (
-        document.querySelector('[data-testid="crop-confirm"]') as HTMLButtonElement
+        document.querySelector(
+          '[data-testid="crop-confirm"]',
+        ) as HTMLButtonElement
       )?.click();
       await Promise.resolve();
       await Promise.resolve();
@@ -218,7 +225,9 @@ describe("AddItemDialog", () => {
 
     await act(async () => {
       (
-        document.querySelector('[data-testid="crop-cancel"]') as HTMLButtonElement
+        document.querySelector(
+          '[data-testid="crop-cancel"]',
+        ) as HTMLButtonElement
       )?.click();
     });
 
@@ -251,16 +260,18 @@ describe("AddItemDialog", () => {
 
     await act(async () => {
       (
-        document.querySelector('[data-testid="crop-confirm"]') as HTMLButtonElement
+        document.querySelector(
+          '[data-testid="crop-confirm"]',
+        ) as HTMLButtonElement
       )?.click();
       await Promise.resolve();
       await Promise.resolve();
     });
 
     expect(document.body.textContent).not.toContain("Add Items");
-    expect(
-      consoleError.mock.calls.flat().map(String).join("\n"),
-    ).not.toContain("Cannot update a component");
+    expect(consoleError.mock.calls.flat().map(String).join("\n")).not.toContain(
+      "Cannot update a component",
+    );
 
     consoleError.mockRestore();
   });

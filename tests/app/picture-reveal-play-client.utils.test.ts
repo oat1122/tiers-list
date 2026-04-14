@@ -60,7 +60,10 @@ describe("picture reveal play client utils", () => {
     const rounds = buildHostRounds(createGame());
 
     expect(rounds).toHaveLength(2);
-    expect(rounds.map((round) => round.image.id)).toEqual(["image-2", "image-1"]);
+    expect(rounds.map((round) => round.image.id)).toEqual([
+      "image-2",
+      "image-1",
+    ]);
     expect(rounds[0]).toMatchObject({
       roundIndex: 0,
       currentScore: 1000,
@@ -105,6 +108,3 @@ describe("picture reveal play client utils", () => {
     ]);
   });
 });
-
-
-

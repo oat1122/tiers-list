@@ -1,4 +1,8 @@
-import type { TierPreview, TierPreviewItem, TierPreviewRow } from "./tier-preview";
+import type {
+  TierPreview,
+  TierPreviewItem,
+  TierPreviewRow,
+} from "./tier-preview";
 
 export interface AdminTierListOwner {
   id: string;
@@ -40,18 +44,19 @@ export interface AdminDashboardResponse {
   deleted: AdminTierListSummary[];
 }
 
-export interface AdminTierListSummaryDto
-  extends Omit<
-    AdminTierListSummary,
-    "createdAt" | "updatedAt" | "deletedAt"
-  > {
+export interface AdminTierListSummaryDto extends Omit<
+  AdminTierListSummary,
+  "createdAt" | "updatedAt" | "deletedAt"
+> {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
 }
 
-export interface AdminDashboardResponseDto
-  extends Omit<AdminDashboardResponse, "active" | "public" | "templates" | "deleted"> {
+export interface AdminDashboardResponseDto extends Omit<
+  AdminDashboardResponse,
+  "active" | "public" | "templates" | "deleted"
+> {
   active: AdminTierListSummaryDto[];
   public: AdminTierListSummaryDto[];
   templates: AdminTierListSummaryDto[];

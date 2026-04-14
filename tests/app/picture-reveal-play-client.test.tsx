@@ -47,20 +47,18 @@ vi.mock("next/link", () => ({
 function createGame(
   overrides: Partial<PublicPictureRevealGameDetail> = {},
 ): PublicPictureRevealGameDetail {
-  const images =
-    overrides.images ??
-    [
-      {
-        id: "image-1",
-        imagePath: "/uploads/cat.webp",
-        answer: "Cat",
-        rows: 2,
-        cols: 2,
-        totalTiles: 4,
-        specialTileCount: 0,
-        specialPattern: "plus",
-      },
-    ];
+  const images = overrides.images ?? [
+    {
+      id: "image-1",
+      imagePath: "/uploads/cat.webp",
+      answer: "Cat",
+      rows: 2,
+      cols: 2,
+      totalTiles: 4,
+      specialTileCount: 0,
+      specialPattern: "plus",
+    },
+  ];
 
   return {
     id: "game-1",
@@ -133,7 +131,9 @@ function getWinnerInput(container: HTMLElement) {
 }
 
 function getBoardSizeWrapper(container: HTMLElement) {
-  const wrapper = container.querySelector("[data-board-size]") as HTMLElement | null;
+  const wrapper = container.querySelector(
+    "[data-board-size]",
+  ) as HTMLElement | null;
 
   expect(wrapper).toBeTruthy();
 
@@ -183,7 +183,9 @@ describe("PictureRevealPlayClient", () => {
 
     await clickButton(container, "Start Host Run");
 
-    expect(container.textContent).toContain("Open Tiles, Then Reveal the Answer");
+    expect(container.textContent).toContain(
+      "Open Tiles, Then Reveal the Answer",
+    );
     expect(container.textContent).toContain("Show Live Leaderboard");
     expect(container.textContent).not.toContain("Hide Live Leaderboard");
     expect(container.textContent).toContain(
@@ -280,7 +282,9 @@ describe("PictureRevealPlayClient", () => {
 
     await clickButton(container, "Start Host Run");
 
-    const specialTile = container.querySelector('button[aria-label="Open tile 2"]');
+    const specialTile = container.querySelector(
+      'button[aria-label="Open tile 2"]',
+    );
 
     await act(async () => {
       specialTile?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -400,7 +404,9 @@ describe("PictureRevealPlayClient", () => {
 
     await clickButton(container, "Reveal Answer");
 
-    const datalistOption = container.querySelector('datalist option[value="โอ๊ต"]');
+    const datalistOption = container.querySelector(
+      'datalist option[value="โอ๊ต"]',
+    );
 
     expect(datalistOption).toBeTruthy();
     expect(container.textContent).toContain("Existing Names");
@@ -420,7 +426,9 @@ describe("PictureRevealPlayClient", () => {
     await flush();
 
     await clickButton(container, "Start Host Run");
-    expect(container.textContent).toContain("Open Tiles, Then Reveal the Answer");
+    expect(container.textContent).toContain(
+      "Open Tiles, Then Reveal the Answer",
+    );
 
     act(() => {
       root.unmount();
@@ -470,6 +478,3 @@ describe("PictureRevealPlayClient", () => {
     expect(boardWrapper.getAttribute("style")).toContain("min-width: 320px");
   });
 });
-
-
-

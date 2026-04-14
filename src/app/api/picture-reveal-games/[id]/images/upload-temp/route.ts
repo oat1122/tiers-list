@@ -3,10 +3,19 @@ import { savePictureRevealTempImageFile } from "@/lib/picture-reveal-upload";
 import {
   handlePictureRevealRouteError,
   requirePictureRevealAdmin,
+  validatePictureRevealRouteInput,
 } from "@/lib/picture-reveal-route";
 import { UploadValidationError } from "@/lib/upload";
+import { PictureRevealGameIdParamSchema } from "@/lib/validations";
 import { getPictureRevealGameById } from "@/services/picture-reveal-games.service";
 
+/**
+ * Uploads a temporary cropped image and optional original image for a game item.
+ *
+ * @param request - Admin multipart request containing image files.
+ * @param props - Next route context containing the async game id params.
+ * @returns JSON response containing temporary image upload paths.
+ */
 export async function POST(
   request: NextRequest,
   props: { params: Promise<{ id: string }> },
@@ -15,8 +24,16 @@ export async function POST(
 
   try {
     await requirePictureRevealAdmin(request);
+    const result = validatePictureRevealRouteInput(
+      PictureRevealGameIdParamSchema,
+      params,
+    );
 
-    const game = await getPictureRevealGameById(params.id);
+    if (result.response) {
+      return result.response;
+    }
+
+    const game = await getPictureRevealGameById(result.data.id);
 
     if (!game || game.deletedAt) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });

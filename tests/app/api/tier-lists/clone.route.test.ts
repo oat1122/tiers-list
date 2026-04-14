@@ -34,7 +34,10 @@ describe("/api/tier-lists/[id]/clone route", () => {
     });
     mocks.createFromTemplate.mockRejectedValue(new Error("Template not found"));
 
-    const response = await POST(new Request("http://localhost") as never, params());
+    const response = await POST(
+      new Request("http://localhost") as never,
+      params(),
+    );
 
     expect(response.status).toBe(404);
     await expect(response.json()).resolves.toEqual({

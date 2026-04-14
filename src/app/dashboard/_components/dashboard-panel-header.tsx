@@ -26,10 +26,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { AdminDashboardResponseDto } from "@/types/admin-dashboard";
-import type {
-  DashboardUser,
-  FeedbackState,
-} from "./dashboard-panel.types";
+import type { DashboardUser, FeedbackState } from "./dashboard-panel.types";
 
 function SummaryCard({
   label,

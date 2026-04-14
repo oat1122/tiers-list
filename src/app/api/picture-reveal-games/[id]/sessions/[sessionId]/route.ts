@@ -3,10 +3,18 @@ import { PictureRevealSessionRouteParamsSchema } from "@/lib/validations";
 import {
   getPictureRevealPlayerToken,
   handlePictureRevealRouteError,
+  validatePictureRevealRouteInput,
 } from "@/lib/picture-reveal-route";
 import { auth } from "@/lib/auth";
 import { getPictureRevealSessionView } from "@/services/picture-reveal-play.service";
 
+/**
+ * Returns removed-session compatibility response for a legacy session view.
+ *
+ * @param request - Player or admin request carrying auth and cookie context.
+ * @param props - Next route context containing async game and session params.
+ * @returns JSON response from the compatibility service or a route error.
+ */
 export async function GET(
   request: NextRequest,
   props: { params: Promise<{ id: string; sessionId: string }> },
@@ -14,13 +22,13 @@ export async function GET(
   const params = await props.params;
 
   try {
-    const result = PictureRevealSessionRouteParamsSchema.safeParse(params);
+    const result = validatePictureRevealRouteInput(
+      PictureRevealSessionRouteParamsSchema,
+      params,
+    );
 
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.flatten() },
-        { status: 400 },
-      );
+    if (result.response) {
+      return result.response;
     }
 
     const session = await auth.api.getSession({ headers: request.headers });

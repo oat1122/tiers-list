@@ -73,7 +73,9 @@ describe("ConfirmDialogProvider", () => {
     expect(document.body.textContent).toContain("This action cannot be undone");
 
     const buttons = Array.from(document.querySelectorAll("button"));
-    const confirmButton = buttons.find((button) => button.textContent === "Delete");
+    const confirmButton = buttons.find(
+      (button) => button.textContent === "Delete",
+    );
 
     await act(async () => {
       confirmButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));

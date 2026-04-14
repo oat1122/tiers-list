@@ -73,7 +73,8 @@ export default async function TierListsPage() {
                     อยากเริ่มจากหน้าเปล่า?
                   </p>
                   <p className="text-sm leading-6 text-muted-foreground">
-                    ข้าม gallery ได้ถ้าอยากเปิด editor ใหม่ทันทีโดยไม่ต้องเลือก template
+                    ข้าม gallery ได้ถ้าอยากเปิด editor ใหม่ทันทีโดยไม่ต้องเลือก
+                    template
                   </p>
                   <Link
                     href="/create"

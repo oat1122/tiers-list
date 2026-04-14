@@ -6,10 +6,7 @@ interface TierListAppProps {
   warningMessage?: string | null;
 }
 
-export function TierListApp({
-  initialData,
-  warningMessage,
-}: TierListAppProps) {
+export function TierListApp({ initialData, warningMessage }: TierListAppProps) {
   return (
     <TierListEditor
       mode="local"

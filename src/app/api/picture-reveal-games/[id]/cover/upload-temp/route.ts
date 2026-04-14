@@ -3,11 +3,19 @@ import { savePictureRevealTempImageFile } from "@/lib/picture-reveal-upload";
 import {
   handlePictureRevealRouteError,
   requirePictureRevealAdmin,
+  validatePictureRevealRouteInput,
 } from "@/lib/picture-reveal-route";
 import { UploadValidationError } from "@/lib/upload";
 import { PictureRevealGameIdParamSchema } from "@/lib/validations";
 import { getPictureRevealGameById } from "@/services/picture-reveal-games.service";
 
+/**
+ * Uploads a temporary cover image for an admin picture reveal game.
+ *
+ * @param request - Admin multipart request containing the cover image file.
+ * @param props - Next route context containing the async game id params.
+ * @returns JSON response containing the temporary cover upload path.
+ */
 export async function POST(
   request: NextRequest,
   props: { params: Promise<{ id: string }> },
@@ -16,13 +24,13 @@ export async function POST(
 
   try {
     await requirePictureRevealAdmin(request);
-    const result = PictureRevealGameIdParamSchema.safeParse(params);
+    const result = validatePictureRevealRouteInput(
+      PictureRevealGameIdParamSchema,
+      params,
+    );
 
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.flatten() },
-        { status: 400 },
-      );
+    if (result.response) {
+      return result.response;
     }
 
     const game = await getPictureRevealGameById(result.data.id);

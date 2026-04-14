@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PictureRevealGameIdParamSchema } from "@/lib/validations";
-import { handlePictureRevealRouteError } from "@/lib/picture-reveal-route";
+import {
+  handlePictureRevealRouteError,
+  validatePictureRevealRouteInput,
+} from "@/lib/picture-reveal-route";
 import { getPublicPictureRevealGameById } from "@/services/picture-reveal-games.service";
 
+/**
+ * Loads one published picture reveal game for public play.
+ *
+ * @param _request - Public route request, unused because this endpoint is open.
+ * @param props - Next route context containing the async game id params.
+ * @returns JSON response containing the public game or a route error.
+ */
 export async function GET(
   _request: NextRequest,
   props: { params: Promise<{ id: string }> },
@@ -10,13 +20,13 @@ export async function GET(
   const params = await props.params;
 
   try {
-    const result = PictureRevealGameIdParamSchema.safeParse(params);
+    const result = validatePictureRevealRouteInput(
+      PictureRevealGameIdParamSchema,
+      params,
+    );
 
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.flatten() },
-        { status: 400 },
-      );
+    if (result.response) {
+      return result.response;
     }
 
     const game = await getPublicPictureRevealGameById(result.data.id);

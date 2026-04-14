@@ -6,9 +6,17 @@ import {
 import {
   getPictureRevealPlayerToken,
   handlePictureRevealRouteError,
+  validatePictureRevealRouteInput,
 } from "@/lib/picture-reveal-route";
 import { guessPictureRevealChoice } from "@/services/picture-reveal-play.service";
 
+/**
+ * Returns removed-session compatibility response for legacy guess submissions.
+ *
+ * @param request - Player request containing the legacy guess JSON body.
+ * @param props - Next route context containing async game and session params.
+ * @returns JSON response from the compatibility service or a route error.
+ */
 export async function POST(
   request: NextRequest,
   props: { params: Promise<{ id: string; sessionId: string }> },
@@ -16,23 +24,23 @@ export async function POST(
   const params = await props.params;
 
   try {
-    const paramResult = PictureRevealSessionRouteParamsSchema.safeParse(params);
+    const paramResult = validatePictureRevealRouteInput(
+      PictureRevealSessionRouteParamsSchema,
+      params,
+    );
 
-    if (!paramResult.success) {
-      return NextResponse.json(
-        { error: paramResult.error.flatten() },
-        { status: 400 },
-      );
+    if (paramResult.response) {
+      return paramResult.response;
     }
 
     const body = await request.json();
-    const result = GuessPictureRevealChoiceSchema.safeParse(body);
+    const result = validatePictureRevealRouteInput(
+      GuessPictureRevealChoiceSchema,
+      body,
+    );
 
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.flatten() },
-        { status: 400 },
-      );
+    if (result.response) {
+      return result.response;
     }
 
     const session = await guessPictureRevealChoice(

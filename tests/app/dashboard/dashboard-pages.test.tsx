@@ -63,9 +63,8 @@ describe("dashboard pages", () => {
   });
 
   it("redirects legacy template route to the new tier-lists path", async () => {
-    const { default: LegacyEditTemplatePage } = await import(
-      "@/app/dashboard/templates/[id]/edit-template/page"
-    );
+    const { default: LegacyEditTemplatePage } =
+      await import("@/app/dashboard/templates/[id]/edit-template/page");
 
     await expect(
       LegacyEditTemplatePage({

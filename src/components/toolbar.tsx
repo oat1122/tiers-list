@@ -144,16 +144,16 @@ export function Toolbar({
     }
 
     return (
-        <button
-          type="button"
-          onClick={async () => {
-            if (onBeforeNavigate && !(await onBeforeNavigate())) {
-              return;
-            }
+      <button
+        type="button"
+        onClick={async () => {
+          if (onBeforeNavigate && !(await onBeforeNavigate())) {
+            return;
+          }
 
-            router.push(backHref);
-          }}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:px-3"
+          router.push(backHref);
+        }}
+        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:px-3"
       >
         <ArrowLeft className="h-4 w-4" />
         <span className="hidden sm:inline">Back</span>
@@ -269,9 +269,7 @@ export function Toolbar({
       <AddItemDialog
         open={isAddItemOpen}
         onClose={() => setAddItemOpen(false)}
-        uploadContext={
-          mode === "template" && listId ? { listId } : undefined
-        }
+        uploadContext={mode === "template" && listId ? { listId } : undefined}
       />
       <TierSettingsDialog
         open={isTierSettingsOpen}

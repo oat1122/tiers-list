@@ -94,7 +94,9 @@ describe("PictureRevealGalleryClient", () => {
     });
     await flush();
 
-    expect(container.querySelector('img[alt="Cover for Animal Quiz"]')).toBeTruthy();
+    expect(
+      container.querySelector('img[alt="Cover for Animal Quiz"]'),
+    ).toBeTruthy();
     expect(container.textContent).not.toContain("Open Tile");
     expect(container.textContent).not.toContain("Special");
     expect(container.textContent).not.toContain("Start");
@@ -106,8 +108,9 @@ describe("PictureRevealGalleryClient", () => {
     });
     await flush();
 
-    expect(container.querySelector('a[href="/picture-reveal/create"]')).toBeTruthy();
+    expect(
+      container.querySelector('a[href="/picture-reveal/create"]'),
+    ).toBeTruthy();
     expect(container.textContent).toContain("สร้างเกมของคุณเอง");
   });
 });
-

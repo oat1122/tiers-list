@@ -1,0 +1,231 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="100%" height="100%">
+  <defs>
+    <style>
+      :root {
+        --bg: #f8fafc;
+        --card-bg: #ffffff;
+        --table-bg: #f1f5f9;
+        --table-stroke: #e2e8f0;
+        --vinyl-base: #0f172a;
+        --vinyl-track: #1e293b;
+        --vinyl-label: #f43f5e;
+        --vinyl-hole: #f8fafc;
+        --tonearm-base: #e2e8f0;
+        --tonearm-arm: #cbd5e1;
+        --tonearm-head: #94a3b8;
+        --play-bg: #6366f1;
+        --play-icon: #ffffff;
+        --choice-bg: #f8fafc;
+        --choice-stroke: #e2e8f0;
+        --choice-text: #0f172a;
+        --choice-text-muted: #64748b;
+        --choice-correct-bg: #10b981;
+        --choice-correct-text: #ffffff;
+        --score-text: #10b981;
+        --cursor-stroke: #0f172a;
+        --note-1: #6366f1;
+        --note-2: #ec4899;
+        --note-3: #8b5cf6;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f172a;
+          --card-bg: #1e293b;
+          --table-bg: #334155;
+          --table-stroke: #475569;
+          --vinyl-base: #020617;
+          --vinyl-track: #0f172a;
+          --vinyl-label: #e11d48;
+          --vinyl-hole: #1e293b;
+          --tonearm-base: #475569;
+          --tonearm-arm: #64748b;
+          --tonearm-head: #94a3b8;
+          --play-bg: #4f46e5;
+          --choice-bg: #0f172a;
+          --choice-stroke: #334155;
+          --choice-text: #f8fafc;
+          --choice-text-muted: #94a3b8;
+          --choice-correct-bg: #059669;
+          --cursor-stroke: #ffffff;
+          --note-1: #818cf8;
+          --note-2: #f472b6;
+          --note-3: #a78bfa;
+        }
+      }
+
+      /* แอนิเมชันสำหรับ Cursor */
+      @keyframes cursorAnim {
+        0%, 10% { transform: translate(750px, 350px); }
+        15%, 17% { transform: translate(580px, 110px); }
+        18% { transform: translate(580px, 110px) scale(0.85); }
+        20%, 40% { transform: translate(580px, 110px) scale(1); }
+        45%, 47% { transform: translate(580px, 240px); }
+        48% { transform: translate(580px, 240px) scale(0.85); }
+        50%, 90% { transform: translate(580px, 240px) scale(1); }
+        95%, 100% { transform: translate(750px, 350px); }
+      }
+
+      /* แอนิเมชันสำหรับปุ่ม Play */
+      @keyframes btnScale {
+        0%, 17% { transform: scale(1); }
+        18% { transform: scale(0.95); }
+        19%, 100% { transform: scale(1); }
+      }
+
+      /* แอนิเมชันของหมุนแผ่นเสียง */
+      @keyframes spinAnim {
+        0%, 20% { transform: rotate(0deg); }
+        65% { transform: rotate(1800deg); }
+        100% { transform: rotate(1800deg); }
+      }
+
+      /* แอนิเมชันของ Tonearm */
+      @keyframes tonearmAnim {
+        0%, 15% { transform: rotate(0deg); }
+        20%, 65% { transform: rotate(20deg); }
+        70%, 100% { transform: rotate(0deg); }
+      }
+
+      /* แอนิเมชันตัวเลือกถูก */
+      @keyframes glowFade {
+        0%, 48% { opacity: 0; }
+        50%, 90% { opacity: 1; }
+        95%, 100% { opacity: 0; }
+      }
+      @keyframes textFade {
+        0%, 48% { opacity: 1; }
+        50%, 90% { opacity: 0; }
+        95%, 100% { opacity: 1; }
+      }
+
+      /* แอนิเมชันคะแนนลอยตัว */
+      @keyframes floatScore {
+        0%, 48% { opacity: 0; transform: translate(680px, 230px); }
+        49% { opacity: 1; transform: translate(680px, 230px); }
+        55%, 90% { opacity: 0; transform: translate(680px, 180px); }
+        95%, 100% { opacity: 0; }
+      }
+
+      /* แอนิเมชันตัวโน้ตเพลง */
+      @keyframes note1Anim {
+        0%, 22% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+        25% { opacity: 1; transform: translate(-20px, -40px) scale(1.1); }
+        35%, 100% { opacity: 0; transform: translate(-60px, -80px) scale(1.5); }
+      }
+      @keyframes note2Anim {
+        0%, 32% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+        35% { opacity: 1; transform: translate(30px, -40px) scale(1); }
+        45%, 100% { opacity: 0; transform: translate(60px, -90px) scale(1.4); }
+      }
+      @keyframes note3Anim {
+        0%, 42% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+        45% { opacity: 1; transform: translate(-10px, -60px) scale(1.2); }
+        55%, 100% { opacity: 0; transform: translate(-30px, -110px) scale(1.6); }
+      }
+
+      .cursor { animation: cursorAnim 10s infinite; pointer-events: none; }
+      .btn-play-group { animation: btnScale 10s infinite; transform-origin: 580px 110px; }
+      .vinyl-spin { animation: spinAnim 10s infinite ease-in-out; transform-origin: 220px 200px; }
+      .tonearm-move { animation: tonearmAnim 10s infinite ease-in-out; transform-origin: 340px 100px; }
+      
+      .choice-glow, .c2-text-correct { animation: glowFade 10s infinite; }
+      .c2-text-base { animation: textFade 10s infinite; }
+      .score-float { animation: floatScore 10s infinite ease-out; font-family: sans-serif; font-weight: 900; font-size: 28px; fill: var(--score-text); text-anchor: middle; pointer-events: none; }
+
+      .n1 { animation: note1Anim 10s infinite ease-out; font-family: sans-serif; font-weight: bold; font-size: 36px; fill: var(--note-1); pointer-events: none; }
+      .n2 { animation: note2Anim 10s infinite ease-out; font-family: sans-serif; font-weight: bold; font-size: 32px; fill: var(--note-2); pointer-events: none; }
+      .n3 { animation: note3Anim 10s infinite ease-out; font-family: sans-serif; font-weight: bold; font-size: 40px; fill: var(--note-3); pointer-events: none; }
+    </style>
+
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.15" />
+    </filter>
+    <filter id="vinyl-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="400" fill="var(--bg)" />
+
+  <!-- Left Side: Turntable -->
+  <rect x="60" y="40" width="320" height="320" rx="16" fill="var(--card-bg)" filter="url(#shadow)" />
+  <circle cx="220" cy="200" r="145" fill="var(--table-bg)" />
+  
+  <circle cx="100" cy="320" r="12" fill="var(--table-bg)" stroke="var(--table-stroke)" stroke-width="2"/>
+  <rect x="130" y="315" width="30" height="10" rx="5" fill="var(--table-bg)" stroke="var(--table-stroke)" stroke-width="2" />
+  
+  <g filter="url(#vinyl-shadow)">
+    <g class="vinyl-spin">
+      <circle cx="220" cy="200" r="130" fill="var(--vinyl-base)" />
+      <circle cx="220" cy="200" r="105" fill="none" stroke="var(--vinyl-track)" stroke-width="3" />
+      <circle cx="220" cy="200" r="90" fill="none" stroke="var(--vinyl-track)" stroke-width="2" />
+      <circle cx="220" cy="200" r="75" fill="none" stroke="var(--vinyl-track)" stroke-width="4" />
+      <circle cx="220" cy="200" r="60" fill="none" stroke="var(--vinyl-track)" stroke-width="1.5" />
+      
+      <circle cx="220" cy="200" r="45" fill="var(--vinyl-label)" />
+      <path d="M220 200 L220 155 A 45 45 0 0 1 265 200 Z" fill="#ffffff" opacity="0.15" />
+      <circle cx="220" cy="200" r="15" fill="#ffffff" opacity="0.2" />
+    </g>
+  </g>
+  <circle cx="220" cy="200" r="4" fill="var(--vinyl-hole)" />
+
+  <circle cx="340" cy="100" r="30" fill="var(--tonearm-base)" stroke="var(--table-stroke)" stroke-width="1.5" filter="url(#shadow)" />
+  <circle cx="340" cy="100" r="12" fill="var(--tonearm-head)" />
+  <g class="tonearm-move">
+    <path d="M340 100 L340 160 Q340 210 320 220" stroke="var(--tonearm-arm)" stroke-width="8" fill="none" stroke-linecap="round" />
+    <rect x="308" y="212" width="16" height="26" rx="4" fill="var(--tonearm-head)" transform="rotate(-30 316 225)"/>
+  </g>
+
+  <!-- Flying Notes -->
+  <text class="n1" x="220" y="200">♪</text>
+  <text class="n2" x="220" y="200">♫</text>
+  <text class="n3" x="220" y="200">♬</text>
+
+  <!-- Right Side: Quiz Board -->
+  <rect x="420" y="40" width="320" height="320" rx="16" fill="var(--card-bg)" filter="url(#shadow)" />
+  
+  <text x="580" y="65" font-family="sans-serif" font-weight="700" font-size="15" fill="var(--text-muted)" text-anchor="middle">Mystery Audio Quiz</text>
+
+  <g class="btn-play-group">
+    <rect x="460" y="86" width="240" height="48" rx="24" fill="var(--play-bg)" filter="url(#shadow)" />
+    <polygon points="530,102 546,110 530,118" fill="var(--play-icon)"/>
+    <text x="556" y="115" fill="var(--play-icon)" font-family="sans-serif" font-weight="bold" font-size="15">Start Audio Quiz</text>
+  </g>
+
+  <!-- Choice A -->
+  <rect x="460" y="160" width="240" height="48" rx="8" fill="var(--choice-bg)" stroke="var(--choice-stroke)" stroke-width="1.5" />
+  <rect x="470" y="169" width="30" height="30" rx="6" fill="var(--table-bg)" />
+  <text x="485" y="190" font-family="sans-serif" font-weight="bold" font-size="14" fill="var(--choice-text-muted)" text-anchor="middle">A</text>
+  <text x="515" y="189" font-family="sans-serif" font-weight="600" font-size="15" fill="var(--choice-text)">Stayin' Alive</text>
+
+  <!-- Choice B -->
+  <g>
+    <rect x="460" y="216" width="240" height="48" rx="8" fill="var(--choice-bg)" stroke="var(--choice-stroke)" stroke-width="1.5" />
+    <rect class="choice-glow" x="460" y="216" width="240" height="48" rx="8" fill="var(--choice-correct-bg)" />
+    
+    <rect class="c2-text-base" x="470" y="225" width="30" height="30" rx="6" fill="var(--table-bg)" />
+    <rect class="c2-text-correct" x="470" y="225" width="30" height="30" rx="6" fill="#ffffff" fill-opacity="0.25" />
+
+    <text x="485" y="246" class="c2-text-base" font-family="sans-serif" font-weight="bold" font-size="14" fill="var(--choice-text-muted)" text-anchor="middle">B</text>
+    <text x="515" y="245" class="c2-text-base" font-family="sans-serif" font-weight="600" font-size="15" fill="var(--choice-text)">Bohemian Rhapsody</text>
+
+    <text x="485" y="246" class="c2-text-correct" font-family="sans-serif" font-weight="bold" font-size="14" fill="var(--choice-correct-text)" text-anchor="middle">B</text>
+    <text x="515" y="245" class="c2-text-correct" font-family="sans-serif" font-weight="600" font-size="15" fill="var(--choice-correct-text)">Bohemian Rhapsody</text>
+  </g>
+
+  <!-- Choice C -->
+  <rect x="460" y="272" width="240" height="48" rx="8" fill="var(--choice-bg)" stroke="var(--choice-stroke)" stroke-width="1.5" />
+  <rect x="470" y="281" width="30" height="30" rx="6" fill="var(--table-bg)" />
+  <text x="485" y="302" font-family="sans-serif" font-weight="bold" font-size="14" fill="var(--choice-text-muted)" text-anchor="middle">C</text>
+  <text x="515" y="301" font-family="sans-serif" font-weight="600" font-size="15" fill="var(--choice-text)">Hotel California</text>
+
+  <text class="score-float">+50</text>
+
+  <!-- Cursor -->
+  <g class="cursor">
+    <path d="M2,2 L20,18 L13,19 L8.5,29 Z" fill="#ffffff" stroke="var(--cursor-stroke)" stroke-width="2.5" stroke-linejoin="round" filter="url(#shadow)"/>
+    <polygon points="6,7.5 14,15.5 10.5,16 7,23" fill="var(--play-bg)" />
+  </g>
+
+</svg>

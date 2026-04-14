@@ -16,8 +16,7 @@ export function AppToaster(props: ToasterProps) {
       duration={2800}
       toastOptions={{
         classNames: {
-          toast:
-            "border border-border bg-background text-foreground shadow-lg",
+          toast: "border border-border bg-background text-foreground shadow-lg",
           description: "text-muted-foreground",
           actionButton: "bg-primary text-primary-foreground",
           cancelButton: "bg-muted text-foreground",

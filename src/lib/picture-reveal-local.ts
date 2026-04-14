@@ -13,7 +13,18 @@ import type {
 
 export const LOCAL_PICTURE_REVEAL_DRAFT_ID = "current-picture-reveal-draft";
 
-function createEmptyLocalImageDraft(sortOrder: number): LocalPictureRevealImageDraft {
+const DEFAULT_LOCAL_IMAGE_SIZE = 1080;
+const MINIMUM_LOCAL_GRID_SIZE = 1;
+
+/**
+ * Creates an empty image draft for the local creator flow.
+ *
+ * @param sortOrder - Position of the image inside the local draft.
+ * @returns Local image draft with default grid and scoring settings.
+ */
+function createEmptyLocalImageDraft(
+  sortOrder: number,
+): LocalPictureRevealImageDraft {
   const draft = createEmptyImageDraft(sortOrder);
 
   return {
@@ -29,6 +40,11 @@ function createEmptyLocalImageDraft(sortOrder: number): LocalPictureRevealImageD
   };
 }
 
+/**
+ * Creates the first local draft shown to a new browser-only creator.
+ *
+ * @returns Default local draft with one empty image slot.
+ */
 export function createDefaultLocalPictureRevealDraft(): LocalPictureRevealDraft {
   return {
     id: LOCAL_PICTURE_REVEAL_DRAFT_ID,
@@ -38,14 +54,20 @@ export function createDefaultLocalPictureRevealDraft(): LocalPictureRevealDraft 
     startScore: 1000,
     openTilePenalty: 50,
     specialTilePenalty: 200,
-    imageWidth: 1080,
-    imageHeight: 1080,
+    imageWidth: DEFAULT_LOCAL_IMAGE_SIZE,
+    imageHeight: DEFAULT_LOCAL_IMAGE_SIZE,
     cover: null,
     images: [createEmptyLocalImageDraft(0)],
     updatedAt: new Date().toISOString(),
   };
 }
 
+/**
+ * Revokes object URLs owned by a local draft to avoid browser memory leaks.
+ *
+ * @param draft - Draft whose cover and image object URLs should be released.
+ * @returns Nothing when the draft is absent or after URLs are revoked.
+ */
 export function revokeLocalPictureRevealDraftUrls(
   draft: LocalPictureRevealDraft | null | undefined,
 ) {
@@ -68,6 +90,12 @@ export function revokeLocalPictureRevealDraftUrls(
   });
 }
 
+/**
+ * Converts a local draft into the shared content form shape.
+ *
+ * @param draft - Local draft loaded from IndexedDB or created in memory.
+ * @returns Editor form values with local asset ids preserved.
+ */
 export function buildPictureRevealLocalContentFormValues(
   draft: LocalPictureRevealDraft,
 ): PictureRevealContentFormState {
@@ -95,6 +123,14 @@ export function buildPictureRevealLocalContentFormValues(
   };
 }
 
+/**
+ * Rebuilds a local asset reference from form values and an existing asset fallback.
+ *
+ * @param assetId - Asset id selected by the editor form.
+ * @param objectUrl - Current preview URL for the asset.
+ * @param fallbackAsset - Existing asset metadata used when the same asset is retained.
+ * @returns Local asset reference, or null when no asset id is present.
+ */
 function normalizeAssetRef(
   assetId: string | null | undefined,
   objectUrl: string | null | undefined,
@@ -119,6 +155,13 @@ function normalizeAssetRef(
   };
 }
 
+/**
+ * Builds and validates a local draft from settings and content form state.
+ *
+ * @param params - Current local creator settings, content, and optional existing draft.
+ * @returns Valid local draft ready to persist or play.
+ * @throws ZodError when the rebuilt draft violates local draft validation.
+ */
 export function buildLocalPictureRevealDraftFromFormValues(params: {
   existingDraft?: LocalPictureRevealDraft | null;
   title: string;
@@ -142,8 +185,8 @@ export function buildLocalPictureRevealDraftFromFormValues(params: {
     startScore: params.startScore,
     openTilePenalty: params.openTilePenalty,
     specialTilePenalty: params.specialTilePenalty,
-    imageWidth: Number(params.content.imageWidth) || 1080,
-    imageHeight: Number(params.content.imageHeight) || 1080,
+    imageWidth: Number(params.content.imageWidth) || DEFAULT_LOCAL_IMAGE_SIZE,
+    imageHeight: Number(params.content.imageHeight) || DEFAULT_LOCAL_IMAGE_SIZE,
     cover: normalizeAssetRef(
       params.content.coverAssetId,
       params.content.coverImagePath ?? null,
@@ -155,8 +198,8 @@ export function buildLocalPictureRevealDraftFromFormValues(params: {
       return {
         id: image.id ?? existingImage?.id ?? crypto.randomUUID(),
         answer: image.answer.trim(),
-        rows: Number(image.rows) || 1,
-        cols: Number(image.cols) || 1,
+        rows: Number(image.rows) || MINIMUM_LOCAL_GRID_SIZE,
+        cols: Number(image.cols) || MINIMUM_LOCAL_GRID_SIZE,
         specialTileCount: Number(image.specialTileCount) || 0,
         specialPattern: image.specialPattern,
         sortOrder: index,
@@ -178,6 +221,13 @@ export function buildLocalPictureRevealDraftFromFormValues(params: {
   return LocalPictureRevealDraftSchema.parse(draft);
 }
 
+/**
+ * Converts a complete local draft into the public game detail used by the play UI.
+ *
+ * @param draft - Local draft that must contain playable image assets and answers.
+ * @returns Public game detail compatible with the hosted picture reveal player.
+ * @throws ZodError when the draft is incomplete and cannot be played.
+ */
 export function buildPlayablePictureRevealFromLocalDraft(
   draft: LocalPictureRevealDraft,
 ): PublicPictureRevealGameDetail {

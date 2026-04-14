@@ -57,10 +57,9 @@ describe("/api/tier-lists/public/[id] route", () => {
   });
 
   it("returns 400 when the route param is invalid", async () => {
-    const response = await GET(
-      new Request("http://localhost") as never,
-      { params: Promise.resolve({ id: "" }) },
-    );
+    const response = await GET(new Request("http://localhost") as never, {
+      params: Promise.resolve({ id: "" }),
+    });
     const body = await response.json();
 
     expect(response.status).toBe(400);

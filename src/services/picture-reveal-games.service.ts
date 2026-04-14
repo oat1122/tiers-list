@@ -4,15 +4,30 @@ import { pictureRevealGames, pictureRevealImages } from "@/db/schema";
 import { finalizePictureRevealTempImageFile } from "@/lib/picture-reveal-upload";
 import type {
   CreatePictureRevealGameInput,
+  PictureRevealImageDraftInput,
   SavePictureRevealGameContentInput,
   UpdatePictureRevealGameInput,
 } from "@/lib/validations";
 import { PictureRevealServiceError } from "@/services/picture-reveal-errors";
 
+const DEFAULT_PICTURE_REVEAL_IMAGE_SIZE = 1080;
+
+/**
+ * Sorts records by their persisted display order without mutating the input.
+ *
+ * @param items - Records that contain a numeric sort order.
+ * @returns New array ordered by ascending sort order.
+ */
 function sortBySortOrder<T extends { sortOrder: number }>(items: T[]) {
   return [...items].sort((left, right) => left.sortOrder - right.sortOrder);
 }
 
+/**
+ * Counts active images for publishability checks.
+ *
+ * @param gameId - Game id whose non-deleted images should be counted.
+ * @returns Number of active images attached to the game.
+ */
 async function countActiveImagesForGame(gameId: string) {
   const rows = await db
     .select({
@@ -31,6 +46,13 @@ async function countActiveImagesForGame(gameId: string) {
   return rows[0]?.count ?? 0;
 }
 
+/**
+ * Ensures a game has the required content before publishing.
+ *
+ * @param gameId - Game id being moved to published status.
+ * @returns Promise resolved when the game can be published.
+ * @throws PictureRevealServiceError when no active images are attached.
+ */
 async function assertPublishableGame(gameId: string) {
   const activeImageCount = await countActiveImagesForGame(gameId);
 
@@ -42,6 +64,12 @@ async function assertPublishableGame(gameId: string) {
   }
 }
 
+/**
+ * Loads non-deleted images for a game in display order.
+ *
+ * @param gameId - Game id whose images should be loaded.
+ * @returns Active image rows ordered for editing and public playback.
+ */
 async function getActiveImagesForGame(gameId: string) {
   return db
     .select()
@@ -55,6 +83,66 @@ async function getActiveImagesForGame(gameId: string) {
     .orderBy(pictureRevealImages.sortOrder, pictureRevealImages.createdAt);
 }
 
+/**
+ * Resolves the stored image path for a submitted image draft.
+ *
+ * @param imageDraft - Submitted image draft from the content editor.
+ * @param existingImagePath - Current stored image path for existing images.
+ * @returns Final image path to persist, or null when no image path is available.
+ */
+async function resolveImagePath(
+  imageDraft: PictureRevealImageDraftInput,
+  existingImagePath: string | null | undefined,
+) {
+  return imageDraft.tempImagePath
+    ? await finalizePictureRevealTempImageFile(imageDraft.tempImagePath)
+    : (imageDraft.imagePath ?? existingImagePath ?? null);
+}
+
+/**
+ * Resolves the stored original image path for recrop support.
+ *
+ * @param imageDraft - Submitted image draft from the content editor.
+ * @param existingOriginalImagePath - Current stored original image path.
+ * @param resolvedImagePath - Final cropped image path used as a fallback.
+ * @returns Final original image path to persist.
+ */
+async function resolveOriginalImagePath(
+  imageDraft: PictureRevealImageDraftInput,
+  existingOriginalImagePath: string | null | undefined,
+  resolvedImagePath: string,
+) {
+  return imageDraft.tempOriginalImagePath
+    ? await finalizePictureRevealTempImageFile(imageDraft.tempOriginalImagePath)
+    : (imageDraft.originalImagePath ??
+        existingOriginalImagePath ??
+        resolvedImagePath);
+}
+
+/**
+ * Finds image ids removed from the submitted content.
+ *
+ * @param existingImages - Active image rows currently persisted for the game.
+ * @param keptImageIds - Image ids inserted or updated during the save operation.
+ * @returns Existing image ids that should be soft-deleted.
+ */
+function findRemovedImageIds(
+  existingImages: Array<{ id: string }>,
+  keptImageIds: string[],
+) {
+  const keptIds = new Set(keptImageIds);
+
+  return existingImages
+    .filter((image) => !keptIds.has(image.id))
+    .map((image) => image.id);
+}
+
+/**
+ * Loads one picture reveal game by id without filtering deleted rows.
+ *
+ * @param id - Picture reveal game id.
+ * @returns Game row when found, otherwise null.
+ */
 export async function getPictureRevealGameById(id: string) {
   const rows = await db
     .select()
@@ -65,6 +153,11 @@ export async function getPictureRevealGameById(id: string) {
   return rows[0] ?? null;
 }
 
+/**
+ * Lists non-deleted picture reveal games for the admin dashboard.
+ *
+ * @returns Admin game summaries with active image counts.
+ */
 export async function getAdminPictureRevealGames() {
   const imageCount = sql<number>`count(${pictureRevealImages.id})`
     .mapWith(Number)
@@ -115,9 +208,17 @@ export async function getAdminPictureRevealGames() {
       pictureRevealGames.updatedAt,
       pictureRevealGames.deletedAt,
     )
-    .orderBy(desc(pictureRevealGames.updatedAt), desc(pictureRevealGames.createdAt));
+    .orderBy(
+      desc(pictureRevealGames.updatedAt),
+      desc(pictureRevealGames.createdAt),
+    );
 }
 
+/**
+ * Lists published picture reveal games for the public gallery.
+ *
+ * @returns Public game summaries with active image counts.
+ */
 export async function getPublicPictureRevealGames() {
   const imageCount = sql<number>`count(${pictureRevealImages.id})`
     .mapWith(Number)
@@ -165,9 +266,18 @@ export async function getPublicPictureRevealGames() {
       pictureRevealGames.imageHeight,
       pictureRevealGames.updatedAt,
     )
-    .orderBy(desc(pictureRevealGames.updatedAt), desc(pictureRevealGames.createdAt));
+    .orderBy(
+      desc(pictureRevealGames.updatedAt),
+      desc(pictureRevealGames.createdAt),
+    );
 }
 
+/**
+ * Loads a published picture reveal game and its active images for public play.
+ *
+ * @param id - Picture reveal game id from the public route.
+ * @returns Public game row with images, or null when unavailable.
+ */
 export async function getPublicPictureRevealGameById(id: string) {
   const imageCount = sql<number>`count(${pictureRevealImages.id})`
     .mapWith(Number)
@@ -232,6 +342,14 @@ export async function getPublicPictureRevealGameById(id: string) {
   };
 }
 
+/**
+ * Creates a draft picture reveal game for an admin user.
+ *
+ * @param data - Validated create-game input from the route layer.
+ * @param userId - Admin user id that owns the game.
+ * @returns Created game row, or null if the insert cannot be reloaded.
+ * @throws PictureRevealServiceError when callers attempt to publish on create.
+ */
 export async function createPictureRevealGame(
   data: CreatePictureRevealGameInput,
   userId: string,
@@ -256,13 +374,21 @@ export async function createPictureRevealGame(
     startScore: data.startScore,
     openTilePenalty: data.openTilePenalty,
     specialTilePenalty: data.specialTilePenalty,
-    imageWidth: 1080,
-    imageHeight: 1080,
+    imageWidth: DEFAULT_PICTURE_REVEAL_IMAGE_SIZE,
+    imageHeight: DEFAULT_PICTURE_REVEAL_IMAGE_SIZE,
   });
 
   return getPictureRevealGameById(id);
 }
 
+/**
+ * Updates settings for an existing picture reveal game.
+ *
+ * @param id - Picture reveal game id to update.
+ * @param data - Validated partial settings payload from the route layer.
+ * @returns Updated game row, or null if the game cannot be reloaded.
+ * @throws PictureRevealServiceError when publishing without required images.
+ */
 export async function updatePictureRevealGame(
   id: string,
   data: UpdatePictureRevealGameInput,
@@ -271,11 +397,20 @@ export async function updatePictureRevealGame(
     await assertPublishableGame(id);
   }
 
-  await db.update(pictureRevealGames).set(data).where(eq(pictureRevealGames.id, id));
+  await db
+    .update(pictureRevealGames)
+    .set(data)
+    .where(eq(pictureRevealGames.id, id));
 
   return getPictureRevealGameById(id);
 }
 
+/**
+ * Marks a picture reveal game as deleted while preserving historical rows.
+ *
+ * @param id - Picture reveal game id to soft-delete.
+ * @returns Promise resolved after the deleted timestamp is stored.
+ */
 export async function softDeletePictureRevealGame(id: string) {
   await db
     .update(pictureRevealGames)
@@ -283,6 +418,12 @@ export async function softDeletePictureRevealGame(id: string) {
     .where(eq(pictureRevealGames.id, id));
 }
 
+/**
+ * Loads editable content for an admin picture reveal game.
+ *
+ * @param id - Picture reveal game id to load.
+ * @returns Game row with active images, or null when missing or deleted.
+ */
 export async function getPictureRevealGameContent(id: string) {
   const game = await getPictureRevealGameById(id);
 
@@ -298,6 +439,14 @@ export async function getPictureRevealGameContent(id: string) {
   };
 }
 
+/**
+ * Saves cover and image content for a picture reveal game.
+ *
+ * @param id - Picture reveal game id being edited.
+ * @param data - Validated content payload from the editor route.
+ * @returns Updated game content, or null if reloading fails after save.
+ * @throws PictureRevealServiceError when the game is missing or content is invalid.
+ */
 export async function savePictureRevealGameContent(
   id: string,
   data: SavePictureRevealGameContentInput,
@@ -318,7 +467,7 @@ export async function savePictureRevealGameContent(
   await db.transaction(async (tx) => {
     const resolvedCoverImagePath = data.coverTempUploadPath
       ? await finalizePictureRevealTempImageFile(data.coverTempUploadPath)
-      : data.coverImagePath ?? null;
+      : (data.coverImagePath ?? null);
 
     await tx
       .update(pictureRevealGames)
@@ -349,20 +498,20 @@ export async function savePictureRevealGameContent(
           : null;
 
       const imageId = existingImage?.id ?? crypto.randomUUID();
-      const resolvedImagePath = imageDraft.tempImagePath
-        ? await finalizePictureRevealTempImageFile(imageDraft.tempImagePath)
-        : imageDraft.imagePath ?? existingImage?.imagePath ?? null;
-      const resolvedOriginalImagePath = imageDraft.tempOriginalImagePath
-        ? await finalizePictureRevealTempImageFile(
-            imageDraft.tempOriginalImagePath,
-          )
-        : imageDraft.originalImagePath ??
-          existingImage?.originalImagePath ??
-          resolvedImagePath;
+      const resolvedImagePath = await resolveImagePath(
+        imageDraft,
+        existingImage?.imagePath,
+      );
 
       if (!resolvedImagePath) {
         throw new PictureRevealServiceError(400, "Image path is required");
       }
+
+      const resolvedOriginalImagePath = await resolveOriginalImagePath(
+        imageDraft,
+        existingImage?.originalImagePath,
+        resolvedImagePath,
+      );
 
       if (existingImage) {
         await tx
@@ -397,9 +546,7 @@ export async function savePictureRevealGameContent(
       keptImageIds.push(imageId);
     }
 
-    const removedImageIds = existingImages
-      .filter((image) => !keptImageIds.includes(image.id))
-      .map((image) => image.id);
+    const removedImageIds = findRemovedImageIds(existingImages, keptImageIds);
 
     if (removedImageIds.length > 0) {
       await tx

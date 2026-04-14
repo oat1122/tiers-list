@@ -107,7 +107,9 @@ export function TierListEditor({
   } = useUIStore();
 
   const [editorData, setEditorData] = useState(initialData);
-  const [description, setDescription] = useState(initialData?.description ?? "");
+  const [description, setDescription] = useState(
+    initialData?.description ?? "",
+  );
   const [coverImagePath, setCoverImagePath] = useState<string | null>(
     initialData?.coverImagePath ?? null,
   );
@@ -182,7 +184,15 @@ export function TierListEditor({
         coverTempUploadPath,
         state: { tiers, pool, cardSize },
       }),
-    [cardSize, coverImagePath, coverTempUploadPath, description, pool, tiers, title],
+    [
+      cardSize,
+      coverImagePath,
+      coverTempUploadPath,
+      description,
+      pool,
+      tiers,
+      title,
+    ],
   );
 
   const isDirty = useMemo(
@@ -217,7 +227,12 @@ export function TierListEditor({
       return;
     }
 
-    moveItem(draggableId, source.droppableId, destination.droppableId, destination.index);
+    moveItem(
+      draggableId,
+      source.droppableId,
+      destination.droppableId,
+      destination.index,
+    );
   };
 
   const handleCoverUpload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -308,11 +323,14 @@ export function TierListEditor({
     setIsSaving(true);
 
     try {
-      const response = await fetch(`/api/tier-lists/${editorData.listId}/editor`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
-      });
+      const response = await fetch(
+        `/api/tier-lists/${editorData.listId}/editor`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(draft),
+        },
+      );
 
       const payload = (await response.json()) as
         | TemplateEditorPageData
@@ -411,7 +429,9 @@ export function TierListEditor({
                   className="mt-2 w-full max-w-md rounded-md border border-transparent bg-transparent px-3 py-1 text-center text-sm text-muted-foreground outline-none transition-colors focus:border-border focus:bg-muted/40"
                 />
               ) : (
-                <p className="mt-0.5 text-xs text-muted-foreground">BY mavelus</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  BY mavelus
+                </p>
               )}
             </div>
 
@@ -492,7 +512,9 @@ export function TierListEditor({
                     ) : null}
                   </div>
 
-                  <p className="text-xs text-muted-foreground">{coverHelperText}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {coverHelperText}
+                  </p>
                   {coverError ? (
                     <p className="text-sm text-destructive">{coverError}</p>
                   ) : null}
@@ -511,7 +533,9 @@ export function TierListEditor({
                 className="hidden flex flex-col items-center border-b border-border bg-card py-3 text-center"
               >
                 <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-                <p className="mt-0.5 text-xs text-muted-foreground">BY mavelus</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  BY mavelus
+                </p>
               </div>
 
               <Droppable droppableId="tier-board" type="TIER">

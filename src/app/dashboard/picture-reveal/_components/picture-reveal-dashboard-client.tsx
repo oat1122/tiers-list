@@ -3,13 +3,7 @@
 import Link from "next/link";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  ImagePlus,
-  Loader2,
-  RefreshCw,
-  Search,
-} from "lucide-react";
+import { ArrowLeft, ImagePlus, Loader2, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -130,7 +124,9 @@ export function PictureRevealDashboardClient({
       router.refresh();
     } catch (submitError) {
       const message =
-        submitError instanceof Error ? submitError.message : "สร้างเกมไม่สำเร็จ";
+        submitError instanceof Error
+          ? submitError.message
+          : "สร้างเกมไม่สำเร็จ";
       setCreateError(message);
       toast.error(message);
     } finally {
@@ -208,7 +204,10 @@ export function PictureRevealDashboardClient({
                 <div className="flex flex-wrap items-center gap-2">
                   <Link
                     href="/dashboard"
-                    className={buttonVariants({ variant: "outline", size: "sm" })}
+                    className={buttonVariants({
+                      variant: "outline",
+                      size: "sm",
+                    })}
                   >
                     <ArrowLeft className="size-4" />
                     กลับหน้า Dashboard

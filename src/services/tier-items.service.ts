@@ -69,10 +69,7 @@ export async function createImageTierItem(
 }
 
 export async function updateTierItem(id: string, data: UpdateTierItemInput) {
-  await db
-    .update(tierItems)
-    .set(data)
-    .where(eq(tierItems.id, id));
+  await db.update(tierItems).set(data).where(eq(tierItems.id, id));
 }
 
 export async function softDeleteTierItem(id: string) {

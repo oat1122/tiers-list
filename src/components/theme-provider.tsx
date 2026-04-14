@@ -65,9 +65,7 @@ function readStoredTheme(defaultTheme: Theme) {
 function temporarilyDisableTransitions() {
   const style = document.createElement("style");
   style.appendChild(
-    document.createTextNode(
-      "*,*::before,*::after{transition:none!important}",
-    ),
+    document.createTextNode("*,*::before,*::after{transition:none!important}"),
   );
   document.head.appendChild(style);
 

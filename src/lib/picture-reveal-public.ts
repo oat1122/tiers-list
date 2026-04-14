@@ -15,6 +15,12 @@ type PublicPictureRevealGameDetailRow = NonNullable<
   Awaited<ReturnType<typeof getPublicPictureRevealGameById>>
 >;
 
+/**
+ * Converts a database-backed public game row into the API/page summary contract.
+ *
+ * @param game - Public game row returned by the service layer.
+ * @returns Serializable public summary with date values converted to strings.
+ */
 export function serializePublicPictureRevealGameSummary(
   game: PublicPictureRevealGameRow,
 ): PublicPictureRevealGameSummary {
@@ -34,6 +40,12 @@ export function serializePublicPictureRevealGameSummary(
   };
 }
 
+/**
+ * Converts a public game row with images into the playable detail contract.
+ *
+ * @param game - Public game row with active images loaded by the service layer.
+ * @returns Serializable game detail used by the public play page.
+ */
 export function serializePublicPictureRevealGameDetail(
   game: PublicPictureRevealGameDetailRow,
 ): PublicPictureRevealGameDetail {
@@ -47,7 +59,8 @@ export function serializePublicPictureRevealGameDetail(
       cols: image.cols,
       totalTiles: image.rows * image.cols,
       specialTileCount: image.specialTileCount,
-      specialPattern: image.specialPattern as PublicPictureRevealGameDetail["images"][number]["specialPattern"],
+      specialPattern:
+        image.specialPattern as PublicPictureRevealGameDetail["images"][number]["specialPattern"],
     })),
   };
 }

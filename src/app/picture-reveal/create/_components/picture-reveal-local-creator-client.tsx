@@ -4,7 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { ArrowLeft, Home as HomeIcon, Loader2, Play, RotateCcw } from "lucide-react";
+import {
+  ArrowLeft,
+  Home as HomeIcon,
+  Loader2,
+  Play,
+  RotateCcw,
+} from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useConfirmDialog } from "@/components/confirm-dialog-provider";
@@ -61,7 +67,15 @@ type LocalPictureRevealSettingsValues = z.infer<
   typeof LocalPictureRevealSettingsSchema
 >;
 
-function buildSettingsValues(draft: LocalPictureRevealDraft): LocalPictureRevealSettingsValues {
+/**
+ * Builds local creator settings form values from a draft.
+ *
+ * @param draft - Local draft loaded from IndexedDB or created by default.
+ * @returns Settings values used by react-hook-form.
+ */
+function buildSettingsValues(
+  draft: LocalPictureRevealDraft,
+): LocalPictureRevealSettingsValues {
   return {
     title: draft.title,
     description: draft.description,
@@ -72,6 +86,12 @@ function buildSettingsValues(draft: LocalPictureRevealDraft): LocalPictureReveal
   };
 }
 
+/**
+ * Formats the autosave timestamp for the local creator status bar.
+ *
+ * @param value - ISO timestamp from the saved draft, or null before saving.
+ * @returns Localized saved-at label for the current browser locale.
+ */
 function formatSavedAt(value: string | null) {
   if (!value) {
     return "แบบร่างพร้อมใช้งาน";
@@ -83,6 +103,12 @@ function formatSavedAt(value: string | null) {
   }).format(new Date(value));
 }
 
+/**
+ * Revokes preview URLs held by a content snapshot.
+ *
+ * @param snapshot - Content snapshot whose blob URLs should be released.
+ * @returns Nothing when there is no snapshot or after URLs are revoked.
+ */
 function revokeSnapshotUrls(snapshot: PictureRevealContentFormState | null) {
   if (!snapshot) {
     return;
@@ -103,6 +129,12 @@ function revokeSnapshotUrls(snapshot: PictureRevealContentFormState | null) {
   });
 }
 
+/**
+ * Extracts a useful message from validation and browser storage failures.
+ *
+ * @param error - Unknown error thrown by draft validation, storage, or routing.
+ * @returns Message safe to show in the local creator UI.
+ */
 function extractErrorMessage(error: unknown) {
   if (error instanceof z.ZodError) {
     const issue = error.issues[0];
@@ -117,6 +149,11 @@ function extractErrorMessage(error: unknown) {
     : "Could not use the local picture reveal draft.";
 }
 
+/**
+ * Renders the browser-only local picture reveal creator.
+ *
+ * @returns Local draft editor with autosave, reset, upload, and play actions.
+ */
 export function PictureRevealLocalCreatorClient() {
   const router = useRouter();
   const { confirm } = useConfirmDialog();
@@ -196,7 +233,9 @@ export function PictureRevealLocalCreatorClient() {
         const nextDraft = storedDraft ?? createDefaultLocalPictureRevealDraft();
 
         if (cancelled) {
-          revokeSnapshotUrls(buildPictureRevealLocalContentFormValues(nextDraft));
+          revokeSnapshotUrls(
+            buildPictureRevealLocalContentFormValues(nextDraft),
+          );
           return;
         }
 
@@ -204,7 +243,8 @@ export function PictureRevealLocalCreatorClient() {
         setLastSavedAt(nextDraft.updatedAt);
         settingsForm.reset(buildSettingsValues(nextDraft));
 
-        const initialSnapshot = buildPictureRevealLocalContentFormValues(nextDraft);
+        const initialSnapshot =
+          buildPictureRevealLocalContentFormValues(nextDraft);
         setContentInitialValues(initialSnapshot);
         setContentSnapshot(initialSnapshot);
         setEditorKey((value) => value + 1);
@@ -430,13 +470,17 @@ export function PictureRevealLocalCreatorClient() {
               สร้างเกมทายภาพของคุณเอง
             </h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground md:text-base">
-              สร้างเกมทายภาพ (Picture Reveal) สำหรับนำไปใช้จัดกิจกรรม ข้อมูลแบบร่างและรูปภาพทั้งหมดที่คุณอัปโหลดจะถูกบันทึกไว้ในเบราว์เซอร์ของอุปกรณ์นี้เท่านั้น ไม่มีการส่งข้อมูลใด ๆ ไปยังเซิร์ฟเวอร์
+              สร้างเกมทายภาพ (Picture Reveal) สำหรับนำไปใช้จัดกิจกรรม
+              ข้อมูลแบบร่างและรูปภาพทั้งหมดที่คุณอัปโหลดจะถูกบันทึกไว้ในเบราว์เซอร์ของอุปกรณ์นี้เท่านั้น
+              ไม่มีการส่งข้อมูลใด ๆ ไปยังเซิร์ฟเวอร์
             </p>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
             <div>
-              <p className="text-sm font-semibold text-foreground">สถานะแบบร่าง (Local Draft)</p>
+              <p className="text-sm font-semibold text-foreground">
+                สถานะแบบร่าง (Local Draft)
+              </p>
               <p className="text-sm text-muted-foreground">
                 {isAutosaving
                   ? "กำลังบันทึกอัตโนมัติ..."
@@ -448,7 +492,11 @@ export function PictureRevealLocalCreatorClient() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" onClick={() => void handleStartOver()}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void handleStartOver()}
+              >
                 <RotateCcw className="size-4" />
                 เริ่มใหม่ทั้งหมด
               </Button>
@@ -465,7 +513,8 @@ export function PictureRevealLocalCreatorClient() {
         <CardHeader>
           <CardTitle>การตั้งค่าเกม</CardTitle>
           <CardDescription>
-            ค่าเหล่านี้จะถูกบันทึกไว้ในเบราว์เซอร์ขณะที่คุณแก้ไข และจะถูกนำไปใช้ในหน้าเล่นเกมสำหรับผู้จัดกิจกรรมทันที
+            ค่าเหล่านี้จะถูกบันทึกไว้ในเบราว์เซอร์ขณะที่คุณแก้ไข
+            และจะถูกนำไปใช้ในหน้าเล่นเกมสำหรับผู้จัดกิจกรรมทันที
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -480,12 +529,16 @@ export function PictureRevealLocalCreatorClient() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="local-picture-reveal-mode">โหมดการเล่น</Label>
-                  <Select
+                <Select
                   value={settingsSnapshot.mode}
                   onValueChange={(value) =>
-                    settingsForm.setValue("mode", value as "single" | "marathon", {
-                      shouldDirty: true,
-                    })
+                    settingsForm.setValue(
+                      "mode",
+                      value as "single" | "marathon",
+                      {
+                        shouldDirty: true,
+                      },
+                    )
                   }
                 >
                   <SelectTrigger id="local-picture-reveal-mode">
@@ -493,14 +546,18 @@ export function PictureRevealLocalCreatorClient() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="single">แบบข้อเดียว (Single)</SelectItem>
-                    <SelectItem value="marathon">แบบต่อเนื่อง (Marathon)</SelectItem>
+                    <SelectItem value="marathon">
+                      แบบต่อเนื่อง (Marathon)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="local-picture-reveal-description">คำอธิบายเกม</Label>
+              <Label htmlFor="local-picture-reveal-description">
+                คำอธิบายเกม
+              </Label>
               <Textarea
                 id="local-picture-reveal-description"
                 {...settingsForm.register("description")}
@@ -519,7 +576,9 @@ export function PictureRevealLocalCreatorClient() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="local-open-tile-penalty">คะแนนที่ลดลงเมื่อเปิด 1 ป้าย</Label>
+                <Label htmlFor="local-open-tile-penalty">
+                  คะแนนที่ลดลงเมื่อเปิด 1 ป้าย
+                </Label>
                 <Input
                   id="local-open-tile-penalty"
                   type="number"

@@ -28,6 +28,13 @@ export interface PictureRevealHostRound {
   awardedScore: number;
 }
 
+/**
+ * Creates the host-run round queue from a public game detail.
+ *
+ * @param game - Public game detail rendered by the play page.
+ * @returns Host rounds with shuffled image order and special tile placement.
+ * @throws Error when the shuffled queue references an image missing from the game.
+ */
 export function buildHostRounds(
   game: PublicPictureRevealGameDetail,
 ): PictureRevealHostRound[] {
@@ -59,6 +66,13 @@ export function buildHostRounds(
   });
 }
 
+/**
+ * Builds render-friendly tile state from opened tile numbers.
+ *
+ * @param totalTiles - Total number of tiles in the active image.
+ * @param openedTileNumbers - One-based tile numbers already opened by the host.
+ * @returns Tile states used to render the board buttons.
+ */
 export function createTileStates(
   totalTiles: number,
   openedTileNumbers: number[],
@@ -71,10 +85,24 @@ export function createTileStates(
   }));
 }
 
+/**
+ * Normalizes winner input so duplicate leaderboard names collapse consistently.
+ *
+ * @param value - Raw winner name typed by the host.
+ * @returns Trimmed name with internal whitespace collapsed.
+ */
 export function normalizeWinnerName(value: string) {
   return value.trim().replace(/\s+/g, " ");
 }
 
+/**
+ * Adds awarded round points to the live leaderboard.
+ *
+ * @param entries - Existing leaderboard entries.
+ * @param rawName - Winner name typed by the host.
+ * @param points - Points to award for the completed round.
+ * @returns Sorted leaderboard with the winner inserted or updated.
+ */
 export function awardLeaderboardPoints(
   entries: PictureRevealLeaderboardEntry[],
   rawName: string,
@@ -113,6 +141,12 @@ export function awardLeaderboardPoints(
   );
 }
 
+/**
+ * Sorts leaderboard entries by score and then display name.
+ *
+ * @param entries - Leaderboard entries to sort.
+ * @returns New leaderboard array sorted for display.
+ */
 export function sortLeaderboard(entries: PictureRevealLeaderboardEntry[]) {
   return [...entries].sort((left, right) => {
     if (right.score !== left.score) {

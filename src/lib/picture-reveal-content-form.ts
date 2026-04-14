@@ -17,6 +17,15 @@ export interface PictureRevealContentFormState {
   images: PictureRevealContentFormImageState[];
 }
 
+const DEFAULT_PICTURE_REVEAL_IMAGE_SIZE = 1080;
+const MINIMUM_GRID_SIZE = 1;
+
+/**
+ * Creates a stable content snapshot for form resets, dirty checks, and local storage.
+ *
+ * @param values - Current editor form state, possibly containing empty browser values.
+ * @returns Normalized form state with safe defaults and consistent nullable fields.
+ */
 export function buildPictureRevealContentFormSnapshot(
   values: PictureRevealContentFormState,
 ): PictureRevealContentFormState {
@@ -24,8 +33,9 @@ export function buildPictureRevealContentFormSnapshot(
     coverImagePath: values.coverImagePath ?? null,
     coverTempUploadPath: values.coverTempUploadPath ?? null,
     coverAssetId: values.coverAssetId ?? null,
-    imageWidth: Number(values.imageWidth) || 1080,
-    imageHeight: Number(values.imageHeight) || 1080,
+    imageWidth: Number(values.imageWidth) || DEFAULT_PICTURE_REVEAL_IMAGE_SIZE,
+    imageHeight:
+      Number(values.imageHeight) || DEFAULT_PICTURE_REVEAL_IMAGE_SIZE,
     images: (values.images ?? []).map((image, index) => ({
       ...image,
       id: image.id,
@@ -36,8 +46,8 @@ export function buildPictureRevealContentFormSnapshot(
       imageAssetId: image.imageAssetId ?? null,
       originalImageAssetId: image.originalImageAssetId ?? null,
       answer: image.answer ?? "",
-      rows: Number(image.rows) || 1,
-      cols: Number(image.cols) || 1,
+      rows: Number(image.rows) || MINIMUM_GRID_SIZE,
+      cols: Number(image.cols) || MINIMUM_GRID_SIZE,
       specialTileCount: Number(image.specialTileCount) || 0,
       sortOrder: index,
     })),

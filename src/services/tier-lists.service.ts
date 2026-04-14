@@ -20,13 +20,8 @@ import type {
   CreateTierListInput,
   UpdateTierListInput,
 } from "@/lib/validations";
-import type {
-  UpdateTierListEditorInput,
-} from "@/lib/validations";
-import type {
-  TemplateEditorPageData,
-  TierEditorItemDraft,
-} from "@/types";
+import type { UpdateTierListEditorInput } from "@/lib/validations";
+import type { TemplateEditorPageData, TierEditorItemDraft } from "@/types";
 import type {
   AdminDashboardResponse,
   AdminTierPreviewItem,
@@ -125,7 +120,9 @@ function buildAdminTierPreview(params: {
   });
 
   const rows = normalizedData.editorConfig.tiers.slice(0, 4).map((tier) => {
-    const rowItems = normalizedData.items.filter((item) => item.tier === tier.id);
+    const rowItems = normalizedData.items.filter(
+      (item) => item.tier === tier.id,
+    );
     const visibleItems = rowItems.slice(0, 3).map(buildPreviewItem);
 
     return {
@@ -145,7 +142,9 @@ function buildAdminTierPreview(params: {
   };
 }
 
-export async function getPublicTierListGallery(): Promise<PublicTierListSummary[]> {
+export async function getPublicTierListGallery(): Promise<
+  PublicTierListSummary[]
+> {
   const itemCount = sql<number>`count(${tierItems.id})`
     .mapWith(Number)
     .as("itemCount");
@@ -290,10 +289,7 @@ export async function createFromTemplate(templateId: string, userId: string) {
     .select()
     .from(tierItems)
     .where(
-      and(
-        eq(tierItems.tierListId, templateId),
-        isNull(tierItems.deletedAt),
-      ),
+      and(eq(tierItems.tierListId, templateId), isNull(tierItems.deletedAt)),
     );
 
   if (items.length > 0) {
@@ -314,10 +310,7 @@ export async function createFromTemplate(templateId: string, userId: string) {
 }
 
 export async function updateTierList(id: string, data: UpdateTierListInput) {
-  await db
-    .update(tierLists)
-    .set(data)
-    .where(eq(tierLists.id, id));
+  await db.update(tierLists).set(data).where(eq(tierLists.id, id));
 
   return await getTierListById(id);
 }
@@ -329,7 +322,7 @@ export async function saveTierListEditor(
   await db.transaction(async (tx) => {
     const resolvedCoverImagePath = data.coverTempUploadPath
       ? await finalizeTempImageFile(data.coverTempUploadPath)
-      : data.coverImagePath ?? null;
+      : (data.coverImagePath ?? null);
 
     await tx
       .update(tierLists)
@@ -358,7 +351,8 @@ export async function saveTierListEditor(
             tier: item.tier,
             position: item.position,
             itemType: item.itemType,
-            imagePath: item.imagePath ?? existingMap.get(item.id)?.imagePath ?? null,
+            imagePath:
+              item.imagePath ?? existingMap.get(item.id)?.imagePath ?? null,
             showCaption: item.showCaption ?? 1,
             deletedAt: null,
           })
@@ -371,10 +365,10 @@ export async function saveTierListEditor(
       const insertedId = crypto.randomUUID();
       const imagePath =
         item.itemType === "image"
-          ? item.imagePath ??
+          ? (item.imagePath ??
             (item.tempUploadPath
               ? await finalizeTempImageFile(item.tempUploadPath)
-              : null)
+              : null))
           : null;
 
       await tx.insert(tierItems).values({

@@ -2,16 +2,10 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import {
-  ArrowRight,
-  LayoutDashboard,
-} from "lucide-react";
+import { ArrowRight, LayoutDashboard } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { SignOutButton } from "./_components/sign-out-button";
@@ -24,8 +18,7 @@ const portalGhostLinkClassName =
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
-  description:
-    "Choose an admin workspace for Tier Lists and Picture Reveal.",
+  description: "Choose an admin workspace for Tier Lists and Picture Reveal.",
 };
 
 export default async function DashboardPage() {

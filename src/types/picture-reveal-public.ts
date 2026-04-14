@@ -29,7 +29,6 @@ export interface PublicPictureRevealPlayableImage {
   specialPattern: PictureRevealSpecialPattern;
 }
 
-export interface PublicPictureRevealGameDetail
-  extends PublicPictureRevealGameSummary {
+export interface PublicPictureRevealGameDetail extends PublicPictureRevealGameSummary {
   images: PublicPictureRevealPlayableImage[];
 }

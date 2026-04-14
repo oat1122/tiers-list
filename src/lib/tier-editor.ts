@@ -133,12 +133,14 @@ function ensureTierConfigCoverage(
 
   const uniqueMissingTierIds = Array.from(new Set(missingTierIds));
 
-  const appendedTiers = uniqueMissingTierIds.map<TierEditorTier>((tierId, index) => ({
-    id: tierId,
-    label: tierId,
-    color: createFallbackTierColor(tiers.length + index),
-    order: tiers.length + index,
-  }));
+  const appendedTiers = uniqueMissingTierIds.map<TierEditorTier>(
+    (tierId, index) => ({
+      id: tierId,
+      label: tierId,
+      color: createFallbackTierColor(tiers.length + index),
+      order: tiers.length + index,
+    }),
+  );
 
   return {
     ...normalizedConfig,
@@ -186,8 +188,7 @@ function toTierItem(
     imagePath: item.imagePath ?? null,
     imageUrl: item.imagePath ?? undefined,
     tempUploadPath: item.tempUploadPath ?? null,
-    showCaption:
-      item.showCaption === undefined ? true : item.showCaption === 1,
+    showCaption: item.showCaption === undefined ? true : item.showCaption === 1,
     tierId: item.tier,
     position: item.position,
     listId,
@@ -232,7 +233,9 @@ export function templateEditorPageDataToState(data: TemplateEditorPageData) {
   };
 }
 
-export function buildEditorConfigFromState(state: TierListState): TierEditorConfig {
+export function buildEditorConfigFromState(
+  state: TierListState,
+): TierEditorConfig {
   return {
     cardSize: state.cardSize,
     tiers: state.tiers.map((tier, index) => ({
@@ -256,9 +259,12 @@ function serializeItem(
     tier: tierId,
     position,
     itemType:
-      item.itemType ?? (item.imagePath || item.tempUploadPath ? "image" : "text"),
+      item.itemType ??
+      (item.imagePath || item.tempUploadPath ? "image" : "text"),
     imagePath: item.imagePath ?? null,
-    tempUploadPath: item.persistedId ? undefined : item.tempUploadPath ?? null,
+    tempUploadPath: item.persistedId
+      ? undefined
+      : (item.tempUploadPath ?? null),
     showCaption: item.showCaption ? 1 : 0,
   };
 }

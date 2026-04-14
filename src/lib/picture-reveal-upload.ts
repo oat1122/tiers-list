@@ -12,14 +12,32 @@ export const PICTURE_REVEAL_UPLOAD_DIR = "public/uploads/picture-reveal";
 export const PICTURE_REVEAL_TEMP_UPLOAD_DIR =
   "public/uploads/picture-reveal/temp";
 
+/**
+ * Builds the public path for a finalized picture reveal upload.
+ *
+ * @param fileName - Stored file name inside the public upload directory.
+ * @returns Browser-readable public upload path.
+ */
 function getPublicUploadPath(fileName: string) {
   return `/uploads/picture-reveal/${fileName}`;
 }
 
+/**
+ * Builds the public path for a temporary picture reveal upload.
+ *
+ * @param fileName - Stored file name inside the temporary upload directory.
+ * @returns Browser-readable temporary upload path.
+ */
 function getTempPublicUploadPath(fileName: string) {
   return `/uploads/picture-reveal/temp/${fileName}`;
 }
 
+/**
+ * Creates an upload directory when it does not exist.
+ *
+ * @param dirPath - Relative upload directory that must be available for writes.
+ * @returns Promise that resolves after the directory exists.
+ */
 async function ensureDirectoryExists(dirPath: string) {
   try {
     await fs.access(dirPath);
@@ -28,6 +46,14 @@ async function ensureDirectoryExists(dirPath: string) {
   }
 }
 
+/**
+ * Validates image size and MIME type before persisting an upload.
+ *
+ * @param file - Browser file submitted through a route handler.
+ * @param allowedMimeTypes - MIME types accepted by the current upload flow.
+ * @returns Nothing when validation passes.
+ * @throws UploadValidationError when the file violates size or type rules.
+ */
 function validateImageFile(
   file: File,
   allowedMimeTypes: readonly string[] = LEGACY_UPLOAD_ALLOWED_MIME,
@@ -57,6 +83,16 @@ function validateImageFile(
   }
 }
 
+/**
+ * Saves a validated image file to a target upload directory.
+ *
+ * @param file - Browser file submitted by the editor.
+ * @param directory - Filesystem directory where the upload should be stored.
+ * @param publicPathFactory - Function that maps stored file names to public paths.
+ * @param allowedMimeTypes - Optional MIME type override for this upload flow.
+ * @returns Public path for the stored file.
+ * @throws UploadValidationError when the file cannot be accepted.
+ */
 async function saveImageFileToDirectory(
   file: File,
   directory: string,
@@ -78,6 +114,13 @@ async function saveImageFileToDirectory(
   return publicPathFactory(uniqueName);
 }
 
+/**
+ * Saves a picture reveal image to the temporary upload directory.
+ *
+ * @param file - Croppable image selected in the editor.
+ * @returns Temporary public path that can later be finalized on save.
+ * @throws UploadValidationError when the file cannot be accepted.
+ */
 export async function savePictureRevealTempImageFile(file: File) {
   return saveImageFileToDirectory(
     file,
@@ -87,6 +130,13 @@ export async function savePictureRevealTempImageFile(file: File) {
   );
 }
 
+/**
+ * Moves a temporary picture reveal upload into the permanent public directory.
+ *
+ * @param tempPath - Temporary public path returned by the upload endpoint.
+ * @returns Permanent public path for the finalized image.
+ * @throws Error when the provided path is not a picture reveal temp upload.
+ */
 export async function finalizePictureRevealTempImageFile(tempPath: string) {
   const tempPrefix = "/uploads/picture-reveal/temp/";
 

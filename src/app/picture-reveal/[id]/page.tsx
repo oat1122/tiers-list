@@ -13,7 +13,8 @@ const HOME_URL = "https://mavelus-jk.com";
 
 export const metadata: Metadata = {
   title: "Play Picture Reveal | Public Games",
-  description: "Host-run Picture Reveal with hidden answers and live local scoring.",
+  description:
+    "Host-run Picture Reveal with hidden answers and live local scoring.",
 };
 
 export default async function PictureRevealGamePage(
@@ -41,7 +42,9 @@ export default async function PictureRevealGamePage(
                   <Gamepad2 className="mr-1 size-3.5" />
                   Picture Reveal
                 </Badge>
-                <Badge variant="secondary">{publicGame.imageCount} images</Badge>
+                <Badge variant="secondary">
+                  {publicGame.imageCount} images
+                </Badge>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">

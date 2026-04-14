@@ -50,7 +50,9 @@ export function ImageCropDialog({
   onCancel,
   onConfirm,
 }: ImageCropDialogProps) {
-  const [imageMetrics, setImageMetrics] = useState<LoadedImageMetrics | null>(null);
+  const [imageMetrics, setImageMetrics] = useState<LoadedImageMetrics | null>(
+    null,
+  );
   const [crop, setCrop] = useState<SquareCropState | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [isPreparing, setIsPreparing] = useState(false);
@@ -316,7 +318,9 @@ export function ImageCropDialog({
 
         <div className="w-full max-w-sm space-y-5">
           <div className="rounded-xl border border-border bg-muted/30 p-4">
-            <p className="text-sm font-semibold text-foreground">ผลลัพธ์ที่จะได้</p>
+            <p className="text-sm font-semibold text-foreground">
+              ผลลัพธ์ที่จะได้
+            </p>
             <p className="mt-1 text-sm text-muted-foreground">
               รูปปลายทาง {sizeLabel} อัตราส่วน {ratioLabel} และบันทึกเป็น WEBP
             </p>
@@ -337,7 +341,9 @@ export function ImageCropDialog({
                 max="4"
                 step="0.05"
                 value={crop?.zoom ?? 1}
-                onChange={(event) => handleZoomChange(Number(event.target.value))}
+                onChange={(event) =>
+                  handleZoomChange(Number(event.target.value))
+                }
                 className="flex-1 accent-primary"
               />
               <ZoomIn className="size-4 text-muted-foreground" />
@@ -347,7 +353,8 @@ export function ImageCropDialog({
           <div className="rounded-xl border border-border bg-muted/20 p-4 text-sm text-muted-foreground">
             <p>คำแนะนำ</p>
             <p className="mt-1">
-              รูปต้นฉบับควรใหญ่พอสำหรับสัดส่วนที่เลือก เพื่อให้ภาพหลังครอปยังคมชัด
+              รูปต้นฉบับควรใหญ่พอสำหรับสัดส่วนที่เลือก
+              เพื่อให้ภาพหลังครอปยังคมชัด
             </p>
           </div>
 
@@ -355,7 +362,10 @@ export function ImageCropDialog({
             <Button variant="outline" onClick={onCancel} disabled={isSaving}>
               ยกเลิก
             </Button>
-            <Button onClick={() => void handleConfirm()} disabled={isPreparing || isSaving}>
+            <Button
+              onClick={() => void handleConfirm()}
+              disabled={isPreparing || isSaving}
+            >
               {isSaving ? <Loader2 className="size-4 animate-spin" /> : null}
               ใช้รูปนี้
             </Button>

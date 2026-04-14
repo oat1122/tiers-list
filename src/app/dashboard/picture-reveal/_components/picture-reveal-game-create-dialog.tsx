@@ -80,7 +80,8 @@ export function PictureRevealGameCreateDialog({
         <DialogHeader>
           <DialogTitle>สร้างเกม Picture Reveal</DialogTitle>
           <DialogDescription>
-            สร้างเป็น draft ก่อน แล้วค่อยไปตั้งค่า content และ publish ในหน้าแก้ไข
+            สร้างเป็น draft ก่อน แล้วค่อยไปตั้งค่า content และ publish
+            ในหน้าแก้ไข
           </DialogDescription>
         </DialogHeader>
 
@@ -116,7 +117,9 @@ export function PictureRevealGameCreateDialog({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="single">แบบข้อเดียว (Single)</SelectItem>
-                    <SelectItem value="marathon">แบบต่อเนื่อง (Marathon)</SelectItem>
+                    <SelectItem value="marathon">
+                      แบบต่อเนื่อง (Marathon)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               )}

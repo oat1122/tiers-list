@@ -85,6 +85,13 @@ export const pictureRevealImageSizeExamples = [
   { key: "portrait-2k", label: "1440x2560", width: 1440, height: 2560 },
 ] as const;
 
+/**
+ * Formats a width and height as a reduced aspect ratio label.
+ *
+ * @param width - Image width in pixels.
+ * @param height - Image height in pixels.
+ * @returns Aspect ratio label such as 16:9.
+ */
 export function formatPictureRevealAspectRatio(width: number, height: number) {
   const gcd = (left: number, right: number): number =>
     right === 0 ? left : gcd(right, left % right);
@@ -93,6 +100,12 @@ export function formatPictureRevealAspectRatio(width: number, height: number) {
   return `${width / divisor}:${height / divisor}`;
 }
 
+/**
+ * Formats nullable timestamps for the Thai admin dashboard.
+ *
+ * @param dateString - ISO date string returned by the API, or null.
+ * @returns Localized date-time label, or a dash when missing.
+ */
 export function formatDateTime(dateString: string | null) {
   if (!dateString) {
     return "-";
@@ -104,6 +117,12 @@ export function formatDateTime(dateString: string | null) {
   }).format(new Date(dateString));
 }
 
+/**
+ * Extracts the most useful message from a picture reveal API error payload.
+ *
+ * @param payload - Unknown JSON response returned by a picture reveal endpoint.
+ * @returns Human-readable error message when available, otherwise null.
+ */
 export function extractPictureRevealApiError(payload: unknown) {
   if (
     payload &&
@@ -144,6 +163,12 @@ export function extractPictureRevealApiError(payload: unknown) {
   return null;
 }
 
+/**
+ * Reads a JSON response without throwing when the body is empty or invalid.
+ *
+ * @param response - Fetch response returned by a picture reveal API call.
+ * @returns Parsed JSON payload, or null when parsing fails.
+ */
 export async function readJsonOrNull(response: Response) {
   try {
     return (await response.json()) as unknown;
@@ -152,6 +177,14 @@ export async function readJsonOrNull(response: Response) {
   }
 }
 
+/**
+ * Filters admin games by keyword and publication status.
+ *
+ * @param games - Admin game summaries loaded from the API.
+ * @param search - Keyword entered in the dashboard search box.
+ * @param status - Status filter selected by the admin.
+ * @returns Games matching the search and status criteria.
+ */
 export function filterPictureRevealGames(
   games: PictureRevealGameSummaryDto[],
   search: string,
@@ -170,6 +203,12 @@ export function filterPictureRevealGames(
   });
 }
 
+/**
+ * Counts total, draft, and published games for dashboard summary cards.
+ *
+ * @param games - Admin game summaries loaded from the API.
+ * @returns Counts grouped by dashboard status filters.
+ */
 export function countPictureRevealGamesByStatus(
   games: PictureRevealGameSummaryDto[],
 ) {
@@ -183,6 +222,12 @@ export function countPictureRevealGamesByStatus(
   );
 }
 
+/**
+ * Creates a default image draft for the remote content editor.
+ *
+ * @param sortOrder - Position of the new image in the editor list.
+ * @returns Image draft with default board and special tile settings.
+ */
 export function createEmptyImageDraft(sortOrder: number) {
   return {
     id: crypto.randomUUID(),
@@ -195,6 +240,12 @@ export function createEmptyImageDraft(sortOrder: number) {
   } satisfies SavePictureRevealGameContentInput["images"][number];
 }
 
+/**
+ * Converts saved content into initial editor form values.
+ *
+ * @param content - Existing game content loaded for editing, or null for a new draft.
+ * @returns Form state used by the picture reveal content editor.
+ */
 export function buildPictureRevealContentDefaults(
   content?: PictureRevealGameContentDto | null,
 ): PictureRevealContentFormState {
@@ -231,6 +282,13 @@ export function buildPictureRevealContentDefaults(
   };
 }
 
+/**
+ * Normalizes content form values before submitting them to the API.
+ *
+ * @param values - Raw form values produced by react-hook-form.
+ * @returns Valid API input with trimmed answers and sequential sort order.
+ * @throws ZodError when the content violates validation rules.
+ */
 export function normalizePictureRevealContentInput(
   values: z.input<typeof SavePictureRevealGameContentSchema>,
 ): SavePictureRevealGameContentInput {
@@ -247,6 +305,13 @@ export function normalizePictureRevealContentInput(
   });
 }
 
+/**
+ * Builds the API payload for creating a draft game from dialog values.
+ *
+ * @param values - Raw create-dialog values entered by the admin.
+ * @returns Valid create-game payload with trimmed text and draft status.
+ * @throws ZodError when the create payload is invalid.
+ */
 export function buildPictureRevealCreatePayload(
   values: Pick<
     z.input<typeof CreatePictureRevealGameSchema>,
@@ -266,6 +331,12 @@ export function buildPictureRevealCreatePayload(
   });
 }
 
+/**
+ * Builds the API payload for updating picture reveal settings.
+ *
+ * @param values - Raw settings values submitted by the editor.
+ * @returns Settings update payload with normalized text fields.
+ */
 export function buildPictureRevealSettingsPayload(
   values: UpdatePictureRevealGameInput,
 ) {

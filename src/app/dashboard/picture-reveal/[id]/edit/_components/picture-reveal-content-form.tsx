@@ -67,16 +67,33 @@ const PICTURE_REVEAL_COVER_WIDTH = 1600;
 const PICTURE_REVEAL_COVER_HEIGHT = 900;
 const COVER_ACCEPTED_FORMATS_LABEL = "JPEG, PNG, WEBP";
 
+/**
+ * Formats a byte limit as a rounded megabyte label for editor helper text.
+ *
+ * @param bytes - File size limit in bytes.
+ * @returns Rounded megabyte label.
+ */
 function formatBytes(bytes: number) {
   return `${Math.round(bytes / (1024 * 1024))}MB`;
 }
 
+/**
+ * Builds cover upload guidance from the current crop and upload constraints.
+ *
+ * @returns Human-readable helper text for the cover upload control.
+ */
 function createPictureRevealCoverHelperText() {
   return `Cropped to ${PICTURE_REVEAL_COVER_WIDTH}x${PICTURE_REVEAL_COVER_HEIGHT}px (16:9), max ${formatBytes(
     IMAGE_UPLOAD_LIMIT_BYTES,
   )}, supports ${COVER_ACCEPTED_FORMATS_LABEL}.`;
 }
 
+/**
+ * Builds the file-type validation message for unsupported crop inputs.
+ *
+ * @param file - File selected by the editor.
+ * @returns User-facing message explaining why the file cannot be cropped.
+ */
 function getUnsupportedTypeMessage(file: File) {
   if (isGifImageType(file)) {
     return "GIF is not supported in this crop flow. Please use JPEG, PNG, or WEBP.";
@@ -85,12 +102,26 @@ function getUnsupportedTypeMessage(file: File) {
   return "Only JPEG, PNG, and WEBP files are supported.";
 }
 
+/**
+ * Extracts a string message from a react-hook-form field error.
+ *
+ * @param error - Unknown field error value from form state.
+ * @returns Error message when present, otherwise null.
+ */
 function getFieldError(error: unknown) {
   return error && typeof error === "object" && "message" in error
     ? String(error.message)
     : null;
 }
 
+/**
+ * Uploads a cropped cover image through the remote admin API.
+ *
+ * @param gameId - Game id whose cover image is being updated.
+ * @param file - Cropped cover image file.
+ * @returns Preview path and null local asset id for remote mode.
+ * @throws Error when the upload endpoint rejects the file.
+ */
 async function uploadRemoteCover(gameId: string, file: File) {
   const formData = new FormData();
   formData.append("image", file);
@@ -105,7 +136,9 @@ async function uploadRemoteCover(gameId: string, file: File) {
   const payload = await readJsonOrNull(response);
 
   if (!response.ok) {
-    throw new Error(extractPictureRevealApiError(payload) ?? "อัปโหลดรูปภาพหน้าปกไม่สำเร็จ");
+    throw new Error(
+      extractPictureRevealApiError(payload) ?? "อัปโหลดรูปภาพหน้าปกไม่สำเร็จ",
+    );
   }
 
   const result = payload as { tempUploadPath: string };
@@ -116,6 +149,15 @@ async function uploadRemoteCover(gameId: string, file: File) {
   };
 }
 
+/**
+ * Uploads a cropped image and optional original image through the remote API.
+ *
+ * @param gameId - Game id whose image content is being updated.
+ * @param file - Cropped image file saved for gameplay.
+ * @param originalFile - Original source file used for future recropping.
+ * @returns Preview paths and null local asset ids for remote mode.
+ * @throws Error when the upload endpoint rejects the file.
+ */
 async function uploadRemoteImage(
   gameId: string,
   file: File,
@@ -138,7 +180,9 @@ async function uploadRemoteImage(
   const payload = await readJsonOrNull(response);
 
   if (!response.ok) {
-    throw new Error(extractPictureRevealApiError(payload) ?? "อัปโหลดรูปภาพไม่สำเร็จ");
+    throw new Error(
+      extractPictureRevealApiError(payload) ?? "อัปโหลดรูปภาพไม่สำเร็จ",
+    );
   }
 
   const result = payload as {
@@ -154,6 +198,14 @@ async function uploadRemoteImage(
   };
 }
 
+/**
+ * Loads an existing remote image as a File so it can be cropped again.
+ *
+ * @param image - Current image form state with original or cropped image paths.
+ * @param index - Image index used to build a deterministic fallback file name.
+ * @returns File loaded from the current image path, or null when no source exists.
+ * @throws Error when the browser cannot fetch the source image.
+ */
 async function loadRemoteRecropFile(
   image: PictureRevealContentFormImageState,
   index: number,
@@ -199,6 +251,12 @@ export interface PictureRevealContentUploadAdapter {
   }) => Promise<File | null>;
 }
 
+/**
+ * Renders cover upload, crop, preview, and removal controls.
+ *
+ * @param props - Form control, setter, optional game id, and upload adapter.
+ * @returns Cover editor card for remote and local picture reveal flows.
+ */
 function PictureRevealCoverCard({
   gameId,
   control,
@@ -392,6 +450,12 @@ function PictureRevealCoverCard({
   );
 }
 
+/**
+ * Renders one editable image item with crop, answer, grid, and special tile inputs.
+ *
+ * @param props - Image index, form bindings, ordering actions, and upload adapter.
+ * @returns Image editor card for a single picture reveal image.
+ */
 function PictureRevealImageCard({
   gameId,
   index,
@@ -693,7 +757,8 @@ function PictureRevealImageCard({
             </div>
 
             <p className="mt-2 text-xs text-muted-foreground">
-              ทุกๆ รูปภาพจะถูกครอปให้เป็นขนาด {targetWidth}x{targetHeight} พิกเซล
+              ทุกๆ รูปภาพจะถูกครอปให้เป็นขนาด {targetWidth}x{targetHeight}{" "}
+              พิกเซล
             </p>
             {uploadError ? (
               <p className="mt-2 text-sm text-destructive">{uploadError}</p>
@@ -751,7 +816,8 @@ function PictureRevealImageCard({
                   จำนวนแผ่นป้ายพิเศษ
                   <InfoHint label="Special tile count">
                     <span>
-                      เมื่อผู้จัดรายการเปิดแผ่นป้ายพิเศษ แผ่นป้ายรอบๆ จะถูกเปิดให้อัตโนมัติตามรูปแบบที่เลือก
+                      เมื่อผู้จัดรายการเปิดแผ่นป้ายพิเศษ แผ่นป้ายรอบๆ
+                      จะถูกเปิดให้อัตโนมัติตามรูปแบบที่เลือก
                     </span>
                   </InfoHint>
                 </Label>
@@ -842,6 +908,12 @@ export interface PictureRevealContentFormProps {
   submitLabel?: string;
 }
 
+/**
+ * Renders the shared picture reveal content editor used by remote and local flows.
+ *
+ * @param props - Initial form values, save callbacks, upload adapter, and status flags.
+ * @returns Content form for cover, image dimensions, and image cards.
+ */
 export function PictureRevealContentForm({
   gameId,
   initialValues,
@@ -993,7 +1065,8 @@ export function PictureRevealContentForm({
           <div>
             <h2 className="text-lg font-semibold">เนื้อหา/รูปภาพ</h2>
             <p className="text-sm text-muted-foreground">
-              ตั้งค่ารูปหน้าปก, ขนาดรูปภาพของเกม, อัปโหลดรูปรวมถึงกำหนดคำตอบให้แต่ละรูป
+              ตั้งค่ารูปหน้าปก, ขนาดรูปภาพของเกม,
+              อัปโหลดรูปรวมถึงกำหนดคำตอบให้แต่ละรูป
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -1033,7 +1106,8 @@ export function PictureRevealContentForm({
                   <Label>รูปแบบขนาดสัดส่วน (Ratio)</Label>
                   <InfoHint label="Ratio presets">
                     <span>
-                      เลือกสัดส่วนจากรูปแบบสำเร็จรูป หรือปลดล็อกเพื่อแก้ไขขนาดโดยกำหนดเอง
+                      เลือกสัดส่วนจากรูปแบบสำเร็จรูป
+                      หรือปลดล็อกเพื่อแก้ไขขนาดโดยกำหนดเอง
                     </span>
                   </InfoHint>
                 </div>
@@ -1169,6 +1243,12 @@ export function PictureRevealContentForm({
   );
 }
 
+/**
+ * Builds initial form values for the remote admin content editor.
+ *
+ * @param initialContent - Content loaded from the admin API, or null for defaults.
+ * @returns Normalized content form state for react-hook-form.
+ */
 export function buildPictureRevealRemoteContentInitialValues(
   initialContent?: PictureRevealGameContentDto | null,
 ) {

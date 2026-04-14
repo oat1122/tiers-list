@@ -6,12 +6,20 @@ import {
 import {
   handlePictureRevealRouteError,
   requirePictureRevealAdmin,
+  validatePictureRevealRouteInput,
 } from "@/lib/picture-reveal-route";
 import {
   getPictureRevealGameContent,
   savePictureRevealGameContent,
 } from "@/services/picture-reveal-games.service";
 
+/**
+ * Loads editable content for an admin picture reveal game.
+ *
+ * @param request - Admin request used to verify the current session.
+ * @param props - Next route context containing the async game id params.
+ * @returns JSON response containing game content or a route error.
+ */
 export async function GET(
   request: NextRequest,
   props: { params: Promise<{ id: string }> },
@@ -20,13 +28,13 @@ export async function GET(
 
   try {
     await requirePictureRevealAdmin(request);
-    const result = PictureRevealGameIdParamSchema.safeParse(params);
+    const result = validatePictureRevealRouteInput(
+      PictureRevealGameIdParamSchema,
+      params,
+    );
 
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.flatten() },
-        { status: 400 },
-      );
+    if (result.response) {
+      return result.response;
     }
 
     const content = await getPictureRevealGameContent(result.data.id);
@@ -41,6 +49,13 @@ export async function GET(
   }
 }
 
+/**
+ * Saves editable content for an admin picture reveal game.
+ *
+ * @param request - Admin request containing the content JSON body.
+ * @param props - Next route context containing the async game id params.
+ * @returns JSON response containing saved content or a route error.
+ */
 export async function PUT(
   request: NextRequest,
   props: { params: Promise<{ id: string }> },
@@ -49,23 +64,23 @@ export async function PUT(
 
   try {
     await requirePictureRevealAdmin(request);
-    const paramResult = PictureRevealGameIdParamSchema.safeParse(params);
+    const paramResult = validatePictureRevealRouteInput(
+      PictureRevealGameIdParamSchema,
+      params,
+    );
 
-    if (!paramResult.success) {
-      return NextResponse.json(
-        { error: paramResult.error.flatten() },
-        { status: 400 },
-      );
+    if (paramResult.response) {
+      return paramResult.response;
     }
 
     const body = await request.json();
-    const result = SavePictureRevealGameContentSchema.safeParse(body);
+    const result = validatePictureRevealRouteInput(
+      SavePictureRevealGameContentSchema,
+      body,
+    );
 
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.flatten() },
-        { status: 400 },
-      );
+    if (result.response) {
+      return result.response;
     }
 
     const saved = await savePictureRevealGameContent(

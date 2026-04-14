@@ -51,7 +51,8 @@ export function PictureRevealLocalPlayClient() {
           throw new Error("No local draft was found in this browser.");
         }
 
-        const playableGame = buildPlayablePictureRevealFromLocalDraft(storedDraft);
+        const playableGame =
+          buildPlayablePictureRevealFromLocalDraft(storedDraft);
 
         if (!cancelled) {
           draftRef.current = storedDraft;

@@ -12,21 +12,34 @@ import {
   type PictureRevealContentFormState,
 } from "@/lib/picture-reveal-content-form";
 
-vi.mock("next/image", () => ({
-  default: ({
-    alt,
-    fill: _fill,
-    unoptimized: _unoptimized,
-    sizes: _sizes,
-    ...props
-  }: {
-    alt: string;
-    fill?: boolean;
-    unoptimized?: boolean;
-    sizes?: string;
-    [key: string]: unknown;
-  }) => <img alt={alt} {...props} />,
-}));
+interface MockNextImageProps {
+  alt: string;
+  fill?: boolean;
+  unoptimized?: boolean;
+  sizes?: string;
+  [key: string]: unknown;
+}
+
+vi.mock("next/image", () => {
+  /**
+   * Renders a plain image element for tests while ignoring Next-only props.
+   *
+   * @param props - Next image props used by the component under test.
+   * @returns Basic image element compatible with jsdom assertions.
+   */
+  function MockNextImage({ alt, ...props }: MockNextImageProps) {
+    const { fill, unoptimized, sizes, ...imageProps } = props;
+
+    void fill;
+    void unoptimized;
+    void sizes;
+
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img alt={alt} {...imageProps} />;
+  }
+
+  return { default: MockNextImage };
+});
 
 vi.mock("sonner", () => ({
   toast: {
@@ -169,12 +182,18 @@ describe("PictureRevealContentForm", () => {
 
     expect(container.textContent).toContain("ขนาดปัจจุบัน: 1920x1080");
     expect(
-      (container.querySelector("#content-image-width") as HTMLInputElement | null)
-        ?.value,
+      (
+        container.querySelector(
+          "#content-image-width",
+        ) as HTMLInputElement | null
+      )?.value,
     ).toBe("1920");
     expect(
-      (container.querySelector("#content-image-height") as HTMLInputElement | null)
-        ?.value,
+      (
+        container.querySelector(
+          "#content-image-height",
+        ) as HTMLInputElement | null
+      )?.value,
     ).toBe("1080");
   });
 
@@ -216,7 +235,9 @@ describe("PictureRevealContentForm", () => {
     await clickButton(container, "Confirm crop");
 
     expect(uploadAdapter.uploadCover).toHaveBeenCalledTimes(1);
-    expect(container.querySelector('img[src="blob:cover-preview"]')).toBeTruthy();
+    expect(
+      container.querySelector('img[src="blob:cover-preview"]'),
+    ).toBeTruthy();
   });
 
   it("adds a new image card instead of restoring the empty placeholder", async () => {

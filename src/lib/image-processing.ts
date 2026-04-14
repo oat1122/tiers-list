@@ -103,13 +103,7 @@ export function getCenteredCropState(
   targetWidth = IMAGE_TARGET_SIZE,
   targetHeight = IMAGE_TARGET_SIZE,
 ): SquareCropState {
-  const bounds = getCropBounds(
-    width,
-    height,
-    zoom,
-    targetWidth,
-    targetHeight,
-  );
+  const bounds = getCropBounds(width, height, zoom, targetWidth, targetHeight);
 
   return {
     zoom: bounds.zoom,
@@ -118,7 +112,9 @@ export function getCenteredCropState(
   };
 }
 
-export async function loadImageMetrics(file: File): Promise<LoadedImageMetrics> {
+export async function loadImageMetrics(
+  file: File,
+): Promise<LoadedImageMetrics> {
   const src = createObjectUrl(file);
 
   try {
@@ -173,16 +169,24 @@ export function nextCropStateForZoom(
   );
 }
 
-function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality?: number) {
+function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  type: string,
+  quality?: number,
+) {
   return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        reject(new Error("ไม่สามารถสร้างไฟล์รูปหลังครอปได้"));
-        return;
-      }
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error("ไม่สามารถสร้างไฟล์รูปหลังครอปได้"));
+          return;
+        }
 
-      resolve(blob);
-    }, type, quality);
+        resolve(blob);
+      },
+      type,
+      quality,
+    );
   });
 }
 
@@ -238,9 +242,13 @@ export async function createCroppedImageFile(params: {
       throw new Error("ไฟล์หลังครอปต้องไม่เกิน 5MB");
     }
 
-    return new File([blob], `${getImageBaseName(params.file.name)}.${IMAGE_OUTPUT_EXTENSION}`, {
-      type: IMAGE_OUTPUT_MIME,
-    });
+    return new File(
+      [blob],
+      `${getImageBaseName(params.file.name)}.${IMAGE_OUTPUT_EXTENSION}`,
+      {
+        type: IMAGE_OUTPUT_MIME,
+      },
+    );
   } finally {
     URL.revokeObjectURL(src);
   }

@@ -49,12 +49,25 @@ interface PictureRevealLocalAssetRecord extends StoredLocalPictureRevealAssetRef
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
+/**
+ * Ensures the browser supports IndexedDB before local draft operations run.
+ *
+ * @returns Nothing when IndexedDB is available.
+ * @throws Error when the browser environment cannot persist local drafts.
+ */
 function ensureIndexedDb() {
   if (typeof indexedDB === "undefined") {
     throw new Error("IndexedDB is not available in this browser.");
   }
 }
 
+/**
+ * Converts an IndexedDB request into a Promise for async/await control flow.
+ *
+ * @param request - IndexedDB request returned by an object store operation.
+ * @returns Promise resolved with the request result.
+ * @throws Error when the IndexedDB request fails.
+ */
 function requestToPromise<T>(request: IDBRequest<T>) {
   return new Promise<T>((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
@@ -63,6 +76,13 @@ function requestToPromise<T>(request: IDBRequest<T>) {
   });
 }
 
+/**
+ * Waits for an IndexedDB transaction to complete or fail.
+ *
+ * @param transaction - IndexedDB transaction containing one or more operations.
+ * @returns Promise resolved when the transaction commits.
+ * @throws Error when the transaction errors or aborts.
+ */
 function transactionToPromise(transaction: IDBTransaction) {
   return new Promise<void>((resolve, reject) => {
     transaction.oncomplete = () => resolve();
@@ -73,6 +93,12 @@ function transactionToPromise(transaction: IDBTransaction) {
   });
 }
 
+/**
+ * Opens the local picture reveal IndexedDB database and creates stores on upgrade.
+ *
+ * @returns Shared database connection promise for draft and asset operations.
+ * @throws Error when IndexedDB cannot open the local database.
+ */
 async function openDatabase() {
   ensureIndexedDb();
 
@@ -101,6 +127,12 @@ async function openDatabase() {
   return dbPromise;
 }
 
+/**
+ * Strips object URLs and blob-only data before storing asset metadata in a draft.
+ *
+ * @param asset - Runtime asset reference from the local editor.
+ * @returns Persistable asset metadata, or null when no asset exists.
+ */
 function toStoredAssetRef(
   asset: LocalPictureRevealAssetRef | null,
 ): StoredLocalPictureRevealAssetRef | null {
@@ -115,6 +147,13 @@ function toStoredAssetRef(
   };
 }
 
+/**
+ * Rebuilds a runtime asset reference from stored metadata and its saved blob.
+ *
+ * @param asset - Stored asset metadata referenced by a draft.
+ * @param assetStore - IndexedDB asset store used to read the blob.
+ * @returns Runtime asset reference with a fresh object URL, or null when missing.
+ */
 async function hydrateAssetRef(
   asset: StoredLocalPictureRevealAssetRef | null,
   assetStore: IDBObjectStore,
@@ -123,9 +162,9 @@ async function hydrateAssetRef(
     return null;
   }
 
-  const record = (await requestToPromise(
-    assetStore.get(asset.assetId),
-  )) as PictureRevealLocalAssetRecord | undefined;
+  const record = (await requestToPromise(assetStore.get(asset.assetId))) as
+    | PictureRevealLocalAssetRecord
+    | undefined;
 
   if (!record) {
     return null;
@@ -139,6 +178,12 @@ async function hydrateAssetRef(
   } satisfies LocalPictureRevealAssetRef;
 }
 
+/**
+ * Collects asset ids still referenced by a local draft.
+ *
+ * @param draft - Local draft whose cover and image assets should be retained.
+ * @returns Set of asset ids that must not be pruned.
+ */
 function collectReferencedAssetIds(draft: LocalPictureRevealDraft) {
   const ids = new Set<string>();
 
@@ -159,6 +204,13 @@ function collectReferencedAssetIds(draft: LocalPictureRevealDraft) {
   return ids;
 }
 
+/**
+ * Removes orphaned asset blobs after a draft is saved.
+ *
+ * @param assetStore - IndexedDB asset store containing saved blobs.
+ * @param referencedAssetIds - Asset ids still used by the saved draft.
+ * @returns Promise resolved after unused assets are deleted.
+ */
 async function pruneUnusedAssets(
   assetStore: IDBObjectStore,
   referencedAssetIds: Set<string>,
@@ -172,6 +224,12 @@ async function pruneUnusedAssets(
   );
 }
 
+/**
+ * Saves a local image blob and returns a runtime asset reference for the editor.
+ *
+ * @param blob - Image blob or file selected by the local creator.
+ * @returns Asset reference containing metadata and a browser object URL.
+ */
 export async function saveAssetBlob(blob: Blob | File) {
   const database = await openDatabase();
   const assetId = crypto.randomUUID();
@@ -198,13 +256,19 @@ export async function saveAssetBlob(blob: Blob | File) {
   } satisfies LocalPictureRevealAssetRef;
 }
 
+/**
+ * Reads a saved local asset as a File for crop and recrop flows.
+ *
+ * @param assetId - Asset id previously returned by saveAssetBlob.
+ * @returns File when the asset exists, otherwise null.
+ */
 export async function readAssetBlob(assetId: string) {
   const database = await openDatabase();
   const transaction = database.transaction(ASSETS_STORE, "readonly");
   const assetStore = transaction.objectStore(ASSETS_STORE);
-  const record = (await requestToPromise(
-    assetStore.get(assetId),
-  )) as PictureRevealLocalAssetRecord | undefined;
+  const record = (await requestToPromise(assetStore.get(assetId))) as
+    | PictureRevealLocalAssetRecord
+    | undefined;
 
   await transactionToPromise(transaction);
 
@@ -217,9 +281,17 @@ export async function readAssetBlob(assetId: string) {
   });
 }
 
+/**
+ * Loads the current local picture reveal draft and hydrates its asset URLs.
+ *
+ * @returns Hydrated local draft when saved, otherwise null.
+ */
 export async function loadCurrentDraft() {
   const database = await openDatabase();
-  const transaction = database.transaction([DRAFTS_STORE, ASSETS_STORE], "readonly");
+  const transaction = database.transaction(
+    [DRAFTS_STORE, ASSETS_STORE],
+    "readonly",
+  );
   const draftsStore = transaction.objectStore(DRAFTS_STORE);
   const assetStore = transaction.objectStore(ASSETS_STORE);
   const storedDraft = (await requestToPromise(
@@ -262,9 +334,18 @@ export async function loadCurrentDraft() {
   return draft;
 }
 
+/**
+ * Saves the current local draft and prunes assets no longer referenced by it.
+ *
+ * @param draft - Valid local picture reveal draft to persist in IndexedDB.
+ * @returns Promise resolved when the draft and asset cleanup transaction commits.
+ */
 export async function saveCurrentDraft(draft: LocalPictureRevealDraft) {
   const database = await openDatabase();
-  const transaction = database.transaction([DRAFTS_STORE, ASSETS_STORE], "readwrite");
+  const transaction = database.transaction(
+    [DRAFTS_STORE, ASSETS_STORE],
+    "readwrite",
+  );
   const draftsStore = transaction.objectStore(DRAFTS_STORE);
   const assetStore = transaction.objectStore(ASSETS_STORE);
   const storedDraft: StoredLocalPictureRevealDraft = {
@@ -297,11 +378,21 @@ export async function saveCurrentDraft(draft: LocalPictureRevealDraft) {
   await transactionToPromise(transaction);
 }
 
+/**
+ * Removes the current local draft and every saved local image asset.
+ *
+ * @returns Promise resolved when all local picture reveal data is cleared.
+ */
 export async function clearCurrentDraft() {
   const database = await openDatabase();
-  const transaction = database.transaction([DRAFTS_STORE, ASSETS_STORE], "readwrite");
+  const transaction = database.transaction(
+    [DRAFTS_STORE, ASSETS_STORE],
+    "readwrite",
+  );
 
-  await requestToPromise(transaction.objectStore(DRAFTS_STORE).delete(CURRENT_DRAFT_KEY));
+  await requestToPromise(
+    transaction.objectStore(DRAFTS_STORE).delete(CURRENT_DRAFT_KEY),
+  );
   await requestToPromise(transaction.objectStore(ASSETS_STORE).clear());
   await transactionToPromise(transaction);
 }

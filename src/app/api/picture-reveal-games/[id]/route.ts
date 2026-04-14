@@ -6,6 +6,7 @@ import {
 import {
   handlePictureRevealRouteError,
   requirePictureRevealAdmin,
+  validatePictureRevealRouteInput,
 } from "@/lib/picture-reveal-route";
 import {
   getPictureRevealGameById,
@@ -13,6 +14,13 @@ import {
   updatePictureRevealGame,
 } from "@/services/picture-reveal-games.service";
 
+/**
+ * Loads one admin picture reveal game by id.
+ *
+ * @param request - Admin request used to verify the current session.
+ * @param props - Next route context containing the async game id params.
+ * @returns JSON response containing the game or a route error.
+ */
 export async function GET(
   request: NextRequest,
   props: { params: Promise<{ id: string }> },
@@ -21,13 +29,13 @@ export async function GET(
 
   try {
     await requirePictureRevealAdmin(request);
-    const result = PictureRevealGameIdParamSchema.safeParse(params);
+    const result = validatePictureRevealRouteInput(
+      PictureRevealGameIdParamSchema,
+      params,
+    );
 
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.flatten() },
-        { status: 400 },
-      );
+    if (result.response) {
+      return result.response;
     }
 
     const game = await getPictureRevealGameById(result.data.id);
@@ -42,6 +50,13 @@ export async function GET(
   }
 }
 
+/**
+ * Updates admin-editable settings for one picture reveal game.
+ *
+ * @param request - Admin request containing the settings JSON body.
+ * @param props - Next route context containing the async game id params.
+ * @returns JSON response containing the updated game or a route error.
+ */
 export async function PATCH(
   request: NextRequest,
   props: { params: Promise<{ id: string }> },
@@ -50,23 +65,23 @@ export async function PATCH(
 
   try {
     await requirePictureRevealAdmin(request);
-    const paramResult = PictureRevealGameIdParamSchema.safeParse(params);
+    const paramResult = validatePictureRevealRouteInput(
+      PictureRevealGameIdParamSchema,
+      params,
+    );
 
-    if (!paramResult.success) {
-      return NextResponse.json(
-        { error: paramResult.error.flatten() },
-        { status: 400 },
-      );
+    if (paramResult.response) {
+      return paramResult.response;
     }
 
     const body = await request.json();
-    const result = UpdatePictureRevealGameSchema.safeParse(body);
+    const result = validatePictureRevealRouteInput(
+      UpdatePictureRevealGameSchema,
+      body,
+    );
 
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.flatten() },
-        { status: 400 },
-      );
+    if (result.response) {
+      return result.response;
     }
 
     const game = await getPictureRevealGameById(paramResult.data.id);
@@ -75,13 +90,23 @@ export async function PATCH(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const updated = await updatePictureRevealGame(paramResult.data.id, result.data);
+    const updated = await updatePictureRevealGame(
+      paramResult.data.id,
+      result.data,
+    );
     return NextResponse.json(updated, { status: 200 });
   } catch (error) {
     return handlePictureRevealRouteError(error);
   }
 }
 
+/**
+ * Soft-deletes one admin picture reveal game.
+ *
+ * @param request - Admin request used to verify the current session.
+ * @param props - Next route context containing the async game id params.
+ * @returns JSON response confirming deletion or a route error.
+ */
 export async function DELETE(
   request: NextRequest,
   props: { params: Promise<{ id: string }> },
@@ -90,13 +115,13 @@ export async function DELETE(
 
   try {
     await requirePictureRevealAdmin(request);
-    const result = PictureRevealGameIdParamSchema.safeParse(params);
+    const result = validatePictureRevealRouteInput(
+      PictureRevealGameIdParamSchema,
+      params,
+    );
 
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.flatten() },
-        { status: 400 },
-      );
+    if (result.response) {
+      return result.response;
     }
 
     const game = await getPictureRevealGameById(result.data.id);

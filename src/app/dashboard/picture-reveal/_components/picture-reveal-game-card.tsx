@@ -36,7 +36,11 @@ export function PictureRevealGameCard({
           <div className="space-y-2">
             <div className="flex flex-wrap gap-2">
               <Badge variant={statusVariant(game.status)}>{game.status}</Badge>
-              <Badge variant="outline">{game.mode === "single" ? "แบบข้อเดียว (Single)" : "แบบต่อเนื่อง (Marathon)"}</Badge>
+              <Badge variant="outline">
+                {game.mode === "single"
+                  ? "แบบข้อเดียว (Single)"
+                  : "แบบต่อเนื่อง (Marathon)"}
+              </Badge>
             </div>
             <CardTitle>{game.title}</CardTitle>
             <CardDescription>
@@ -77,7 +81,9 @@ export function PictureRevealGameCard({
             disabled={toggling}
           >
             {toggling ? <Loader2 className="size-4 animate-spin" /> : null}
-            {game.status === "published" ? "เปลี่ยนเป็นซ่อน" : "เปลี่ยนเป็นสาธารณะ"}
+            {game.status === "published"
+              ? "เปลี่ยนเป็นซ่อน"
+              : "เปลี่ยนเป็นสาธารณะ"}
           </Button>
           <Link
             href={`/dashboard/picture-reveal/${game.id}/edit`}

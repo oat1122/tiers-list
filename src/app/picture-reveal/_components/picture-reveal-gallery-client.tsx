@@ -30,9 +30,7 @@ function formatUpdatedAt(updatedAt: string) {
 }
 
 function modeLabel(mode: PublicPictureRevealGameSummary["mode"]) {
-  return mode === "single"
-    ? "แบบข้อเดียว (Single)"
-    : "แบบต่อเนื่อง (Marathon)";
+  return mode === "single" ? "แบบข้อเดียว (Single)" : "แบบต่อเนื่อง (Marathon)";
 }
 
 export function PictureRevealGalleryClient({

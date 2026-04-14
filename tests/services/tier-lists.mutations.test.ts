@@ -13,7 +13,10 @@ vi.mock("@/db", () => ({
   },
 }));
 
-import { createFromTemplate, createTierList } from "@/services/tier-lists.service";
+import {
+  createFromTemplate,
+  createTierList,
+} from "@/services/tier-lists.service";
 
 function createSelectByIdQuery(rows: unknown[]) {
   return {
@@ -83,9 +86,9 @@ describe("tier list mutation services", () => {
       ]),
     );
 
-    await expect(
-      createFromTemplate("template-1", "user-1"),
-    ).rejects.toThrow("Template not found");
+    await expect(createFromTemplate("template-1", "user-1")).rejects.toThrow(
+      "Template not found",
+    );
     expect(mocks.insert).not.toHaveBeenCalled();
   });
 });

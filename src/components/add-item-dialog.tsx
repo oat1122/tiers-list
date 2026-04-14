@@ -11,10 +11,7 @@ import {
   IMAGE_RECOMMENDED_SIZE_LABEL,
   IMAGE_UPLOAD_LIMIT_BYTES,
 } from "@/lib/image-upload-config";
-import {
-  isCroppableImageType,
-  isGifImageType,
-} from "@/lib/image-processing";
+import { isCroppableImageType, isGifImageType } from "@/lib/image-processing";
 import { useTierStore } from "@/store/useTierStore";
 import type { TierItem } from "@/types";
 
@@ -49,7 +46,10 @@ function fileNameToLabel(fileName: string) {
 }
 
 function createLocalItemId() {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return `item-${crypto.randomUUID()}`;
   }
 
@@ -133,7 +133,9 @@ export function AddItemDialog({
   const [textValue, setTextValue] = useState("");
   const [comboText, setComboText] = useState("");
   const [comboDraft, setComboDraft] = useState<ComboDraft | null>(null);
-  const [pendingCropQueue, setPendingCropQueue] = useState<PendingCropItem[]>([]);
+  const [pendingCropQueue, setPendingCropQueue] = useState<PendingCropItem[]>(
+    [],
+  );
   const [shouldCloseAfterQueue, setShouldCloseAfterQueue] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -174,7 +176,13 @@ export function AddItemDialog({
 
     setShouldCloseAfterQueue(false);
     onClose();
-  }, [isUploading, onClose, open, pendingCropQueue.length, shouldCloseAfterQueue]);
+  }, [
+    isUploading,
+    onClose,
+    open,
+    pendingCropQueue.length,
+    shouldCloseAfterQueue,
+  ]);
 
   if (!open) {
     return null;
@@ -480,7 +488,9 @@ export function AddItemDialog({
                   type="text"
                   value={textValue}
                   onChange={(event) => setTextValue(event.target.value)}
-                  onKeyDown={(event) => event.key === "Enter" && handleTextAdd()}
+                  onKeyDown={(event) =>
+                    event.key === "Enter" && handleTextAdd()
+                  }
                   placeholder="พิมพ์ชื่อ item..."
                   className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                   autoFocus
@@ -537,7 +547,9 @@ export function AddItemDialog({
                   type="text"
                   value={comboText}
                   onChange={(event) => setComboText(event.target.value)}
-                  onKeyDown={(event) => event.key === "Enter" && void handleComboAdd()}
+                  onKeyDown={(event) =>
+                    event.key === "Enter" && void handleComboAdd()
+                  }
                   placeholder="ชื่อ / caption..."
                   className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                 />
@@ -546,7 +558,9 @@ export function AddItemDialog({
                   onClick={() => void handleComboAdd()}
                   disabled={!comboDraft || !comboText.trim() || isUploading}
                 >
-                  {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  {isUploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : null}
                   เพิ่ม Item
                 </Button>
               </div>

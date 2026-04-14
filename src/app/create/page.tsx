@@ -4,7 +4,8 @@ import { getPublicTierListEditorData } from "@/services/tier-lists.service";
 
 export const metadata: Metadata = {
   title: "Create | Tier List",
-  description: "เริ่มจัดอันดับจากหน้าเปล่าหรือโหลด public tier list มาแก้ต่อใน local editor",
+  description:
+    "เริ่มจัดอันดับจากหน้าเปล่าหรือโหลด public tier list มาแก้ต่อใน local editor",
 };
 
 function readSourceParam(value: string | string[] | undefined) {

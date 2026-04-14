@@ -9,10 +9,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { getPublicPictureRevealGames } from "@/services/picture-reveal-games.service";
 import { getPublicTierListGallery } from "@/services/tier-lists.service";
@@ -56,17 +53,15 @@ export default async function HomePage() {
                     เลือก public workspace ที่อยากเล่น
                   </h1>
                   <p className="max-w-3xl text-sm leading-6 text-muted-foreground md:text-base">
-                    แยกหน้า public ของ Tier Lists กับ Picture Reveal ออกจากกันให้ชัด
-                    เพื่อให้แต่ละโหมดเล่นง่าย ค้นหาไว และแชร์ลิงก์ได้ตรงเส้นทางมากขึ้น
+                    แยกหน้า public ของ Tier Lists กับ Picture Reveal
+                    ออกจากกันให้ชัด เพื่อให้แต่ละโหมดเล่นง่าย ค้นหาไว
+                    และแชร์ลิงก์ได้ตรงเส้นทางมากขึ้น
                   </p>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <a
-                  href={HOME_URL}
-                  className={cn(portalOutlineLinkClassName)}
-                >
+                <a href={HOME_URL} className={cn(portalOutlineLinkClassName)}>
                   <HomeIcon className="size-4" />
                   Back to home
                 </a>

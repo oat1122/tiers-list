@@ -8,9 +8,7 @@ const cardSizeValues = createDefaultTierConfig().cardSize
 export const TierEditorTierSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1, "กรุณากรอกชื่อ Tier"),
-  color: z
-    .string()
-    .regex(/^#([0-9a-fA-F]{6})$/, "กรุณาใช้สีรูปแบบ #RRGGBB"),
+  color: z.string().regex(/^#([0-9a-fA-F]{6})$/, "กรุณาใช้สีรูปแบบ #RRGGBB"),
   order: z.coerce.number().int().min(0),
 });
 
@@ -87,4 +85,6 @@ export const UpdateTierListEditorSchema = z
     });
   });
 
-export type UpdateTierListEditorInput = z.infer<typeof UpdateTierListEditorSchema>;
+export type UpdateTierListEditorInput = z.infer<
+  typeof UpdateTierListEditorSchema
+>;
