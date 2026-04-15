@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { getPublicPictureRevealGames } from "@/services/picture-reveal-games.service";
+import { getPublicSoundGuessGames } from "@/services/sound-guess-games.service";
 import { getPublicTierListGallery } from "@/services/tier-lists.service";
 
 const HOME_URL = "https://mavelus-jk.com";
@@ -26,12 +27,18 @@ export const metadata: Metadata = {
     "เลือก public workspace สำหรับเล่น Tier Lists และ Picture Reveal จากหน้าหลักเดียว",
 };
 
+/**
+ * Renders the public portal with links to each playable public workspace.
+ *
+ * @returns Server-rendered portal cards and live public item counts.
+ */
 export default async function HomePage() {
   await connection();
 
-  const [publicLists, publicGames] = await Promise.all([
+  const [publicLists, publicGames, publicSoundGuessGames] = await Promise.all([
     getPublicTierListGallery(),
     getPublicPictureRevealGames(),
+    getPublicSoundGuessGames(),
   ]);
 
   return (
@@ -46,7 +53,7 @@ export default async function HomePage() {
                     <LayoutDashboard className="mr-1 size-3.5" />
                     Public Portal
                   </Badge>
-                  <Badge variant="secondary">2 workspaces</Badge>
+                  <Badge variant="secondary">3 workspaces</Badge>
                 </div>
                 <div className="space-y-2">
                   <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
@@ -76,7 +83,7 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-4 lg:grid-cols-3">
               <Card className="flex flex-col overflow-hidden border-border/70 bg-background/88 shadow-sm">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -117,6 +124,28 @@ export default async function HomePage() {
                   </div>
                   <Link
                     href="/picture-reveal"
+                    className={cn(portalPrimaryLinkClassName)}
+                  >
+                    เปิด workspace
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </CardContent>
+              </Card>
+
+              <Card className="flex flex-col overflow-hidden border-border/70 bg-background/88 shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/home-vinyl-quiz.svg"
+                  alt="Public Sound Guess Games"
+                  className="aspect-[2/1] w-full border-b object-cover"
+                />
+                <CardContent className="space-y-4">
+                  <div className="rounded-2xl border border-border bg-muted/25 px-4 py-3 text-sm text-muted-foreground">
+                    มีเกมทายเสียง public ให้เล่น{" "}
+                    {publicSoundGuessGames.length} เกม
+                  </div>
+                  <Link
+                    href="/sound-guess"
                     className={cn(portalPrimaryLinkClassName)}
                   >
                     เปิด workspace

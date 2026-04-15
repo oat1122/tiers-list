@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   getPublicTierListGallery: vi.fn(),
   getPublicPictureRevealGames: vi.fn(),
   getPublicPictureRevealGameById: vi.fn(),
+  getPublicSoundGuessGames: vi.fn(),
+  getPublicSoundGuessGameById: vi.fn(),
 }));
 
 vi.mock("next/server", () => ({
@@ -62,6 +64,29 @@ vi.mock(
   }),
 );
 
+vi.mock("@/app/sound-guess/_components/sound-guess-gallery-client", () => ({
+  SoundGuessGalleryClient: ({
+    games,
+  }: {
+    games: Array<{ id: string; title: string }>;
+  }) => <div data-sound-guess-gallery={games.length}>{games[0]?.title}</div>,
+}));
+
+vi.mock(
+  "@/app/sound-guess/[id]/_components/sound-guess-play-client",
+  () => ({
+    SoundGuessPlayClient: ({
+      game,
+    }: {
+      game: { id: string; title: string; soundCount: number };
+    }) => (
+      <div data-sound-guess-play={game.id} data-sound-count={game.soundCount}>
+        {game.title}
+      </div>
+    ),
+  }),
+);
+
 vi.mock(
   "@/app/picture-reveal/create/_components/picture-reveal-local-creator-client",
   () => ({
@@ -87,15 +112,21 @@ vi.mock("@/services/picture-reveal-games.service", () => ({
   getPublicPictureRevealGameById: mocks.getPublicPictureRevealGameById,
 }));
 
+vi.mock("@/services/sound-guess-games.service", () => ({
+  getPublicSoundGuessGames: mocks.getPublicSoundGuessGames,
+  getPublicSoundGuessGameById: mocks.getPublicSoundGuessGameById,
+}));
+
 describe("public pages", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.connection.mockResolvedValue(undefined);
   });
 
-  it("renders the public portal home page with both workspace links", async () => {
+  it("renders the public portal home page with all workspace links", async () => {
     mocks.getPublicTierListGallery.mockResolvedValue([{ id: "list-1" }]);
     mocks.getPublicPictureRevealGames.mockResolvedValue([{ id: "game-1" }]);
+    mocks.getPublicSoundGuessGames.mockResolvedValue([{ id: "sound-game-1" }]);
 
     const { default: HomePage } = await import("@/app/page");
     const markup = renderToStaticMarkup(await HomePage());
@@ -103,6 +134,8 @@ describe("public pages", () => {
     expect(markup).toContain("/tier-lists");
     expect(markup).toContain("/picture-reveal");
     expect(markup).toContain("/picture-reveal/create");
+    expect(markup).toContain("/sound-guess");
+    expect(markup).toContain("/home-vinyl-quiz.svg");
     expect(markup).toContain("Public Portal");
   });
 
@@ -177,6 +210,77 @@ describe("public pages", () => {
       PictureRevealGamePage({
         params: Promise.resolve({ id: "missing-game" }),
       } as PageProps<"/picture-reveal/[id]">),
+    ).rejects.toThrow("NOT_FOUND");
+  });
+
+  it("passes public sound guess games to the gallery page", async () => {
+    mocks.getPublicSoundGuessGames.mockResolvedValue([
+      {
+        id: "sound-game-1",
+        title: "Vinyl Quiz",
+        description: "Guess songs",
+        coverImagePath: "/uploads/sound-cover.webp",
+        imageWidth: 1200,
+        imageHeight: 800,
+        updatedAt: new Date("2026-04-10T12:00:00.000Z"),
+        soundCount: 2,
+      },
+    ]);
+
+    const { default: SoundGuessPage } = await import("@/app/sound-guess/page");
+    const markup = renderToStaticMarkup(await SoundGuessPage());
+
+    expect(markup).toContain('data-sound-guess-gallery="1"');
+    expect(markup).toContain("Vinyl Quiz");
+    expect(markup).toContain("Sound Guess");
+  });
+
+  it("renders the sound guess play page with the public playable payload", async () => {
+    mocks.getPublicSoundGuessGameById.mockResolvedValue({
+      id: "sound-game-1",
+      title: "Vinyl Quiz",
+      description: "Guess songs",
+      coverImagePath: null,
+      imageWidth: 1200,
+      imageHeight: 800,
+      updatedAt: new Date("2026-04-10T12:00:00.000Z"),
+      soundCount: 1,
+      sounds: [
+        {
+          id: "sound-1",
+          audioPath: "/uploads/sound.mp3",
+          imagePath: null,
+          answer: "Song A",
+          audioStartMs: 131700,
+          audioEndMs: 182560,
+          sortOrder: 0,
+        },
+      ],
+    });
+
+    const { default: SoundGuessGamePage } =
+      await import("@/app/sound-guess/[id]/page");
+    const markup = renderToStaticMarkup(
+      await SoundGuessGamePage({
+        params: Promise.resolve({ id: "sound-game-1" }),
+      } as PageProps<"/sound-guess/[id]">),
+    );
+
+    expect(markup).toContain('data-sound-guess-play="sound-game-1"');
+    expect(markup).toContain('data-sound-count="1"');
+    expect(markup).toContain("Vinyl Quiz");
+  });
+
+  it("calls notFound for unknown sound guess games", async () => {
+    mocks.getPublicSoundGuessGameById.mockResolvedValue(null);
+
+    const { default: SoundGuessGamePage } =
+      await import("@/app/sound-guess/[id]/page");
+
+    await expect(
+      SoundGuessGamePage({
+        params: Promise.resolve({ id: "missing-game" }),
+      } as PageProps<"/sound-guess/[id]">),
     ).rejects.toThrow("NOT_FOUND");
   });
 

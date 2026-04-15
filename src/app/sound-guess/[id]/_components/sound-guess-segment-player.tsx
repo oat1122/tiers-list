@@ -1,16 +1,18 @@
 "use client";
 
 import { Pause, Play, Volume2 } from "lucide-react";
-import { memo, useRef, useState, type SyntheticEvent } from "react";
+import { useEffect, useRef, useState, type SyntheticEvent } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  clampSoundGuessAudioVolume,
+  readRememberedSoundGuessAudioVolume,
+  rememberSoundGuessAudioVolume,
+} from "@/lib/sound-guess-audio-volume";
 import { cn } from "@/lib/utils";
-import { formatAudioTime } from "./sound-guess-audio-utils";
-import { useRememberedAudioVolume } from "./use-remembered-audio-volume";
 
-interface SoundAudioSegmentPreviewProps {
+interface SoundGuessSegmentPlayerProps {
   audioPath: string;
   endMs: number | null;
-  rangeLabel: string;
   startMs: number;
 }
 
@@ -37,13 +39,21 @@ const volumeRangeClassName = cn(
 );
 
 /**
- * Converts milliseconds to the seconds unit used by HTMLMediaElement.
+ * Formats milliseconds for the cropped public audio player.
  *
- * @param value - Time value in milliseconds.
- * @returns Time value in seconds.
+ * @param valueMs - Time value in milliseconds.
+ * @returns Display label in mm:ss.SS format.
  */
-function millisecondsToSeconds(value: number) {
-  return value / 1000;
+function formatSegmentTime(valueMs: number) {
+  const safeMs = Math.max(0, Number.isFinite(valueMs) ? valueMs : 0);
+  const totalSeconds = Math.floor(safeMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const centiseconds = Math.floor((safeMs % 1000) / 10);
+
+  return `${minutes.toString().padStart(2, "0")}:${seconds
+    .toString()
+    .padStart(2, "0")}.${centiseconds.toString().padStart(2, "0")}`;
 }
 
 /**
@@ -102,39 +112,49 @@ function getTimelineProgressPercent(
 }
 
 /**
- * Renders a cropped audio preview whose visible scrubber represents only the selected segment.
+ * Renders a public game audio player whose timeline covers only the cropped range.
  *
- * @param props - Audio path and selected segment boundaries.
- * @returns Custom cropped audio preview controls.
+ * @param props - Audio path and crop boundaries.
+ * @returns Custom audio player for one sound guess round.
  */
-function SoundAudioSegmentPreviewComponent({
+export function SoundGuessSegmentPlayer({
   audioPath,
   endMs,
-  rangeLabel,
   startMs,
-}: SoundAudioSegmentPreviewProps) {
+}: SoundGuessSegmentPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const {
-    volume,
-    setVolume,
-    handleVolumeChange: rememberPreviewAudioVolume,
-  } = useRememberedAudioVolume(audioRef);
   const [mediaDurationMs, setMediaDurationMs] = useState<number | null>(null);
   const [currentOffsetMs, setCurrentOffsetMs] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [volume, setVolumeState] = useState(
+    readRememberedSoundGuessAudioVolume,
+  );
   const segmentDurationMs = getSegmentDurationMs(
     startMs,
     endMs,
     mediaDurationMs,
   );
-  const currentLabel = formatAudioTime(currentOffsetMs);
-  const durationLabel =
-    segmentDurationMs > 0 ? formatAudioTime(segmentDurationMs) : "--:--.--";
   const volumeLabel = `${Math.round(volume * 100)}%`;
+  const currentLabel = formatSegmentTime(currentOffsetMs);
+  const durationLabel =
+    segmentDurationMs > 0 ? formatSegmentTime(segmentDurationMs) : "--:--.--";
   const timelineProgressPercent = getTimelineProgressPercent(
     currentOffsetMs,
     segmentDurationMs,
   );
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
+
+  useEffect(() => {
+    audioRef.current?.pause();
+    setPlaying(false);
+    setCurrentOffsetMs(0);
+    setMediaDurationMs(null);
+  }, [audioPath, endMs, startMs]);
 
   /**
    * Seeks the hidden audio element to a segment-relative position.
@@ -151,9 +171,7 @@ function SoundAudioSegmentPreviewComponent({
     setCurrentOffsetMs(clampedOffsetMs);
 
     if (audioRef.current) {
-      audioRef.current.currentTime = millisecondsToSeconds(
-        startMs + clampedOffsetMs,
-      );
+      audioRef.current.currentTime = (startMs + clampedOffsetMs) / 1000;
     }
   };
 
@@ -176,14 +194,31 @@ function SoundAudioSegmentPreviewComponent({
     }
 
     if (
-      audioElement.currentTime < millisecondsToSeconds(startMs) ||
-      (endMs !== null && audioElement.currentTime >= millisecondsToSeconds(endMs))
+      audioElement.currentTime < startMs / 1000 ||
+      (endMs !== null && audioElement.currentTime >= endMs / 1000)
     ) {
       seekSegmentOffset(0);
     }
 
     void audioElement.play();
     setPlaying(true);
+  };
+
+  /**
+   * Applies and remembers the public game player volume.
+   *
+   * @param nextVolume - Raw volume value from the volume slider.
+   * @returns Nothing.
+   */
+  const updateVolume = (nextVolume: number) => {
+    const clampedVolume = clampSoundGuessAudioVolume(nextVolume);
+
+    setVolumeState(clampedVolume);
+    rememberSoundGuessAudioVolume(clampedVolume);
+
+    if (audioRef.current) {
+      audioRef.current.volume = clampedVolume;
+    }
   };
 
   /**
@@ -223,25 +258,16 @@ function SoundAudioSegmentPreviewComponent({
     );
   };
 
-  /**
-   * Stops the custom playing state when media playback pauses naturally.
-   *
-   * @returns Nothing.
-   */
-  const handlePause = () => {
-    setPlaying(false);
-  };
-
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <audio
         ref={audioRef}
         src={audioPath}
         className="hidden"
         onLoadedMetadata={handleLoadedMetadata}
-        onPause={handlePause}
+        onPause={() => setPlaying(false)}
         onTimeUpdate={handleTimeUpdate}
-        onVolumeChange={rememberPreviewAudioVolume}
+        onVolumeChange={(event) => updateVolume(event.currentTarget.volume)}
       >
         <track kind="captions" />
       </audio>
@@ -251,7 +277,7 @@ function SoundAudioSegmentPreviewComponent({
           type="button"
           variant="default"
           size="icon-lg"
-          aria-label={playing ? "Pause cropped audio" : "Play cropped audio"}
+          aria-label={playing ? "Pause sound" : "Play sound"}
           onClick={togglePlayback}
           disabled={segmentDurationMs <= 0}
           className="size-11 rounded-full border border-primary/20 shadow-sm hover:-translate-y-0.5 hover:shadow-md active:translate-y-0"
@@ -279,8 +305,8 @@ function SoundAudioSegmentPreviewComponent({
                 seekSegmentOffset(Number(event.target.value))
               }
               className={timelineRangeClassName}
-              aria-label="Cropped audio preview timeline"
-              data-testid="sound-audio-segment-preview-range"
+              aria-label="Sound guess cropped audio timeline"
+              data-testid="sound-guess-segment-player-range"
             />
           </div>
           <div className="mt-2 flex justify-between text-xs">
@@ -303,10 +329,10 @@ function SoundAudioSegmentPreviewComponent({
               max="1"
               step="0.01"
               value={volume}
-              onChange={(event) => setVolume(Number(event.target.value))}
+              onChange={(event) => updateVolume(Number(event.target.value))}
               className={volumeRangeClassName}
-              aria-label="Cropped audio preview volume"
-              data-testid="sound-audio-segment-preview-volume"
+              aria-label="Sound guess audio volume"
+              data-testid="sound-guess-segment-player-volume"
             />
             <span className="w-10 text-right text-xs tabular-nums">
               {volumeLabel}
@@ -314,12 +340,6 @@ function SoundAudioSegmentPreviewComponent({
           </div>
         </div>
       </div>
-
-      <div className="inline-flex rounded-lg border border-border/70 bg-card px-3 py-1 text-xs text-muted-foreground shadow-sm">
-        {rangeLabel}
-      </div>
     </div>
   );
 }
-
-export const SoundAudioSegmentPreview = memo(SoundAudioSegmentPreviewComponent);

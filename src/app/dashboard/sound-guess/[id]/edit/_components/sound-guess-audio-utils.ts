@@ -1,8 +1,10 @@
-import {
-  AUDIO_TIME_STEP_MS,
-  SOUND_GUESS_AUDIO_DEFAULT_VOLUME,
-  SOUND_GUESS_AUDIO_VOLUME_STORAGE_KEY,
-} from "./sound-guess-content-form.constants";
+import { AUDIO_TIME_STEP_MS } from "./sound-guess-content-form.constants";
+
+export {
+  clampSoundGuessAudioVolume as clampAudioVolume,
+  readRememberedSoundGuessAudioVolume as readRememberedAudioVolume,
+  rememberSoundGuessAudioVolume as rememberAudioVolume,
+} from "@/lib/sound-guess-audio-volume";
 
 /**
  * Formats milliseconds as a compact editor time label.
@@ -132,66 +134,4 @@ export function snapAudioTime(value: number, maxValue: number) {
     Math.round(value / AUDIO_TIME_STEP_MS) * AUDIO_TIME_STEP_MS;
 
   return Math.min(maxValue, Math.max(0, snappedValue));
-}
-
-/**
- * Clamps an audio volume value to the browser-supported range.
- *
- * @param value - Raw volume value.
- * @returns Volume clamped between 0 and 1.
- */
-export function clampAudioVolume(value: number) {
-  return Math.min(1, Math.max(0, value));
-}
-
-/**
- * Reads the remembered admin audio volume from localStorage.
- *
- * @returns Stored volume when valid, otherwise the default editor volume.
- */
-export function readRememberedAudioVolume() {
-  if (typeof window === "undefined") {
-    return SOUND_GUESS_AUDIO_DEFAULT_VOLUME;
-  }
-
-  try {
-    const storedValue = window.localStorage.getItem(
-      SOUND_GUESS_AUDIO_VOLUME_STORAGE_KEY,
-    );
-
-    if (!storedValue) {
-      return SOUND_GUESS_AUDIO_DEFAULT_VOLUME;
-    }
-
-    const parsedValue = Number(storedValue);
-
-    if (!Number.isFinite(parsedValue)) {
-      return SOUND_GUESS_AUDIO_DEFAULT_VOLUME;
-    }
-
-    return clampAudioVolume(parsedValue);
-  } catch {
-    return SOUND_GUESS_AUDIO_DEFAULT_VOLUME;
-  }
-}
-
-/**
- * Persists the shared admin audio volume for future audio previews.
- *
- * @param value - Volume value emitted by an audio element.
- * @returns Nothing.
- */
-export function rememberAudioVolume(value: number) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  try {
-    window.localStorage.setItem(
-      SOUND_GUESS_AUDIO_VOLUME_STORAGE_KEY,
-      String(clampAudioVolume(value)),
-    );
-  } catch {
-    // Ignore storage failures so browser privacy settings do not break playback.
-  }
 }

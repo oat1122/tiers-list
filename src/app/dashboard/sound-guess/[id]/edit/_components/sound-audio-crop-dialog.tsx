@@ -42,7 +42,8 @@ export function SoundAudioCropDialog({
   onConfirm: (range: { audioStartMs: number; audioEndMs: number | null }) => void;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const rememberDialogAudioVolume = useRememberedAudioVolume(audioRef);
+  const { handleVolumeChange: rememberDialogAudioVolume } =
+    useRememberedAudioVolume(audioRef);
   const [durationMs, setDurationMs] = useState<number | null>(null);
   const [startText, setStartText] = useState(formatAudioTime(initialStartMs));
   const [endText, setEndText] = useState(
