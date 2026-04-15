@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import {
   buildSoundGuessContentFormSnapshot,
   createEmptySoundGuessSoundDraft,
+  type SoundGuessContentUploadAdapter,
   type SoundGuessContentFormState,
 } from "@/lib/sound-guess-content-form";
 import { SaveSoundGuessGameContentSchema } from "@/lib/validations";
@@ -40,7 +41,9 @@ export interface SoundGuessContentFormProps {
   error?: string | null;
   onSave?: (values: SaveSoundGuessGameContentInput) => Promise<void>;
   onDirtyChange?: (isDirty: boolean) => void;
+  onSnapshotChange?: (snapshot: SoundGuessContentFormState) => void;
   submitLabel?: string;
+  uploadAdapter?: SoundGuessContentUploadAdapter;
 }
 
 /**
@@ -56,7 +59,9 @@ export function SoundGuessContentForm({
   error = null,
   onSave,
   onDirtyChange,
+  onSnapshotChange,
   submitLabel = "บันทึกข้อมูล",
+  uploadAdapter,
 }: SoundGuessContentFormProps) {
   const normalizedInitialValues = useMemo(
     () => buildSoundGuessContentFormSnapshot(initialValues),
@@ -83,6 +88,18 @@ export function SoundGuessContentForm({
     control: form.control,
     name: "sounds",
   });
+  const watchedCoverImagePath = useWatch({
+    control: form.control,
+    name: "coverImagePath",
+  });
+  const watchedCoverTempUploadPath = useWatch({
+    control: form.control,
+    name: "coverTempUploadPath",
+  });
+  const watchedCoverAssetId = useWatch({
+    control: form.control,
+    name: "coverAssetId",
+  });
   const watchedImageWidth =
     useWatch({ control: form.control, name: "imageWidth" }) ??
     SOUND_GUESS_DEFAULT_COVER_WIDTH;
@@ -105,6 +122,27 @@ export function SoundGuessContentForm({
   useEffect(() => {
     onDirtyChange?.(form.formState.isDirty);
   }, [form.formState.isDirty, onDirtyChange]);
+
+  useEffect(() => {
+    onSnapshotChange?.(
+      buildSoundGuessContentFormSnapshot({
+        coverImagePath: watchedCoverImagePath ?? null,
+        coverTempUploadPath: watchedCoverTempUploadPath ?? null,
+        coverAssetId: watchedCoverAssetId ?? null,
+        imageWidth: parsedImageWidth,
+        imageHeight: parsedImageHeight,
+        sounds: watchedSounds ?? [],
+      }),
+    );
+  }, [
+    onSnapshotChange,
+    parsedImageHeight,
+    parsedImageWidth,
+    watchedCoverAssetId,
+    watchedCoverImagePath,
+    watchedCoverTempUploadPath,
+    watchedSounds,
+  ]);
 
   const imageWidthError = form.formState.errors.imageWidth?.message;
   const imageHeightError = form.formState.errors.imageHeight?.message;
@@ -131,6 +169,10 @@ export function SoundGuessContentForm({
       shouldValidate: true,
     });
     form.setValue("coverTempUploadPath", null, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    form.setValue("coverAssetId", null, {
       shouldDirty: true,
       shouldValidate: true,
     });
@@ -224,6 +266,7 @@ export function SoundGuessContentForm({
             setValue={form.setValue}
             targetWidth={parsedImageWidth}
             targetHeight={parsedImageHeight}
+            uploadAdapter={uploadAdapter}
           />
 
           <SoundGuessRatioSettings
@@ -273,6 +316,7 @@ export function SoundGuessContentForm({
             control={form.control}
             register={form.register}
             setValue={form.setValue}
+            uploadAdapter={uploadAdapter}
             removeSound={() => soundsFieldArray.remove(index)}
             moveUp={() => index > 0 && soundsFieldArray.move(index, index - 1)}
             moveDown={() =>

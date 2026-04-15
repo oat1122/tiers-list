@@ -81,23 +81,32 @@ export function SoundGuessGalleryClient({
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
             <h2 className="text-2xl font-semibold tracking-tight">
-              เกมทายเสียงที่พร้อมเล่น
+              เกมสาธารณะที่พร้อมเล่น
             </h2>
             <p className="text-sm text-muted-foreground md:text-base">
-              เลือกเกม เปิดเสียงให้ผู้เล่นฟัง แล้วให้ host เฉลยและเก็บคะแนนในหน้านี้
+              ค้นหาเกมจากชื่อหรือคำอธิบาย แล้วเข้าเล่นต่อได้ทันที
+              หรือสร้างเกมของตัวเองแบบ local ได้จากหน้านี้
             </p>
           </div>
 
-          <label className="relative block w-full md:max-w-sm">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="ค้นหา Sound Guess..."
-              aria-label="Search sound guess games"
-              className="h-10 rounded-xl bg-background pl-9"
-            />
-          </label>
+          <div className="flex w-full flex-col gap-3 md:max-w-sm">
+            <label className="relative block">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="ค้นหา Sound Guess..."
+                aria-label="Search sound guess games"
+                className="h-10 rounded-xl bg-background pl-9"
+              />
+            </label>
+            <Link
+              href="/sound-guess/create"
+              className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+            >
+              สร้างเกมของคุณเอง
+            </Link>
+          </div>
         </div>
       </div>
 

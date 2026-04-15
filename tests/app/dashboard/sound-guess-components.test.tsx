@@ -9,6 +9,7 @@ import { SoundGuessGameCard } from "@/app/dashboard/sound-guess/_components/soun
 import { SoundGuessContentForm } from "@/app/dashboard/sound-guess/[id]/edit/_components/sound-guess-content-form";
 import {
   buildSoundGuessContentFormSnapshot,
+  type SoundGuessContentUploadAdapter,
   type SoundGuessContentFormState,
 } from "@/lib/sound-guess-content-form";
 import type { SoundGuessGameSummaryDto } from "@/types/sound-guess-admin";
@@ -93,9 +94,13 @@ function createInitialValues(
 function ContentHarness({
   initialValues,
   onSave = vi.fn(),
+  onSnapshotChange,
+  uploadAdapter,
 }: {
   initialValues: SoundGuessContentFormState;
   onSave?: (values: unknown) => Promise<void>;
+  onSnapshotChange?: (snapshot: SoundGuessContentFormState) => void;
+  uploadAdapter?: SoundGuessContentUploadAdapter;
 }) {
   const [contentDirty, setContentDirty] = useState(false);
 
@@ -105,7 +110,9 @@ function ContentHarness({
         gameId="game-1"
         initialValues={initialValues}
         onDirtyChange={setContentDirty}
+        onSnapshotChange={onSnapshotChange}
         onSave={onSave as never}
+        uploadAdapter={uploadAdapter}
       />
     </div>
   );
@@ -290,6 +297,51 @@ describe("SoundGuessContentForm", () => {
     expect(
       container.querySelector('[data-testid="sound-audio-segment-preview-range"]'),
     ).toBeTruthy();
+  });
+
+  it("uses a local upload adapter without calling the remote audio endpoint", async () => {
+    const snapshots: SoundGuessContentFormState[] = [];
+    const uploadAdapter: SoundGuessContentUploadAdapter = {
+      uploadCover: vi.fn(async () => ({
+        previewPath: "blob:cover",
+        coverAssetId: "cover-1",
+      })),
+      uploadAudio: vi.fn(async () => ({
+        previewPath: "blob:audio",
+        audioAssetId: "audio-1",
+      })),
+      uploadSoundImage: vi.fn(async () => ({
+        previewPath: "blob:image",
+        imageAssetId: "image-1",
+      })),
+    };
+
+    await act(async () => {
+      root.render(
+        <ContentHarness
+          initialValues={createInitialValues()}
+          onSnapshotChange={(snapshot) => snapshots.push(snapshot)}
+          uploadAdapter={uploadAdapter}
+        />,
+      );
+    });
+    await flush();
+
+    const input = container.querySelector(
+      "#sound-guess-audio-upload-0",
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeTruthy();
+
+    await changeFileInput(
+      input!,
+      new File(["audio"], "bell.mp3", { type: "audio/mpeg" }),
+    );
+
+    expect(uploadAdapter.uploadAudio).toHaveBeenCalledTimes(1);
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(container.querySelector('audio[src="blob:audio"]')).toBeTruthy();
+    expect(snapshots.at(-1)?.sounds[0]?.audioAssetId).toBe("audio-1");
   });
 
   it("renders a cropped audio preview timeline for the saved crop range", async () => {

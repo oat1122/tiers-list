@@ -103,6 +103,20 @@ vi.mock(
   }),
 );
 
+vi.mock(
+  "@/app/sound-guess/create/_components/sound-guess-local-creator-client",
+  () => ({
+    SoundGuessLocalCreatorClient: () => <div data-sound-guess-local-creator />,
+  }),
+);
+
+vi.mock(
+  "@/app/sound-guess/create/_components/sound-guess-local-play-client",
+  () => ({
+    SoundGuessLocalPlayClient: () => <div data-sound-guess-local-play />,
+  }),
+);
+
 vi.mock("@/services/tier-lists.service", () => ({
   getPublicTierListGallery: mocks.getPublicTierListGallery,
 }));
@@ -135,6 +149,7 @@ describe("public pages", () => {
     expect(markup).toContain("/picture-reveal");
     expect(markup).toContain("/picture-reveal/create");
     expect(markup).toContain("/sound-guess");
+    expect(markup).toContain("/sound-guess/create");
     expect(markup).toContain("/home-vinyl-quiz.svg");
     expect(markup).toContain("Public Portal");
   });
@@ -233,6 +248,7 @@ describe("public pages", () => {
     expect(markup).toContain('data-sound-guess-gallery="1"');
     expect(markup).toContain("Vinyl Quiz");
     expect(markup).toContain("Sound Guess");
+    expect(markup).toContain("/sound-guess/create");
   });
 
   it("renders the sound guess play page with the public playable payload", async () => {
@@ -298,5 +314,21 @@ describe("public pages", () => {
     const markup = renderToStaticMarkup(<PictureRevealCreatePlayPage />);
 
     expect(markup).toContain("data-picture-reveal-local-play");
+  });
+
+  it("renders the local sound guess creator route without auth", async () => {
+    const { default: SoundGuessCreatePage } =
+      await import("@/app/sound-guess/create/page");
+    const markup = renderToStaticMarkup(<SoundGuessCreatePage />);
+
+    expect(markup).toContain("data-sound-guess-local-creator");
+  });
+
+  it("renders the local sound guess play route without auth", async () => {
+    const { default: SoundGuessCreatePlayPage } =
+      await import("@/app/sound-guess/create/play/page");
+    const markup = renderToStaticMarkup(<SoundGuessCreatePlayPage />);
+
+    expect(markup).toContain("data-sound-guess-local-play");
   });
 });

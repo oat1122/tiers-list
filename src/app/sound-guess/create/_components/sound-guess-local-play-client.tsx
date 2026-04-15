@@ -1,0 +1,171 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Home as HomeIcon, Loader2 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { SoundGuessPlayClient } from "@/app/sound-guess/[id]/_components/sound-guess-play-client";
+import {
+  buildPlayableSoundGuessFromLocalDraft,
+  revokeLocalSoundGuessDraftUrls,
+} from "@/lib/sound-guess-local";
+import { loadCurrentDraft } from "@/lib/sound-guess-local-store";
+import { cn } from "@/lib/utils";
+import type { PublicSoundGuessGameDetail } from "@/types/sound-guess-public";
+import type { LocalSoundGuessDraft } from "@/types/sound-guess-local";
+
+const HOME_URL = "https://mavelus-jk.com";
+
+/**
+ * Extracts a readable error message for local play load failures.
+ *
+ * @param error - Unknown error thrown by local storage or draft validation.
+ * @returns Message safe to show on the play page.
+ */
+function extractMessage(error: unknown) {
+  return error instanceof Error
+    ? error.message
+    : "Could not load the local Sound Guess draft.";
+}
+
+/**
+ * Loads and plays the current browser-only Sound Guess draft.
+ *
+ * @returns Local play page content or a recovery message when no draft is ready.
+ */
+export function SoundGuessLocalPlayClient() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [game, setGame] = useState<PublicSoundGuessGameDetail | null>(null);
+  const draftRef = useRef<LocalSoundGuessDraft | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadDraft = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const storedDraft = await loadCurrentDraft();
+
+        if (!storedDraft) {
+          throw new Error("No local Sound Guess draft was found in this browser.");
+        }
+
+        const playableGame = buildPlayableSoundGuessFromLocalDraft(storedDraft);
+
+        if (!cancelled) {
+          draftRef.current = storedDraft;
+          setGame(playableGame);
+        } else {
+          revokeLocalSoundGuessDraftUrls(storedDraft);
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          setError(extractMessage(loadError));
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadDraft();
+
+    return () => {
+      cancelled = true;
+      revokeLocalSoundGuessDraftUrls(draftRef.current);
+    };
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="rounded-[2rem] border border-border/70 bg-background/90 px-6 py-16 text-center shadow-sm">
+        <Loader2 className="mx-auto size-6 animate-spin text-muted-foreground" />
+        <p className="mt-3 text-sm text-muted-foreground">
+          Preparing your local Sound Guess game...
+        </p>
+      </div>
+    );
+  }
+
+  if (!game || error) {
+    return (
+      <Card className="border-border/70 bg-background/92 shadow-sm">
+        <CardHeader>
+          <CardTitle>Local game is not ready</CardTitle>
+          <CardDescription>
+            {error ??
+              "No complete local Sound Guess draft was found in this browser."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          <Link
+            href="/sound-guess/create"
+            className={cn(buttonVariants({ variant: "outline" }))}
+          >
+            <ArrowLeft className="size-4" />
+            Back to creator
+          </Link>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      <header className="rounded-[2rem] border border-border/70 bg-background/90 p-6 shadow-sm md:p-8">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="warning">Sound Guess</Badge>
+              <Badge variant="secondary">Local draft</Badge>
+              <Badge variant="outline">{game.soundCount} sounds</Badge>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <a
+                href={HOME_URL}
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <HomeIcon className="size-4" />
+                Back to home
+              </a>
+              <Link
+                href="/sound-guess/create"
+                className={cn(buttonVariants({ variant: "outline" }))}
+              >
+                <ArrowLeft className="size-4" />
+                Back to creator
+              </Link>
+              <ThemeToggle />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h1 className="max-w-4xl text-4xl font-bold tracking-tight text-foreground md:text-5xl">
+              {game.title || "Sound Guess"}
+            </h1>
+            <p className="max-w-3xl text-base leading-7 text-muted-foreground md:text-lg">
+              {game.description?.trim() ||
+                "Play the Sound Guess draft saved in this browser."}
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <SoundGuessPlayClient game={game} />
+    </div>
+  );
+}

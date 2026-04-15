@@ -27,7 +27,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CROPPABLE_IMAGE_MIME } from "@/lib/image-upload-config";
 import { isCroppableImageType } from "@/lib/image-processing";
-import type { SoundGuessContentFormState } from "@/lib/sound-guess-content-form";
+import type {
+  SoundGuessContentFormState,
+  SoundGuessContentUploadAdapter,
+} from "@/lib/sound-guess-content-form";
 import { AUDIO_ACCEPTED_MIME, SOUND_GUESS_SOUND_IMAGE_SIZE } from "./sound-guess-content-form.constants";
 import { formatAudioRangeLabel } from "./sound-guess-audio-utils";
 import {
@@ -51,6 +54,7 @@ export const SoundGuessSoundCard = memo(function SoundGuessSoundCard({
   control,
   register,
   setValue,
+  uploadAdapter,
   removeSound,
   moveUp,
   moveDown,
@@ -62,6 +66,7 @@ export const SoundGuessSoundCard = memo(function SoundGuessSoundCard({
   control: Control<SoundGuessContentFormState>;
   register: UseFormRegister<SoundGuessContentFormState>;
   setValue: UseFormSetValue<SoundGuessContentFormState>;
+  uploadAdapter?: SoundGuessContentUploadAdapter;
   removeSound: () => void;
   moveUp: () => void;
   moveDown: () => void;
@@ -104,13 +109,23 @@ export const SoundGuessSoundCard = memo(function SoundGuessSoundCard({
     setAudioUploadError(null);
 
     try {
-      const result = await uploadRemoteAudio(gameId, file);
+      const result = uploadAdapter
+        ? await uploadAdapter.uploadAudio(file)
+        : await uploadRemoteAudio(gameId, file).then((upload) => ({
+            previewPath: upload.tempAudioPath,
+            audioAssetId: null,
+            tempAudioPath: upload.tempAudioPath,
+          }));
 
-      setValue(`sounds.${index}.tempAudioPath`, result.tempAudioPath, {
+      setValue(`sounds.${index}.tempAudioPath`, result.tempAudioPath ?? undefined, {
         shouldDirty: true,
         shouldValidate: true,
       });
-      setValue(`sounds.${index}.audioPath`, result.tempAudioPath, {
+      setValue(`sounds.${index}.audioPath`, result.previewPath, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setValue(`sounds.${index}.audioAssetId`, result.audioAssetId ?? null, {
         shouldDirty: true,
         shouldValidate: true,
       });
@@ -139,6 +154,10 @@ export const SoundGuessSoundCard = memo(function SoundGuessSoundCard({
       shouldValidate: true,
     });
     setValue(`sounds.${index}.tempAudioPath`, undefined, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue(`sounds.${index}.audioAssetId`, null, {
       shouldDirty: true,
       shouldValidate: true,
     });
@@ -175,13 +194,23 @@ export const SoundGuessSoundCard = memo(function SoundGuessSoundCard({
     setImageUploadError(null);
 
     try {
-      const result = await uploadRemoteSoundImage(gameId, file);
+      const result = uploadAdapter
+        ? await uploadAdapter.uploadSoundImage(file)
+        : await uploadRemoteSoundImage(gameId, file).then((upload) => ({
+            previewPath: upload.tempImagePath,
+            imageAssetId: null,
+            tempImagePath: upload.tempImagePath,
+          }));
 
-      setValue(`sounds.${index}.tempImagePath`, result.tempImagePath, {
+      setValue(`sounds.${index}.tempImagePath`, result.tempImagePath ?? null, {
         shouldDirty: true,
         shouldValidate: true,
       });
-      setValue(`sounds.${index}.imagePath`, result.tempImagePath, {
+      setValue(`sounds.${index}.imagePath`, result.previewPath, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setValue(`sounds.${index}.imageAssetId`, result.imageAssetId ?? null, {
         shouldDirty: true,
         shouldValidate: true,
       });
@@ -202,6 +231,10 @@ export const SoundGuessSoundCard = memo(function SoundGuessSoundCard({
       shouldValidate: true,
     });
     setValue(`sounds.${index}.tempImagePath`, null, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue(`sounds.${index}.imageAssetId`, null, {
       shouldDirty: true,
       shouldValidate: true,
     });

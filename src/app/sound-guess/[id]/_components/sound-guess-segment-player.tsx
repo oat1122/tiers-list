@@ -150,10 +150,11 @@ export function SoundGuessSegmentPlayer({
   }, [volume]);
 
   useEffect(() => {
-    audioRef.current?.pause();
-    setPlaying(false);
-    setCurrentOffsetMs(0);
-    setMediaDurationMs(null);
+    const audioElement = audioRef.current;
+
+    return () => {
+      audioElement?.pause();
+    };
   }, [audioPath, endMs, startMs]);
 
   /**

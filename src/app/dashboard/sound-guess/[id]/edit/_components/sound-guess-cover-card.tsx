@@ -13,7 +13,10 @@ import {
   IMAGE_UPLOAD_LIMIT_BYTES,
 } from "@/lib/image-upload-config";
 import { isCroppableImageType } from "@/lib/image-processing";
-import type { SoundGuessContentFormState } from "@/lib/sound-guess-content-form";
+import type {
+  SoundGuessContentFormState,
+  SoundGuessContentUploadAdapter,
+} from "@/lib/sound-guess-content-form";
 import {
   formatBytes,
   getUnsupportedImageTypeMessage,
@@ -31,12 +34,14 @@ export const SoundGuessCoverCard = memo(function SoundGuessCoverCard({
   setValue,
   targetWidth,
   targetHeight,
+  uploadAdapter,
 }: {
   gameId: string;
   control: Control<SoundGuessContentFormState>;
   setValue: UseFormSetValue<SoundGuessContentFormState>;
   targetWidth: number;
   targetHeight: number;
+  uploadAdapter?: SoundGuessContentUploadAdapter;
 }) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -53,13 +58,23 @@ export const SoundGuessCoverCard = memo(function SoundGuessCoverCard({
     setUploadError(null);
 
     try {
-      const result = await uploadRemoteCover(gameId, file);
+      const result = uploadAdapter
+        ? await uploadAdapter.uploadCover(file)
+        : await uploadRemoteCover(gameId, file).then((upload) => ({
+            previewPath: upload.tempUploadPath,
+            coverAssetId: null,
+            tempUploadPath: upload.tempUploadPath,
+          }));
 
-      setValue("coverTempUploadPath", result.tempUploadPath, {
+      setValue("coverTempUploadPath", result.tempUploadPath ?? null, {
         shouldDirty: true,
         shouldValidate: true,
       });
-      setValue("coverImagePath", result.tempUploadPath, {
+      setValue("coverImagePath", result.previewPath, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setValue("coverAssetId", result.coverAssetId ?? null, {
         shouldDirty: true,
         shouldValidate: true,
       });
@@ -96,6 +111,10 @@ export const SoundGuessCoverCard = memo(function SoundGuessCoverCard({
       shouldValidate: true,
     });
     setValue("coverTempUploadPath", null, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("coverAssetId", null, {
       shouldDirty: true,
       shouldValidate: true,
     });

@@ -63,7 +63,7 @@ export default async function SoundGuessPage() {
                 </Link>
                 <Link
                   href="/sign-in"
-                  className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-primary px-3.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                  className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   <LogIn className="size-4" />
                   เข้าสู่ระบบ
